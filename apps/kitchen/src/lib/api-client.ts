@@ -8,6 +8,8 @@ import type {
   KnowledgeCollection,
   MemoryEntry,
   PaperclipFleetResponse,
+  SimilarTaskResponse,
+  ToolAttentionContextPack,
   ToolAttentionResponse,
 } from "@/types";
 
@@ -252,6 +254,20 @@ export function useToolAttention(query?: string) {
     queryFn: () =>
       fetchJSON<ToolAttentionResponse>(`/api/tool-attention?${params}`),
     refetchInterval: 30000,
+  });
+}
+
+export function useSimilarTaskRecommendations(context: ToolAttentionContextPack = {}) {
+  const params = new URLSearchParams();
+  if (context.task_type) params.set("task_type", context.task_type);
+  if (context.repo) params.set("repo", context.repo);
+  if (context.agent_id) params.set("agent_id", context.agent_id);
+  if (context.tags?.length) params.set("tags", context.tags.join(","));
+  return useQuery({
+    queryKey: ["tool-attention-similar", context],
+    queryFn: () =>
+      fetchJSON<SimilarTaskResponse>(`/api/tool-attention/similar?${params}`),
+    refetchInterval: 60000,
   });
 }
 
