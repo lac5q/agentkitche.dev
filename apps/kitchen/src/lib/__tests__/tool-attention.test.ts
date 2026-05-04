@@ -16,6 +16,13 @@ afterEach(() => {
   }
 });
 
+describe("contextMatchSignal", () => {
+  it.todo("scores task_type match * 2");
+  it.todo("scores repo match * 2");
+  it.todo("scores agent_id match * 1");
+  it.todo("never reads task field");
+});
+
 describe("getToolAttention", () => {
   it("redacts absolute local paths from the UI response", () => {
     tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tool-attention-"));
