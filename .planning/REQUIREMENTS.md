@@ -9,10 +9,10 @@
 
 - [x] **A2A-01**: Kitchen exposes `/.well-known/agent.json` agent card with name, description, capabilities, and endpoint URLs
 - [ ] **A2A-02**: Kitchen implements A2A v1 task API with correct spec method names (`tasks/send`, `tasks/get`, `tasks/cancel` verified against A2A v1 spec)
-- [ ] **A2A-03**: External agent can register with Kitchen via A2A protocol
-- [ ] **A2A-04**: Kitchen can discover registered A2A agents and their declared capabilities
+- [x] **A2A-03**: External agent can register with Kitchen via A2A protocol
+- [x] **A2A-04**: Kitchen can discover registered A2A agents and their declared capabilities
 - [ ] **A2A-05**: Kitchen can delegate tasks to registered A2A agents
-- [ ] **A2A-06**: Google ADK agents register via A2A and appear as nodes in Flow diagram
+- [x] **A2A-06**: Google ADK agents register via A2A and appear as nodes in Flow diagram
 - [ ] **A2A-07**: A2A task progress streams via SSE (server-sent events)
 - [x] **A2A-08**: A2A endpoints enforce agent identity and per-task authorization (security scheme defined in agent card)
 
