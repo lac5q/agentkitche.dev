@@ -20,7 +20,7 @@ function sse(payloads: unknown[]): Response {
   });
 }
 
-export async function POST(request: Request, _context: { params: Promise<{}> }) {
+export async function POST(request: Request) {
   const agent = authenticateAgentHeaders(request.headers);
   const id = taskIdFromUrl(request.url);
   try {

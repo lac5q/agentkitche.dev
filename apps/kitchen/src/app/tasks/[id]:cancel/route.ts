@@ -9,7 +9,7 @@ function taskIdFromUrl(url: string): string {
   return decodeURIComponent(segment.replace(/:cancel$/, ""));
 }
 
-export async function POST(request: Request, _context: { params: Promise<{}> }) {
+export async function POST(request: Request) {
   const agent = authenticateAgentHeaders(request.headers);
   const id = taskIdFromUrl(request.url);
   try {
