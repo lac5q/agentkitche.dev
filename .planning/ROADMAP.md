@@ -9,8 +9,20 @@
 - ✅ **v1.5 Agent Coordination + Voice** — Phases 19-25 (shipped 2026-04-20)
 - ✅ **v1.6 Monorepo + Progressive MCP Tool Attention** — Phases 26-28 (shipped 2026-04-30)
 - ✅ **v1.7 Progressive Tool Gateway Runtime** — Phases 29-33 (shipped 2026-05-04)
+- 🚧 **v2.0 A2A Hub — Open Source** — Phases 34-41 (started 2026-05-04)
 
 ## Phases
+
+### v2.0 A2A Hub — Open Source (Phases 34-41)
+
+- [ ] **Phase 34: Universal REST API + Canonical Agent Registry** — Framework-agnostic REST endpoints, dynamic agent roster, single canonical registry model
+- [ ] **Phase 35: A2A Protocol Implementation + Google ADK** — Agent card, A2A v1 task API, ADK agents register and surface in Flow
+- [ ] **Phase 36: LangGraph Orchestration Service** — Python StateGraph, SqliteSaver checkpointing, HIL approve/reject, capability routing
+- [ ] **Phase 37: Unified Memory — mem0 Graph + Neo4j** — Three-tier `/api/memory/*` covering vector (Qdrant Cloud) + graph (Neo4j) + episodic (SQLite)
+- [ ] **Phase 38: Env Config Audit + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
+- [ ] **Phase 39: Developer Setup Experience** — `setup.sh` prereq detection + scaffolding, first-run wizard for keys + first agent
+- [ ] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, per-framework integration guides, REST + memory references
+- [ ] **Phase 41: OSS Polish** — MIT license, CONTRIBUTING, SECURITY, issue templates, public CI with Docker compose smoke
 
 <details>
 <summary>✅ v1.1 Knowledge Architecture + Dashboard Polish (Phases 1-5) — SHIPPED 2026-04-11</summary>
@@ -99,9 +111,107 @@ Full archive: `.planning/milestones/v1.6-ROADMAP.md`
 
 Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 
-
-
 </details>
+
+## Phase Details
+
+### Phase 34: Universal REST API + Canonical Agent Registry
+**Goal**: Any agent (A2A or otherwise) registers against a single canonical model and reports liveness, skills, memory, and tool outcomes through framework-agnostic REST endpoints — with zero hardcoded agents in source.
+**Depends on**: v1.7 shipped (Phase 33)
+**Requirements**: REST-01, REST-02, REST-03, REST-04, REST-05, REST-06, REG-00, REG-01, REG-02, REG-03
+**Success Criteria** (what must be TRUE):
+  1. A non-A2A client (e.g. `curl`) can register an agent, post a heartbeat, and the agent appears in the Kitchen UI Agent Registry page
+  2. The registry page lists every registered agent with capabilities, status, last heartbeat, and protocol type; the user can deregister from the UI
+  3. All REST endpoints (`/api/heartbeat`, `/api/skills/report`, `/api/memory/add`, `/api/tool-attention/record`) reject requests with missing or invalid per-agent API keys
+  4. Source contains zero hardcoded agent identifiers — the Flow page roster is sourced from the canonical registry DB
+  5. A2A registration (Phase 35) and UI registration both write through the same canonical registry service (REG-00 contract verified by tests)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 35: A2A Protocol Implementation + Google ADK Support
+**Goal**: Kitchen speaks A2A v1 natively — exposes an agent card, accepts A2A task lifecycle calls, discovers and delegates to registered A2A agents, and a Google ADK agent appears in Flow after registering via A2A.
+**Depends on**: Phase 34 (canonical registry must exist before A2A registration adapter)
+**Requirements**: A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08
+**Success Criteria** (what must be TRUE):
+  1. `GET /.well-known/agent.json` returns a valid A2A agent card with name, description, capabilities, endpoint URLs, and security scheme
+  2. A Google ADK agent registers via A2A and appears as a node in the Flow diagram with declared capabilities
+  3. Kitchen accepts `tasks/send`, `tasks/get`, and `tasks/cancel` calls (verified against the A2A v1 spec) and streams progress via SSE
+  4. Kitchen can list registered A2A agents via discovery and successfully delegate a task to one of them
+  5. Unauthenticated and unauthorized A2A task requests are rejected per the security scheme declared in the agent card
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 36: LangGraph Orchestration Service (Python, Checkpoint + HIL)
+**Goal**: A separate Python LangGraph service routes inbound tasks to registered agents by capability, persists checkpoints to its own SQLite DB, retries on failure, and surfaces human-in-the-loop approve/reject prompts in the Kitchen UI.
+**Depends on**: Phase 35 (A2A transport layer in place; LangGraph owns routing policy on top)
+**Requirements**: ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07
+**Success Criteria** (what must be TRUE):
+  1. A task sent to Kitchen routes through LangGraph to a registered agent based on declared capability, and the chosen agent executes it
+  2. LangGraph checkpoints persist to a dedicated `data/orchestration.db` (separate from Kitchen's main SQLite DB) — verified by inspecting the file and confirming no cross-process lock contention
+  3. A graph node configured for HIL pauses execution and shows a pending approve/reject decision in the Kitchen UI; user approval resumes the graph from checkpoint
+  4. A correlation ID generated at task ingress is attached at every hop (Kitchen → LangGraph → agent A → agent B) and is queryable end-to-end
+  5. A failing agent task is retried up to N times before surfacing as a failed HIL decision; the A2A adapter / LangGraph boundary contract (ORCH-07) is documented and respected by the implementation
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 37: Unified Memory — mem0 Graph Layer + Neo4j
+**Goal**: Kitchen exposes one memory API covering all three tiers — vector (Qdrant Cloud), graph (Neo4j via mem0), episodic (SQLite) — with explicit routing rules and a health panel showing all tiers green.
+**Depends on**: Phase 34 (`/api/memory/add` already framework-agnostic from REST baseline)
+**Requirements**: MEM-01, MEM-02, MEM-03, MEM-04, MEM-05
+**Success Criteria** (what must be TRUE):
+  1. `POST /api/memory/add` with `type=graph` writes to Neo4j via mem0's graph layer; `type=vector` writes to Qdrant Cloud; `type=episodic` writes to SQLite
+  2. `GET /api/memory/search` returns semantic-similarity hits from Qdrant Cloud
+  3. `GET /api/memory/graph` returns entity and relationship results from Neo4j
+  4. The memory health panel in Kitchen UI shows status, document/node counts, and last write time for all three tiers (vector, graph, episodic) — all green when services are reachable
+  5. Routing rules for which writes go to which tier are documented and validated by tests
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 38: Env Config Audit + Docker Full-Stack
+**Goal**: Every port, path, key, and backend URL is env-driven; `docker-compose up` brings the full OSS stack (Kitchen + Knowledge MCP + mem0 + Neo4j + Pipecat voice + LangGraph orchestration) to a healthy state with Qdrant configured via env to its cloud endpoint.
+**Depends on**: Phase 37 (Neo4j must exist as a service to compose)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04
+**Success Criteria** (what must be TRUE):
+  1. `.env.example` enumerates every port, path, API key, and backend URL used in source — a grep audit confirms zero hardcoded values
+  2. `docker-compose up` on a clean machine brings all six services healthy (health endpoints reachable) with Qdrant reachable as a cloud endpoint, never a local container
+  3. Pipecat voice service starts in compose using only `.env` values (Gemini API key, port, Kitchen base URL)
+  4. `setup.sh` validates Qdrant Cloud connectivity (URL + API key) at startup and fails with a clear actionable error when misconfigured
+
+**Plans**: TBD
+
+### Phase 39: Developer Setup Experience
+**Goal**: A new contributor can clone the repo on a fresh machine and reach a working Kitchen with one registered agent through `setup.sh` plus a guided first-run wizard.
+**Depends on**: Phase 38 (compose + env baseline must be in place)
+**Requirements**: DEV-01, DEV-02
+**Success Criteria** (what must be TRUE):
+  1. `./setup.sh` on a fresh machine detects missing prereqs (Node, Python, Docker), scaffolds `.env` from `.env.example`, and starts all services without manual intervention
+  2. The first-run wizard guides the user through entering required API keys, registering their first agent, and running an end-to-end health check that passes
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 40: Documentation + Architecture Diagrams
+**Goal**: A new OSS user can follow the README quickstart and have an agent connected to Kitchen in under ten minutes; integration paths for every supported framework and the memory architecture are fully documented.
+**Depends on**: Phase 39 (setup experience must be stable to be documented)
+**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08
+**Success Criteria** (what must be TRUE):
+  1. A new user following the README quickstart on a fresh machine has an agent connected to Kitchen in under 10 minutes
+  2. The architecture diagram covers the A2A hub, three memory tiers, LangGraph orchestration layer, and supported agent frameworks
+  3. Per-framework integration guides exist for Claude Code (A2A), Google ADK (A2A), LangGraph (A2A + L↔L delegation), and CrewAI/AutoGen (REST shim)
+  4. REST API reference documents every endpoint with auth and request/response examples
+  5. Memory architecture guide explains the three tiers, routing rules, when to use each, and the Neo4j schema
+**Plans**: TBD
+
+### Phase 41: OSS Polish
+**Goal**: The repo is ready for public release — licensed, contributable, with security policy, issue templates, and a public CI that runs typecheck, lint, tests, and a Docker compose smoke on every PR.
+**Depends on**: Phase 40 (docs land before public CI gates them)
+**Requirements**: OSS-01, OSS-02, OSS-03, OSS-04, OSS-05
+**Success Criteria** (what must be TRUE):
+  1. Repo contains an MIT `LICENSE` file at root
+  2. `CONTRIBUTING.md` covers setup, branch conventions, PR process, and coding standards
+  3. `SECURITY.md` documents the security policy and responsible disclosure process
+  4. GitHub bug-report and feature-request issue templates exist
+  5. GitHub Actions CI runs typecheck, lint, unit/integration tests, and a Docker compose smoke test on every PR — all green on main
+**Plans**: TBD
 
 ## Progress
 
@@ -140,22 +250,29 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 | 31 | v1.7 | 1/1 | Complete | 2026-05-04 |
 | 32 | v1.7 | 4/4 | Complete | 2026-05-04 |
 | 33 | v1.7 | 1/1 | Complete | 2026-05-04 |
+| 34 | v2.0 | 0/? | Not started | — |
+| 35 | v2.0 | 0/? | Not started | — |
+| 36 | v2.0 | 0/? | Not started | — |
+| 37 | v2.0 | 0/? | Not started | — |
+| 38 | v2.0 | 0/? | Not started | — |
+| 39 | v2.0 | 0/? | Not started | — |
+| 40 | v2.0 | 0/? | Not started | — |
+| 41 | v2.0 | 0/? | Not started | — |
 
 ---
 
 ## Backlog
 
-### v1.8 Ideas (not yet planned)
+### v2.1+ Ideas (deferred from v2.0)
 
-Core features:
-- **Flow trigger button** — kick off `qmd update` pipeline from Kitchen UI (long-standing Active item)
-- **Library freshness** — show QMD index recency timestamp vs file mtime on Library page
-- **LLM-powered recall scoring** — upgrade BM25 lexical recall in SQLite conversation store to semantic/embedding-based ranking
-- **Cross-project recall** — extend similar-task recommendations across multiple local repos, not just the current one
-- **Voice meeting bot** — Pipecat-based meeting participant that writes transcripts to SQLite and surfaces highlights in Kitchen
+- HIL edit-and-continue semantics (modify task state before resuming graph)
+- HIL timeout and escalation policies
+- Multi-hop retry compensation and rollback
+- Memory backend pluggability (beyond mem0 + Qdrant + Neo4j) — v3.0 concern
+- Voice meeting bot (Pipecat as meeting participant)
+- Flow trigger button (`qmd update` from UI)
+- Library freshness indicator (QMD index recency vs file mtime)
+- LLM-powered recall scoring upgrade (embedding over BM25)
+- Cross-project recall (similar-task recommendations across repos)
 
-Deferred from v1.7:
-- GitNexus embeddings (blocked by node-llama-cpp arm64 crash — abhigyanpatwari/GitNexus#824)
-- Memory export/import between agent instances
-
-Run `/gsd-new-milestone` to formally scope v1.8.
+Run `/gsd-new-milestone` to formally scope v2.1.
