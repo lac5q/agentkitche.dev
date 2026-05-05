@@ -38,8 +38,8 @@ describe("parentId migration invariants — react-flow-canvas.tsx", () => {
     expect(SRC).toMatch(/15\s*\+\s*i\s*\*\s*DEV_TOOL_SPACING/);
   });
 
-  it("Test 5: local-agents node uses relative x: 15 + keyRemote.length * agentSpacing", () => {
-    expect(SRC).toMatch(/15\s*\+\s*keyRemote\.length\s*\*\s*agentSpacing/);
+  it("Test 5: local-agents node uses relative x: 15 + visibleAgents.length * agentSpacing", () => {
+    expect(SRC).toMatch(/15\s*\+\s*visibleAgents\.length\s*\*\s*agentSpacing/);
   });
 
   it("Test 6: agent, dev-tool, and local children all use y: 32 (parent-relative), not absolute y values", () => {

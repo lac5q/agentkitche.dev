@@ -130,8 +130,6 @@ const agentY = 280;
 const DEV_TOOL_SPACING = 160;
 const DEV_TOOL_START_X = 160;
 const DEV_TOOL_Y = 560;
-const KEY_AGENTS = ["alba", "gwen", "sophia", "maria", "lucia"];
-
 interface ReactFlowCanvasProps {
   services: HealthStatus[];
   agentCount: number;
@@ -145,7 +143,15 @@ interface ReactFlowCanvasProps {
   topFailureAgent?: string | null;
   nodeActivity: Record<string, number>;
   highlightedNode?: string | null;
-  remoteAgents?: Array<{ id: string; name: string; status: string; latencyMs: number | null; location: string }>;
+  registeredAgents?: Array<{
+    id: string;
+    name: string;
+    status: string;
+    latencyMs: number | null;
+    location: string;
+    protocol?: string;
+    platform?: string;
+  }>;
   localActiveCount?: number;
   localTotalCount?: number;
   onNodeClick: (nodeId: string, nodeLabel: string, nodeIcon: string, nodeStats: Record<string, string | number>) => void;
@@ -171,7 +177,7 @@ export function ReactFlowCanvas({
   topFailureAgent = null,
   nodeActivity,
   highlightedNode,
-  remoteAgents = [],
+  registeredAgents = [],
   localActiveCount = 0,
   localTotalCount = 0,
   onNodeClick,
@@ -209,27 +215,22 @@ export function ReactFlowCanvas({
       case "librarian": return { "Docs": knowledgeCount, "Collections": 15 };
       case "cookbooks": return { "Skills": skillCount, "Gaps": coverageGapsCount, ...(topFailureAgent ? { "Top Failure": topFailureAgent } : {}) };
       case "tool-gateway": return { "Capabilities": toolCapabilityCount, "Workspaces": toolWorkspaceCount };
-      case "gateways": return { "Alba": "18793", "Gwen": "18792" };
+      case "gateways": return { "Registered": agentCount, "Active": activeCount };
       case "manager": return { "Platform": "Paperclip", "Port": "3100" };
       case "apo": return { "Mode": "QA", "Cycle": "hourly" };
       case "gitnexus": return { "Repos": 8, "Symbols": "75k+" };
-      case "llmwiki": return { "Topics": 6, "Maintainer": "Alba" };
+      case "llmwiki": return { "Topics": 6, "Status": "active" };
       default: return {};
     }
   }
 
-  // Build agent nodes dynamically from real remote agents
-  const keyRemote = useMemo(
-    () => KEY_AGENTS.map(id => remoteAgents.find(a => a.id === id)).filter(Boolean) as typeof remoteAgents,
-    [remoteAgents]
-  );
-  const AGENT_ICONS: Record<string, string> = { alba: "🤖", gwen: "🌸", sophia: "💼", maria: "✍️", lucia: "🔧" };
+  const visibleAgents = useMemo(() => registeredAgents.slice(0, 7), [registeredAgents]);
 
   const nodes: Node[] = useMemo(() => {
     // Ungrouped static nodes — these stay at absolute coordinates and do NOT get parentId
     const staticNodes: Node[] = [
       { id: "request",   position: { x: 20,  y: 100 }, data: { label: "User / Telegram", subtitle: "input channel",        icon: "📨", status: getStatus("request"),   highlighted: highlightedNode === "request"   }, type: "flowNode" },
-      { id: "gateways",  position: { x: 160, y: 100 }, data: { label: "Gateways",         subtitle: "Alba · Gwen · Sophia", icon: "🚪", status: getStatus("gateways"),  highlighted: highlightedNode === "gateways"  }, type: "flowNode" },
+      { id: "gateways",  position: { x: 160, y: 100 }, data: { label: "Gateways",         subtitle: "registered entrypoints", icon: "🚪", status: getStatus("gateways"),  highlighted: highlightedNode === "gateways"  }, type: "flowNode" },
       { id: "manager",   position: { x: 560, y: 100 }, data: { label: "Paperclip",        subtitle: "orchestrator",         icon: "📞", status: getStatus("manager"),   highlighted: highlightedNode === "manager"   }, type: "flowNode" },
       { id: "output",    position: { x: 720, y: 100 }, data: { label: "Response",         subtitle: "Discord · Telegram",   icon: "📤", status: getStatus("output"),    highlighted: highlightedNode === "output"    }, type: "flowNode" },
       { id: "tunnels",   position: { x: 20,  y: 420 }, data: { label: "CF Tunnels",       subtitle: "your-tunnel.domain",  icon: "📡", status: getStatus("tunnels"),   highlighted: highlightedNode === "tunnels"   }, type: "flowNode" },
@@ -240,7 +241,7 @@ export function ReactFlowCanvas({
 
     // Compute aggregate health colors for each group from their children's statuses
     const agentStatuses = [
-      ...keyRemote.map(a => (a.status === "active" ? "active" : "dormant")),
+      ...visibleAgents.map(a => (a.status === "active" ? "active" : "dormant")),
       localActiveCount > 0 ? "active" : "idle",
     ];
     const devToolStatuses = ["cookbooks", "tool-gateway", "apo", "gitnexus", "llmwiki"].map(id => getStatus(id));
@@ -286,15 +287,15 @@ export function ReactFlowCanvas({
     // Agent child nodes — parent-relative positions.
     // Absolute: { x: agentStartX + i * agentSpacing, y: agentY }
     // Relative:  absolute - parent = { x: 15 + i * agentSpacing, y: 32 }
-    const agentNodes: Node[] = keyRemote.map((agent, i) => ({
+    const agentNodes: Node[] = visibleAgents.map((agent, i) => ({
       id: `agent-${agent.id}`,
       parentId: "group-agents",
       extent: "parent" as const,
       position: { x: 15 + i * agentSpacing, y: 32 },
       data: {
         label: agent.name,
-        subtitle: agent.location,
-        icon: AGENT_ICONS[agent.id] || "🤖",
+        subtitle: agent.protocol ? `${agent.protocol} · ${agent.location}` : agent.location,
+        icon: agent.name.slice(0, 2).toUpperCase(),
         status: agent.status === "active" ? "active" : "dormant",
         highlighted: highlightedNode === `agent-${agent.id}`,
       },
@@ -302,13 +303,13 @@ export function ReactFlowCanvas({
     }));
 
     // Local-agents node — parent-relative position.
-    // Absolute: { x: agentStartX + keyRemote.length * agentSpacing, y: agentY }
-    // Relative:  { x: 15 + keyRemote.length * agentSpacing, y: 32 }
+    // Absolute: { x: agentStartX + visibleAgents.length * agentSpacing, y: agentY }
+    // Relative:  { x: 15 + visibleAgents.length * agentSpacing, y: 32 }
     const localNode: Node = {
       id: "local-agents",
       parentId: "group-agents",
       extent: "parent" as const,
-      position: { x: 15 + keyRemote.length * agentSpacing, y: 32 },
+      position: { x: 15 + visibleAgents.length * agentSpacing, y: 32 },
       data: {
         label: `${localActiveCount} Active`,
         subtitle: `${localTotalCount} local chefs`,
@@ -340,7 +341,7 @@ export function ReactFlowCanvas({
     const baseNodes = [...groupBoxNodes, ...staticNodes, ...agentNodes, localNode, ...devToolNodes];
     return applyCollapseToNodes(baseNodes, collapsedGroups);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keyRemote, nodeActivity, highlightedNode, localActiveCount, localTotalCount, collapsedGroups, toggleGroup, skillCount, coverageGapsCount, topFailureAgent, toolCapabilityCount, toolWorkspaceCount]);
+  }, [visibleAgents, nodeActivity, highlightedNode, localActiveCount, localTotalCount, collapsedGroups, toggleGroup, skillCount, coverageGapsCount, topFailureAgent, toolCapabilityCount, toolWorkspaceCount]);
 
   // Derive hidden node IDs from the processed nodes array (after collapse applied)
   const hiddenNodeIds = useMemo(
@@ -349,8 +350,8 @@ export function ReactFlowCanvas({
   );
 
   const allAgentIds = useMemo(
-    () => [...keyRemote.map(a => `agent-${a.id}`), "local-agents"],
-    [keyRemote]
+    () => [...visibleAgents.map(a => `agent-${a.id}`), "local-agents"],
+    [visibleAgents]
   );
 
   const edges: Edge[] = useMemo(() => {

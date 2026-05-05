@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useHealth, useAgents, useKnowledge, useMemory, useActivity, useRemoteAgents, useSkills, usePaperclipFleet, useToolAttention } from "@/lib/api-client";
+import { useHealth, useAgents, useKnowledge, useMemory, useActivity, useSkills, usePaperclipFleet, useToolAttention } from "@/lib/api-client";
 import { ReactFlowCanvas } from "@/components/flow/react-flow-canvas";
 import { ActivityFeed } from "@/components/flow/activity-feed";
 import { NodeDetailPanel } from "@/components/flow/node-detail-panel";
@@ -20,7 +20,6 @@ export default function FlowPage() {
   const { data: knowledgeData } = useKnowledge();
   const { data: memoryData } = useMemory("claude");
   const { data: activityData } = useActivity();
-  const { data: remoteData } = useRemoteAgents();
   const { data: skillsData } = useSkills();
   const { data: toolAttentionData } = useToolAttention();
   const { data: paperclipFleet, isLoading: paperclipLoading } = usePaperclipFleet();
@@ -34,8 +33,14 @@ export default function FlowPage() {
   const knowledgeCount = knowledgeData?.totalDocs || 0;
   const nodeActivity = activityData?.nodeActivity || {};
   const events = activityData?.events || [];
-  const remoteAgents = (remoteData?.agents || []).map((a) => ({
-    id: a.id, name: a.name, status: a.status, latencyMs: a.latencyMs, location: a.location,
+  const registeredAgents = (agentsData?.agents || []).map((a) => ({
+    id: a.id,
+    name: a.name,
+    status: a.status,
+    latencyMs: a.latencyMs ?? null,
+    location: a.location ?? "local",
+    protocol: a.protocol,
+    platform: a.platform,
   }));
   const localActiveCount = agentsData?.agents.filter((a: { status: string }) => a.status === "active").length || 0;
   const localTotalCount = agentsData?.agents.length || 0;
@@ -70,7 +75,7 @@ export default function FlowPage() {
           topFailureAgent={topFailureAgent}
           nodeActivity={nodeActivity}
           highlightedNode={hoveredNode || selectedNode?.id}
-          remoteAgents={remoteAgents}
+          registeredAgents={registeredAgents}
           localActiveCount={localActiveCount}
           localTotalCount={localTotalCount}
           onNodeClick={handleNodeClick}

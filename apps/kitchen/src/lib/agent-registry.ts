@@ -417,7 +417,13 @@ export function recordToolOutcome(agentId: string, payload: ToolOutcomeInput): v
 }
 
 function toRemoteAgentConfig(agent: RegisteredAgent): RemoteAgentConfig | null {
-  if (agent.location === "local" || !agent.host || !agent.port) return null;
+  if (
+    (agent.location !== "tailscale" && agent.location !== "cloudflare") ||
+    !agent.host ||
+    !agent.port
+  ) {
+    return null;
+  }
 
   return {
     id: agent.id,

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "Kitchen Floor", icon: "\u{1F468}\u200D\u{1F373}" },
+  { href: "/agents", label: "Agent Registry", icon: "◎" },
   { href: "/ledger", label: "The Ledger", icon: "\u{1F9FE}" },
   { href: "/notebooks", label: "Notebook Wall", icon: "\u{1F9E0}" },
   { href: "/library", label: "The Library", icon: "\u{1F4DA}" },

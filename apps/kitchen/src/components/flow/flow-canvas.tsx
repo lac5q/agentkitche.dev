@@ -26,22 +26,11 @@ interface FlowCanvasProps {
   skillCount: number;
   nodeActivity: Record<string, number>;
   highlightedNode?: string | null;
-  // New: real named agents
-  remoteAgents?: RemoteAgentSummary[];
+  // New: registered agents from the canonical registry
+  registeredAgents?: RemoteAgentSummary[];
   localActiveCount?: number;
   localTotalCount?: number;
 }
-
-// Key agents in display order
-const KEY_AGENT_IDS = ["alba", "gwen", "sophia", "maria", "lucia"];
-
-const AGENT_ICONS: Record<string, string> = {
-  alba: "🤖",
-  gwen: "🌸",
-  sophia: "💼",
-  maria: "✍️",
-  lucia: "🔧",
-};
 
 function agentSubtitle(location: string): string {
   if (location === "tailscale") return "Tailscale";
@@ -50,25 +39,22 @@ function agentSubtitle(location: string): string {
 }
 
 function buildNodes(
-  remoteAgents: RemoteAgentSummary[] = [],
+  registeredAgents: RemoteAgentSummary[] = [],
   localTotal: number,
   localActive: number
 ): { nodes: (FlowNode & { agentStatus?: string })[]; agentNodeIds: string[] } {
-  // Filter to key remote agents in defined order
-  const keyRemote = KEY_AGENT_IDS
-    .map((id) => remoteAgents.find((a) => a.id === id))
-    .filter((a): a is RemoteAgentSummary => Boolean(a));
+  const visibleAgents = registeredAgents.slice(0, 7);
 
   const agentStartX = 200;
   const agentSpacing = 100;
   const agentY = 185;
 
-  const agentNodes: (FlowNode & { agentStatus?: string })[] = keyRemote.map(
+  const agentNodes: (FlowNode & { agentStatus?: string })[] = visibleAgents.map(
     (agent, i) => ({
       id: `agent-${agent.id}`,
       label: agent.name,
       subtitle: agentSubtitle(agent.location),
-      icon: AGENT_ICONS[agent.id] ?? "🤖",
+      icon: agent.name.slice(0, 2).toUpperCase(),
       x: agentStartX + i * agentSpacing,
       y: agentY,
       status: (agent.status === "active" ? "active" : "idle") as FlowNode["status"],
@@ -80,7 +66,7 @@ function buildNodes(
     })
   );
 
-  const localX = agentStartX + keyRemote.length * agentSpacing;
+  const localX = agentStartX + visibleAgents.length * agentSpacing;
   const localNode: FlowNode & { agentStatus?: string } = {
     id: "local-agents",
     label: `${localActive} Active`,
@@ -110,7 +96,7 @@ function buildNodes(
     {
       id: "gateways",
       label: "Gateways",
-      subtitle: "Alba · Gwen · Sophia",
+      subtitle: "registered entrypoints",
       icon: "🚪",
       x: 170,
       y: 50,
@@ -307,7 +293,7 @@ export function FlowCanvas({
   skillCount,
   nodeActivity,
   highlightedNode,
-  remoteAgents = [],
+  registeredAgents = [],
   localActiveCount,
   localTotalCount,
 }: FlowCanvasProps) {
@@ -315,8 +301,8 @@ export function FlowCanvas({
   const localTotal = localTotalCount ?? agentCount;
 
   const { nodes: rawNodes, agentNodeIds } = useMemo(
-    () => buildNodes(remoteAgents, localTotal, localActive),
-    [remoteAgents, localTotal, localActive]
+    () => buildNodes(registeredAgents, localTotal, localActive),
+    [registeredAgents, localTotal, localActive]
   );
 
   const edges = useMemo(() => buildEdges(agentNodeIds), [agentNodeIds]);

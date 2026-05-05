@@ -18,19 +18,19 @@
 
 ### Universal REST API
 
-- [ ] **REST-01**: Any agent can `POST /api/heartbeat` to report liveness (framework-agnostic)
-- [ ] **REST-02**: Any agent can `POST /api/skills/report` to report skill usage
-- [ ] **REST-03**: Any agent can `POST /api/memory/add` to write to unified memory
-- [ ] **REST-04**: Any agent can `POST /api/tool-attention/record` to log tool outcomes
-- [ ] **REST-05**: Dynamic agent roster — registered agents stored in DB, zero hardcoding in source
-- [ ] **REST-06**: Per-agent API key authentication enforced on all REST endpoints
+- [x] **REST-01**: Any agent can `POST /api/heartbeat` to report liveness (framework-agnostic)
+- [x] **REST-02**: Any agent can `POST /api/skills/report` to report skill usage
+- [x] **REST-03**: Any agent can `POST /api/memory/add` to write to unified memory
+- [x] **REST-04**: Any agent can `POST /api/tool-attention/record` to log tool outcomes
+- [x] **REST-05**: Dynamic agent roster — registered agents stored in DB, zero hardcoding in source
+- [x] **REST-06**: Per-agent API key authentication enforced on all REST endpoints
 
 ### Agent Registry
 
-- [ ] **REG-00**: Single canonical agent registry model (DB schema + service layer) — A2A registration, REST registration, and UI registration are all adapters onto this model
-- [ ] **REG-01**: Agent registry page in Kitchen UI listing all registered agents (A2A and REST shim)
-- [ ] **REG-02**: Each agent entry displays capabilities, status, last heartbeat, and protocol type
-- [ ] **REG-03**: User can register and deregister agents from Kitchen UI
+- [x] **REG-00**: Single canonical agent registry model (DB schema + service layer) — A2A registration, REST registration, and UI registration are all adapters onto this model
+- [x] **REG-01**: Agent registry page in Kitchen UI listing all registered agents (A2A and REST shim)
+- [x] **REG-02**: Each agent entry displays capabilities, status, last heartbeat, and protocol type
+- [x] **REG-03**: User can register and deregister agents from Kitchen UI
 
 ### Orchestration (LangGraph)
 

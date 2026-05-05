@@ -1,13 +1,15 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { POLL_INTERVALS } from "./constants";
 import type {
-  Agent,
   HealthStatus,
   KnowledgeCollection,
   MemoryEntry,
   PaperclipFleetResponse,
+  RegisterAgentInput,
+  RegisterAgentResult,
+  RegisteredAgent,
   SimilarTaskResponse,
   ToolAttentionContextPack,
   ToolAttentionResponse,
@@ -19,12 +21,62 @@ async function fetchJSON<T>(url: string): Promise<T> {
   return res.json();
 }
 
+async function mutateJSON<T>(url: string, init: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  return res.json();
+}
+
 export function useAgents() {
   return useQuery({
     queryKey: ["agents"],
     queryFn: () =>
-      fetchJSON<{ agents: Agent[]; timestamp: string }>("/api/agents"),
+      fetchJSON<{ agents: RegisteredAgent[]; timestamp: string }>("/api/agents"),
     refetchInterval: POLL_INTERVALS.agents,
+  });
+}
+
+export function useRegisteredAgents() {
+  return useAgents();
+}
+
+export function registerAgent(input: RegisterAgentInput) {
+  return mutateJSON<RegisterAgentResult & { ok: boolean; timestamp: string }>(
+    "/api/agents/register",
+    { method: "POST", body: JSON.stringify(input) }
+  );
+}
+
+export function deregisterAgent(agentId: string) {
+  return mutateJSON<{ ok: boolean; agent: RegisteredAgent; timestamp: string }>(
+    `/api/agents/${encodeURIComponent(agentId)}`,
+    { method: "DELETE" }
+  );
+}
+
+export function useRegisterAgentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: registerAgent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+    },
+  });
+}
+
+export function useDeregisterAgentMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deregisterAgent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agents"] });
+    },
   });
 }
 
