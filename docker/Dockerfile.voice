@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app/services/voice-server
+COPY services/voice-server/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY services/voice-server ./
+EXPOSE 7860 7861
+CMD ["sh", "-c", "python health.py & python server.py"]

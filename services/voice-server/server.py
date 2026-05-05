@@ -71,7 +71,7 @@ async def build_pipeline(transport, session_id: str, agent: str = "kitchen") -> 
 async def run_voice_server() -> None:
     transport = WebsocketServerTransport(
         host="0.0.0.0",
-        port=7860,
+        port=int(os.getenv("VOICE_WS_PORT", "7860")),
         params=WebsocketServerParams(audio_out_enabled=True),
     )
 

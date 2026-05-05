@@ -52,17 +52,17 @@
 
 ### Operating Profiles
 
-- [ ] **PROFILE-01**: Kitchen ships with a blessed default operating profile that works out-of-the-box for local development without hardcoding Luis-specific paths, ports, or agent names
-- [ ] **PROFILE-02**: Operators can switch or customize install profiles without forking source code (`local-dev`, `single-host`, `private-network`, `cloud-https`, and `custom`)
-- [ ] **PROFILE-03**: Every topology-specific value is config-driven and documented: public base URLs, service URLs, ports, data paths, agent-card URLs, auth/security mode, memory backends, orchestration endpoint, and allowed remote-agent network policy
-- [ ] **PROFILE-04**: Setup, Docker, first-run onboarding, and docs all use the same configuration model so the product can run on one laptop, one server, or multiple private-network machines with the same codebase
+- [x] **PROFILE-01**: Kitchen ships with a blessed default operating profile that works out-of-the-box for local development without hardcoding Luis-specific paths, ports, or agent names
+- [x] **PROFILE-02**: Operators can switch or customize install profiles without forking source code (`local-dev`, `single-host`, `private-network`, `cloud-https`, and `custom`)
+- [x] **PROFILE-03**: Every topology-specific value is config-driven and documented: public base URLs, service URLs, ports, data paths, agent-card URLs, auth/security mode, memory backends, orchestration endpoint, and allowed remote-agent network policy
+- [x] **PROFILE-04**: Setup, Docker, first-run onboarding, and docs all use the same configuration model so the product can run on one laptop, one server, or multiple private-network machines with the same codebase
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: `.env.example` covers every port, path, API key, and backend URL — zero hardcoded values in application source
-- [ ] **INFRA-02**: `docker-compose.yml` spins Kitchen + Knowledge MCP + mem0 + Neo4j + Pipecat voice service + LangGraph orchestration service in one command (Qdrant stays cloud, configured via env)
-- [ ] **INFRA-03**: Pipecat voice service fully env-configured (Gemini API key, service port, Kitchen base URL all via `.env`)
-- [ ] **INFRA-04**: `setup.sh` validates Qdrant Cloud connectivity and API key at startup — fails fast with a clear actionable error if not configured
+- [x] **INFRA-01**: `.env.example` covers every port, path, API key, and backend URL — zero hardcoded values in application source
+- [x] **INFRA-02**: `docker-compose.yml` spins Kitchen + Knowledge MCP + mem0 + Neo4j + Pipecat voice service + LangGraph orchestration service in one command (Qdrant stays cloud, configured via env)
+- [x] **INFRA-03**: Pipecat voice service fully env-configured (Gemini API key, service port, Kitchen base URL all via `.env`)
+- [x] **INFRA-04**: `setup.sh` validates Qdrant Cloud connectivity and API key at startup — fails fast with a clear actionable error if not configured
 
 ### Developer Setup
 
@@ -118,10 +118,8 @@
 | REG-00, REG-01, REG-02, REG-03 | Phase 34 | Complete |
 | A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08 | Phase 35 | Complete |
 | ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07 | Phase 36 | Complete |
-| PROFILE-03 | Phase 36 | Partial |
 | MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 | Phase 37 | Complete |
-| PROFILE-03 | Phase 37 | Partial |
-| INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Pending |
+| INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Complete |
 | DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Pending |
 | DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Pending |
 | OSS-01, OSS-02, OSS-03, OSS-04, OSS-05 | Phase 41 | Pending |

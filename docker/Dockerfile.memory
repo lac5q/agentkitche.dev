@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+WORKDIR /app/services/memory
+COPY services/memory/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY services/memory ./
+EXPOSE 3201
+CMD ["uvicorn", "mem0-server:app", "--host", "0.0.0.0", "--port", "3201"]

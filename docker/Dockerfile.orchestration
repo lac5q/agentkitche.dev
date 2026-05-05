@@ -1,0 +1,8 @@
+FROM python:3.11-slim
+WORKDIR /app
+COPY services/orchestration/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY services/orchestration ./services/orchestration
+ENV PYTHONPATH=/app
+EXPOSE 3210
+CMD ["uvicorn", "services.orchestration.app:app", "--host", "0.0.0.0", "--port", "3210"]
