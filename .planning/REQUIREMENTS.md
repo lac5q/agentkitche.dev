@@ -66,8 +66,8 @@
 
 ### Developer Setup
 
-- [ ] **DEV-01**: `setup.sh` detects missing prereqs (Node, Python, Docker), scaffolds `.env` from `.env.example`, and starts all services
-- [ ] **DEV-02**: First-run wizard — guided setup for required API keys, first agent registration, and end-to-end health check
+- [x] **DEV-01**: `setup.sh` detects missing prereqs (Node, Python, Docker), scaffolds `.env` from `.env.example`, and starts all services
+- [x] **DEV-02**: First-run wizard — guided setup for required API keys, first agent registration, and end-to-end health check
 
 ### Documentation
 
@@ -120,7 +120,7 @@
 | ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07 | Phase 36 | Complete |
 | MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 | Phase 37 | Complete |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Complete |
-| DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Pending |
+| DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Complete |
 | DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Pending |
 | OSS-01, OSS-02, OSS-03, OSS-04, OSS-05 | Phase 41 | Pending |
 

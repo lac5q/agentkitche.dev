@@ -4,6 +4,12 @@ set -euo pipefail
 PROFILE="${KITCHEN_A2A_PROFILE:-local-dev}"
 START_SERVICES="${START_SERVICES:-1}"
 ENV_FILE="${ENV_FILE:-.env}"
+ENV_CREATED=0
+
+if [[ "${1:-}" == "--wizard" ]]; then
+  node scripts/first-run-wizard.mjs
+  exit 0
+fi
 
 need() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -15,6 +21,7 @@ need() {
 copy_env_if_missing() {
   if [[ ! -f "$ENV_FILE" ]]; then
     cp .env.example "$ENV_FILE"
+    ENV_CREATED=1
     echo "Created $ENV_FILE from .env.example. Update API keys before starting cloud-backed services."
   fi
 }
@@ -84,6 +91,9 @@ main() {
   docker compose version >/dev/null
 
   copy_env_if_missing
+  if [[ "$ENV_CREATED" == "1" || "${RUN_FIRST_RUN_WIZARD:-0}" == "1" ]]; then
+    echo "Tip: run ./setup.sh --wizard for guided first-run configuration."
+  fi
   load_env
   PROFILE="${KITCHEN_A2A_PROFILE:-$PROFILE}"
   validate_profile

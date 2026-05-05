@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: A2A Hub — Open Source
 status: in_progress
-stopped_at: Completed Phase 38 operating profiles and Docker full-stack
-last_updated: "2026-05-05T10:58:00.000Z"
+stopped_at: Completed Phase 39 developer setup experience
+last_updated: "2026-05-05T11:02:00.000Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 8
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
-  percent: 69
+  completed_phases: 6
+  total_plans: 12
+  completed_plans: 12
+  percent: 81
 ---
 
 # State: Agent Kitchen
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
 **Core value:** Any agent framework plugs into Kitchen — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
-**Current focus:** Phase 39 — Developer Setup Experience
+**Current focus:** Phase 40 — Documentation + Architecture Diagrams
 
 ## Current Position
 
-Phase: 38 (operating-profiles-docker-full-stack) — COMPLETE
+Phase: 39 (developer-setup-experience) — COMPLETE
 Plan: 1 of 1
-Status: Ready for Phase 39 planning/execution
+Status: Ready for Phase 40 planning/execution
 Last activity: 2026-05-05
 
 ## Roadmap Summary (v2.0)
@@ -39,11 +39,11 @@ Last activity: 2026-05-05
 | 36 | LangGraph orchestration (Python) + HIL | ORCH-01..07 (7) — COMPLETE |
 | 37 | Unified memory — mem0 graph + Neo4j | MEM-01..05 (5) — COMPLETE |
 | 38 | Env config audit + Docker full-stack | INFRA-01..04 + PROFILE-01..04 — COMPLETE |
-| 39 | Developer setup experience | DEV-01..02 (2) |
+| 39 | Developer setup experience | DEV-01..02 + PROFILE-01,02,04 — COMPLETE |
 | 40 | Documentation + architecture diagrams | DOCS-01..08 (8) |
 | 41 | OSS polish (license, CI, security, templates) | OSS-01..05 (5) |
 
-**Completed so far:** Phase 34, Phase 35, Phase 36, Phase 37, and Phase 38.
+**Completed so far:** Phase 34, Phase 35, Phase 36, Phase 37, Phase 38, and Phase 39.
 
 ## Performance Metrics
 
@@ -52,7 +52,7 @@ Last activity: 2026-05-05
 - Total v2.0 plans completed: 8
 - Phase 35 execution completed: 2026-05-05
 - Phase 36 completed: 2026-05-05
-- Latest Phase 38 gate: profile validation, compose config validation, setup syntax/smoke, Kitchen lint, and build passed
+- Latest Phase 39 gate: first-run wizard check, setup syntax/smoke, profile validation, Kitchen lint, and build passed
 
 ## Accumulated Context
 
@@ -81,7 +81,7 @@ Last activity: 2026-05-05
 
 ### Pending Todos
 
-- Phase 39: add first-run wizard ergonomics for API keys, first agent registration, and end-to-end health check.
+- Phase 40: write README, architecture diagrams, integration guides, REST API reference, and memory architecture docs.
 
 ### Blockers/Concerns
 
@@ -95,4 +95,4 @@ Last activity: 2026-05-05
 Last session: 2026-05-05T09:27:41Z
 Stopped at: Completed 35-04-PLAN.md
 Resume file: None
-Next action: Phase 39 developer setup experience, with code-review gate after the phase
+Next action: Phase 40 documentation + architecture diagrams, with code-review gate after the phase
