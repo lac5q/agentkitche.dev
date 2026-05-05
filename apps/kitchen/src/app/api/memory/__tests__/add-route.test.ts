@@ -90,4 +90,30 @@ describe("POST /api/memory/add", () => {
     const rows = getDb().prepare("SELECT agent_id, memory_type FROM agent_memory_writes").all();
     expect(rows).toEqual([{ agent_id: "memory-agent", memory_type: "episodic" }]);
   });
+
+  it("returns a safe 502 when mem0 is unreachable", async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("connection refused"));
+    const { POST, getDb, registerAgent } = await loadRoute();
+    const { apiKey } = registerAgent({
+      id: "memory-agent",
+      name: "Memory Agent",
+      role: "Writes memory",
+      platform: "codex",
+      protocol: "rest",
+      issueApiKey: true,
+    });
+
+    const res = await POST(
+      new Request("http://localhost/api/memory/add", {
+        method: "POST",
+        headers: { authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ content: "remember this", type: "episodic" }),
+      })
+    );
+
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ ok: false, error: "Memory backend unavailable" });
+    const rows = getDb().prepare("SELECT agent_id FROM agent_memory_writes").all();
+    expect(rows).toEqual([]);
+  });
 });

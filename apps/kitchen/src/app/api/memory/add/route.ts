@@ -18,13 +18,20 @@ export async function POST(request: Request) {
     return Response.json({ ok: false, error: "Invalid memory payload" }, { status: 400 });
   }
 
-  const mem0Response = await fetch(`${MEM0_URL}/memory/add`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(5000),
-  });
-  const result = (await mem0Response.json().catch(() => ({}))) as Record<string, unknown>;
+  let mem0Response: Response;
+  let result: Record<string, unknown>;
+  try {
+    mem0Response = await fetch(`${MEM0_URL}/memory/add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(5000),
+    });
+    result = (await mem0Response.json().catch(() => ({}))) as Record<string, unknown>;
+  } catch {
+    return Response.json({ ok: false, error: "Memory backend unavailable" }, { status: 502 });
+  }
+
   if (!mem0Response.ok) {
     return Response.json({ ok: false, error: "Memory backend unavailable" }, { status: 502 });
   }

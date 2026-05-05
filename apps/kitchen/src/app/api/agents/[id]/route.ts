@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { deregisterAgent, getRegisteredAgent } from "@/lib/agent-registry";
+import { authorizeRegistryWrite, registryWriteUnauthorizedResponse } from "@/lib/operator-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +17,13 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!authorizeRegistryWrite(request)) {
+    return registryWriteUnauthorizedResponse();
+  }
+
   const { id } = await params;
   const agent = deregisterAgent(id);
   if (!agent) {

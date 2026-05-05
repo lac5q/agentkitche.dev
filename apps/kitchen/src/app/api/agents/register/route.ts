@@ -1,4 +1,5 @@
 import { registerAgent } from "@/lib/agent-registry";
+import { authorizeRegistryWrite, registryWriteUnauthorizedResponse } from "@/lib/operator-auth";
 import type { AgentPlatform, AgentProtocol, RegisterAgentInput } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,10 @@ function parseInput(body: unknown): RegisterAgentInput | null {
 }
 
 export async function POST(request: Request) {
+  if (!authorizeRegistryWrite(request)) {
+    return registryWriteUnauthorizedResponse();
+  }
+
   const body = (await request.json().catch(() => null)) as unknown;
   const input = parseInput(body);
   if (!input) {

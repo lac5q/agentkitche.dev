@@ -30,6 +30,7 @@ describe("agent registry routes", () => {
     closeDb();
     fs.rmSync(TEST_DB_DIR, { recursive: true, force: true });
     delete process.env.SQLITE_DB_PATH;
+    delete process.env.KITCHEN_OPERATOR_API_KEY;
   });
 
   it("registers, lists, and deregisters canonical agents", async () => {
@@ -107,5 +108,55 @@ describe("agent registry routes", () => {
       status: "active",
       currentTask: "curl check-in",
     });
+  });
+
+  it("requires operator authorization for non-local registry writes", async () => {
+    process.env.KITCHEN_OPERATOR_API_KEY = "operator-secret";
+    const { agentsRoute, registerRoute, agentRoute } = await loadRoutes();
+
+    const registrationBody = JSON.stringify({
+      id: "remote-register-agent",
+      name: "Remote Register Agent",
+      role: "Attempts remote registration",
+      platform: "codex",
+      protocol: "rest",
+      issueApiKey: true,
+    });
+
+    const rejectedRegister = await registerRoute.POST(
+      new Request("https://kitchen.example.com/api/agents/register", {
+        method: "POST",
+        body: registrationBody,
+      })
+    );
+    expect(rejectedRegister.status).toBe(403);
+
+    const acceptedRegister = await registerRoute.POST(
+      new Request("https://kitchen.example.com/api/agents/register", {
+        method: "POST",
+        headers: { "x-kitchen-operator-key": "operator-secret" },
+        body: registrationBody,
+      })
+    );
+    expect(acceptedRegister.status).toBe(200);
+
+    const rejectedDelete = await agentRoute.DELETE(
+      new Request("https://kitchen.example.com/api/agents/remote-register-agent", {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ id: "remote-register-agent" }) }
+    );
+    expect(rejectedDelete.status).toBe(403);
+    expect((await (await agentsRoute.GET()).json()).agents).toHaveLength(1);
+
+    const acceptedDelete = await agentRoute.DELETE(
+      new Request("https://kitchen.example.com/api/agents/remote-register-agent", {
+        method: "DELETE",
+        headers: { "x-kitchen-operator-key": "operator-secret" },
+      }),
+      { params: Promise.resolve({ id: "remote-register-agent" }) }
+    );
+    expect(acceptedDelete.status).toBe(200);
+    expect((await (await agentsRoute.GET()).json()).agents).toHaveLength(0);
   });
 });
