@@ -16,6 +16,7 @@ This phase owns:
 - A2A delegation to registered agents by declared capabilities or explicit target.
 - Secure machine-to-machine A2A requests using the existing Phase 34 bearer/API-key foundation.
 - A Google ADK proof fixture/sample that registers through A2A and appears in Flow.
+- Config-driven A2A public URLs, endpoint advertisement, remote-card registration policy, and ADK fixture defaults so Phase 35 works beyond localhost.
 
 This phase does not own:
 - Full LangGraph routing policy, retries, HIL, or orchestration intelligence. Phase 36 owns that brain on top of the A2A transport layer.
@@ -68,6 +69,13 @@ This phase does not own:
 - **D-26:** Google ADK support needs executable proof, not docs-only compatibility.
 - **D-27:** Include a small local or LAN/Tailscale-reachable ADK-style A2A fixture/sample that exposes an agent card, registers with Kitchen, accepts a basic A2A task, and appears in Flow with declared capabilities.
 - **D-28:** The proof should validate the ADK path without requiring all developers to run a production ADK service during normal Kitchen startup.
+
+### Operating Profiles And Config
+- **D-29:** Kitchen should ship with a blessed default operating profile, but Phase 35 must not bake localhost-only assumptions into A2A cards, endpoints, registration, delegation, or ADK fixtures.
+- **D-30:** A2A public base URL, advertised agent-card URLs, A2A endpoint URLs, allowed remote-card network policy, and ADK fixture host/port must be config-derived or have clear config seams.
+- **D-31:** The recommended startup/team profile is private network/Tailscale/LAN with real bearer/API-key auth; HTTPS-reachable deployment remains supported through configuration.
+- **D-32:** Later install/setup phases own the polished profile selector, Docker templates, and first-run wizard, but Phase 35 must leave them usable seams instead of hardcoded values.
+- **D-33:** Supported profile vocabulary for planning is `local-dev`, `single-host`, `private-network`, `cloud-https`, and `custom`.
 
 ### the agent's Discretion
 - The planner may decide exact route file layout, table names, type module boundaries, and test breakdown after researching the current A2A spec and existing Kitchen route/database patterns.
@@ -139,6 +147,8 @@ This phase does not own:
 ## Specific Ideas
 
 - Prefer private-network/Tailscale/LAN examples for startup internal use, while accepting properly secured HTTPS URLs for agents hosted elsewhere.
+- Treat OpenClaw/Hermes-style operability as the product posture: one recommended install path, plus documented overrides for operators with different machines, ports, service URLs, and security/network constraints.
+- Phase 35 should define or consume config names for Kitchen's public base URL, A2A well-known path, A2A endpoint base, ADK fixture URL, remote-card fetch policy, and outbound delegation timeout/auth behavior.
 - Treat the roadmap's `tasks/send` label as a stale compatibility concern; research must verify current A2A 1.0 method mapping before planning.
 - Agent cards should declare the same security scheme the implementation enforces; do not publish `authentication: none` for protected task endpoints.
 - A2A registration should store original agent-card metadata in registry metadata for debugging and future docs.

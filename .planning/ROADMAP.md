@@ -19,9 +19,9 @@
 - [ ] **Phase 35: A2A Protocol Implementation + Google ADK** — Agent card, A2A v1 task API, ADK agents register and surface in Flow
 - [ ] **Phase 36: LangGraph Orchestration Service** — Python StateGraph, SqliteSaver checkpointing, HIL approve/reject, capability routing
 - [ ] **Phase 37: Unified Memory — mem0 Graph + Neo4j** — Three-tier `/api/memory/*` covering vector (Qdrant Cloud) + graph (Neo4j) + episodic (SQLite)
-- [ ] **Phase 38: Env Config Audit + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
-- [ ] **Phase 39: Developer Setup Experience** — `setup.sh` prereq detection + scaffolding, first-run wizard for keys + first agent
-- [ ] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, per-framework integration guides, REST + memory references
+- [ ] **Phase 38: Operating Profiles + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, default/custom install profiles, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
+- [ ] **Phase 39: Developer Setup Experience** — `setup.sh` prereq detection + profile-aware scaffolding, first-run wizard for keys + first agent
+- [ ] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, install profile guide, per-framework integration guides, REST + memory references
 - [ ] **Phase 41: OSS Polish** — MIT license, CONTRIBUTING, SECURITY, issue templates, public CI with Docker compose smoke
 
 <details>
@@ -133,11 +133,12 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 **Depends on**: Phase 34 (canonical registry must exist before A2A registration adapter)
 **Requirements**: A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08
 **Success Criteria** (what must be TRUE):
-  1. `GET /.well-known/agent.json` returns a valid A2A agent card with name, description, capabilities, endpoint URLs, and security scheme
+  1. `GET /.well-known/agent.json` returns a valid A2A agent card with name, description, capabilities, config-derived endpoint URLs, and security scheme
   2. A Google ADK agent registers via A2A and appears as a node in the Flow diagram with declared capabilities
   3. Kitchen accepts `tasks/send`, `tasks/get`, and `tasks/cancel` calls (verified against the A2A v1 spec) and streams progress via SSE
   4. Kitchen can list registered A2A agents via discovery and successfully delegate a task to one of them
   5. Unauthenticated and unauthorized A2A task requests are rejected per the security scheme declared in the agent card
+  6. Kitchen's A2A card, remote-agent registration, ADK fixture, and delegation client use config-derived base URLs/ports/network policy instead of hardcoded localhost assumptions
 **Plans**: TBD
 **UI hint**: yes
 
@@ -167,38 +168,41 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 38: Env Config Audit + Docker Full-Stack
-**Goal**: Every port, path, key, and backend URL is env-driven; `docker-compose up` brings the full OSS stack (Kitchen + Knowledge MCP + mem0 + Neo4j + Pipecat voice + LangGraph orchestration) to a healthy state with Qdrant configured via env to its cloud endpoint.
+### Phase 38: Operating Profiles + Docker Full-Stack
+**Goal**: Every port, path, key, backend URL, public base URL, and service topology choice is env/profile-driven; the default profile works out-of-the-box, custom profiles are documented, and `docker-compose up` brings the full OSS stack (Kitchen + Knowledge MCP + mem0 + Neo4j + Pipecat voice + LangGraph orchestration) to a healthy state with Qdrant configured via env to its cloud endpoint.
 **Depends on**: Phase 37 (Neo4j must exist as a service to compose)
-**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04
 **Success Criteria** (what must be TRUE):
   1. `.env.example` enumerates every port, path, API key, and backend URL used in source — a grep audit confirms zero hardcoded values
   2. `docker-compose up` on a clean machine brings all six services healthy (health endpoints reachable) with Qdrant reachable as a cloud endpoint, never a local container
   3. Pipecat voice service starts in compose using only `.env` values (Gemini API key, port, Kitchen base URL)
   4. `setup.sh` validates Qdrant Cloud connectivity (URL + API key) at startup and fails with a clear actionable error when misconfigured
+  5. Operators can select or customize `local-dev`, `single-host`, `private-network`, `cloud-https`, or `custom` install profiles without changing application source
 
 **Plans**: TBD
 
 ### Phase 39: Developer Setup Experience
 **Goal**: A new contributor can clone the repo on a fresh machine and reach a working Kitchen with one registered agent through `setup.sh` plus a guided first-run wizard.
 **Depends on**: Phase 38 (compose + env baseline must be in place)
-**Requirements**: DEV-01, DEV-02
+**Requirements**: DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04
 **Success Criteria** (what must be TRUE):
   1. `./setup.sh` on a fresh machine detects missing prereqs (Node, Python, Docker), scaffolds `.env` from `.env.example`, and starts all services without manual intervention
   2. The first-run wizard guides the user through entering required API keys, registering their first agent, and running an end-to-end health check that passes
+  3. Setup presents the recommended default profile first, while allowing an operator to choose or customize topology-specific values for multi-machine use
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 40: Documentation + Architecture Diagrams
 **Goal**: A new OSS user can follow the README quickstart and have an agent connected to Kitchen in under ten minutes; integration paths for every supported framework and the memory architecture are fully documented.
 **Depends on**: Phase 39 (setup experience must be stable to be documented)
-**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08
+**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04
 **Success Criteria** (what must be TRUE):
   1. A new user following the README quickstart on a fresh machine has an agent connected to Kitchen in under 10 minutes
   2. The architecture diagram covers the A2A hub, three memory tiers, LangGraph orchestration layer, and supported agent frameworks
   3. Per-framework integration guides exist for Claude Code (A2A), Google ADK (A2A), LangGraph (A2A + L↔L delegation), and CrewAI/AutoGen (REST shim)
   4. REST API reference documents every endpoint with auth and request/response examples
   5. Memory architecture guide explains the three tiers, routing rules, when to use each, and the Neo4j schema
+  6. Documentation explains supported operating profiles, how to override defaults, and when to choose private-network versus HTTPS deployment
 **Plans**: TBD
 
 ### Phase 41: OSS Polish

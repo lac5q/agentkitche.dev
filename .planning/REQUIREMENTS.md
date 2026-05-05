@@ -50,6 +50,13 @@
 - [ ] **MEM-04**: `GET /api/memory/graph` — entity and relationship queries against Neo4j (graph tier)
 - [ ] **MEM-05**: Memory tier health panel in Kitchen UI showing status, document/node counts, and last write time for each tier (vector, graph, episodic)
 
+### Operating Profiles
+
+- [ ] **PROFILE-01**: Kitchen ships with a blessed default operating profile that works out-of-the-box for local development without hardcoding Luis-specific paths, ports, or agent names
+- [ ] **PROFILE-02**: Operators can switch or customize install profiles without forking source code (`local-dev`, `single-host`, `private-network`, `cloud-https`, and `custom`)
+- [ ] **PROFILE-03**: Every topology-specific value is config-driven and documented: public base URLs, service URLs, ports, data paths, agent-card URLs, auth/security mode, memory backends, orchestration endpoint, and allowed remote-agent network policy
+- [ ] **PROFILE-04**: Setup, Docker, first-run onboarding, and docs all use the same configuration model so the product can run on one laptop, one server, or multiple private-network machines with the same codebase
+
 ### Infrastructure
 
 - [ ] **INFRA-01**: `.env.example` covers every port, path, API key, and backend URL — zero hardcoded values in application source
@@ -110,18 +117,18 @@
 | REST-01, REST-02, REST-03, REST-04, REST-05, REST-06 | Phase 34 | Pending |
 | REG-00, REG-01, REG-02, REG-03 | Phase 34 | Pending |
 | A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08 | Phase 35 | Pending |
-| ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07 | Phase 36 | Pending |
-| MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 | Phase 37 | Pending |
-| INFRA-01, INFRA-02, INFRA-03, INFRA-04 | Phase 38 | Pending |
-| DEV-01, DEV-02 | Phase 39 | Pending |
-| DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08 | Phase 40 | Pending |
+| ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07, PROFILE-03 | Phase 36 | Pending |
+| MEM-01, MEM-02, MEM-03, MEM-04, MEM-05, PROFILE-03 | Phase 37 | Pending |
+| INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Pending |
+| DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Pending |
+| DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Pending |
 | OSS-01, OSS-02, OSS-03, OSS-04, OSS-05 | Phase 41 | Pending |
 
 **Coverage:**
-- v2.0 requirements: 42 total
-- Mapped to phases: 42
+- v2.0 requirements: 53 total
+- Unique requirements mapped to phases: 53
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-04*
-*Last updated: 2026-05-04 — initial definition, Codex-reviewed*
+*Last updated: 2026-05-05 — added operator-customizable install profiles*

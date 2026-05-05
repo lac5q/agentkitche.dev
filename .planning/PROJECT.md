@@ -1,6 +1,6 @@
 # Project: Agent Kitchen
 
-*Last updated: 2026-05-04 — v2.0 A2A Hub — Open Source started*
+*Last updated: 2026-05-05 — v2.0 operating profiles captured*
 
 ---
 
@@ -13,7 +13,7 @@
 - Google ADK support — ADK agents register via A2A, surface in Flow
 - Universal REST API — Framework-agnostic heartbeat, skills, memory, tool-attention endpoints
 - Unified Memory — mem0 graph layer + Neo4j; unified `/api/memory/*` covering vector (Qdrant Cloud) + graph (Neo4j) + episodic (SQLite)
-- Env-driven config — Zero hardcoding, `.env.example` covers all ports/paths/keys
+- Operating profiles + env-driven config — Sane default install, plus documented overrides for ports, paths, URLs, services, auth, and multi-machine topology
 - Docker full-stack — `docker-compose up` for OSS users (Kitchen + Knowledge MCP + mem0 + Neo4j; Qdrant stays cloud)
 - Documentation — README rewrite, architecture diagram, per-framework guides, API reference, memory architecture guide
 - OSS polish — MIT license, CONTRIBUTING.md, security policy, issue templates, public CI
@@ -41,6 +41,8 @@ v1.5 complete — 7 phases (19-25), 15 plans, 55/55 requirements satisfied. Shar
 ## What This Is
 
 An open-source A2A protocol hub and agent operations dashboard. Kitchen speaks Google's Agent-to-Agent (A2A) protocol natively — any A2A-compatible agent (Google ADK, Claude Code, LangChain, CrewAI, AutoGen) plugs in automatically; non-A2A agents get a thin REST shim. It ships with a unified three-tier memory architecture (vector via Qdrant Cloud, graph via Neo4j, episodic via SQLite) and a Next.js dashboard that makes every agent, knowledge system, and skill visible, connected, and self-improving.
+
+Kitchen should operate like a product with a recommended install path, not a personal repo full of hidden assumptions. The default profile should be excellent for local development, while `single-host`, `private-network`, `cloud-https`, and `custom` profiles let operators adapt ports, paths, service URLs, public base URLs, auth mode, and machine layout without changing source.
 
 ## Core Value
 
@@ -104,7 +106,8 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - [ ] Dynamic agent roster (remove all hardcoding)
 - [ ] Unified memory: mem0 graph layer activated with Neo4j backend
 - [ ] Unified memory: `/api/memory/*` API covering vector + graph + episodic tiers
-- [ ] Env-driven config: `.env.example` covering all ports, paths, keys, backends
+- [ ] Operating profiles: default local install plus customizable `single-host`, `private-network`, `cloud-https`, and `custom` topologies
+- [ ] Env-driven config: `.env.example` covering all ports, paths, keys, URLs, backends, and profile-specific values
 - [ ] Docker full-stack: Kitchen + Knowledge MCP + mem0 + Neo4j (Qdrant stays cloud)
 - [ ] Developer setup: `setup.sh`, prereq detection, first-run wizard
 - [ ] Documentation: README rewrite, architecture diagram, per-framework integration guides
@@ -169,6 +172,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 | A2A as the inter-agent protocol standard | — Pending | v2.0 |
 | mem0 graph layer + Neo4j for entity/graph memory | — Pending | v2.0 |
 | Qdrant stays cloud — not in Docker compose | ✓ Env-configured via QDRANT_URL/KEY | v2.0 |
+| Blessed default install plus operator-customizable profiles | — Pending | v2.0 |
 | Docker compose for OSS users only — Luis keeps native workflow | — Pending | v2.0 |
 
 ---
