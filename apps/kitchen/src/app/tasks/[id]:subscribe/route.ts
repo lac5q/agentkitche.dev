@@ -4,6 +4,11 @@ import { subscribeA2aTask } from "@/lib/a2a/task-service";
 
 export const dynamic = "force-dynamic";
 
+function taskIdFromUrl(url: string): string {
+  const segment = new URL(url).pathname.split("/").at(-1) ?? "";
+  return decodeURIComponent(segment.replace(/:subscribe$/, ""));
+}
+
 function sse(payloads: unknown[]): Response {
   const body = payloads.map((payload) => `event: task.update\ndata: ${JSON.stringify(payload)}\n\n`).join("");
   return new Response(body, {
@@ -15,9 +20,9 @@ function sse(payloads: unknown[]): Response {
   });
 }
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, _context: { params: Promise<{}> }) {
   const agent = authenticateAgentHeaders(request.headers);
-  const { id } = await params;
+  const id = taskIdFromUrl(request.url);
   try {
     const result = await subscribeA2aTask(agent, id);
     return sse([result.task, ...result.events]);

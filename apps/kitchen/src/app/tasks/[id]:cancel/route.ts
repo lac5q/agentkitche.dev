@@ -4,9 +4,14 @@ import { cancelA2aTask } from "@/lib/a2a/task-service";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+function taskIdFromUrl(url: string): string {
+  const segment = new URL(url).pathname.split("/").at(-1) ?? "";
+  return decodeURIComponent(segment.replace(/:cancel$/, ""));
+}
+
+export async function POST(request: Request, _context: { params: Promise<{}> }) {
   const agent = authenticateAgentHeaders(request.headers);
-  const { id } = await params;
+  const id = taskIdFromUrl(request.url);
   try {
     const task = await cancelA2aTask(agent, id);
     return Response.json(task);
