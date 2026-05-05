@@ -88,6 +88,7 @@ Each task was committed atomically:
 3. **Task C: Implement HTTP+JSON A2A task routes and SSE streams** - `5bdce9c8`, `8592312b` (test, feat)
 4. **Task D: Add lightweight JSON-RPC compatibility dispatcher** - `5e2cdcc5`, `9660d495` (test, feat)
 5. **Build type fix** - `fbd4d946` (fix)
+6. **Post-wave lint fix** - `839fe53f` (fix)
 
 **Plan metadata:** this summary commit
 
@@ -127,9 +128,17 @@ Each task was committed atomically:
 - **Verification:** `npm --prefix apps/kitchen run test -- src/app/a2a/__tests__/route.test.ts` and `npm --prefix apps/kitchen run build`
 - **Committed in:** `fbd4d946`
 
+**2. [Rule 3 - Blocking] Removed unused context parameters from task action routes**
+- **Found during:** Post-wave integration lint gate
+- **Issue:** The first Next 16 route-param workaround left unused `_context` parameters typed as `Promise<{}>`, which triggered `@typescript-eslint/no-empty-object-type` errors.
+- **Fix:** Removed the context parameter entirely and kept URL-based task ID parsing.
+- **Files modified:** `apps/kitchen/src/app/tasks/[id]:cancel/route.ts`, `apps/kitchen/src/app/tasks/[id]:subscribe/route.ts`
+- **Verification:** `npm --prefix apps/kitchen run test -- src/app/a2a/__tests__/route.test.ts`, `npm --prefix apps/kitchen run lint`, and `npm --prefix apps/kitchen run build`
+- **Committed in:** `839fe53f`
+
 ---
 
-**Total deviations:** 1 auto-fixed (1 blocking).
+**Total deviations:** 2 auto-fixed (2 blocking).
 **Impact on plan:** The fix was required for Next 16 type compatibility and did not change the public route contract.
 
 ## Issues Encountered
@@ -147,6 +156,7 @@ Each task was committed atomically:
 - `npm --prefix apps/kitchen run test -- src/lib/__tests__/db.test.ts` - passed, 6 tests.
 - `npm --prefix apps/kitchen run lint` - passed with 12 pre-existing warnings.
 - `npm --prefix apps/kitchen run build` - passed with known pre-existing Turbopack NFT warning.
+- `npm --prefix apps/kitchen run test -- --run` - passed post-wave, 59 files and 403 tests.
 
 ## User Setup Required
 
