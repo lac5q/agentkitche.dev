@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: A2A Hub — Open Source
 status: in_progress
-stopped_at: Completed Phase 36 LangGraph orchestration service
-last_updated: "2026-05-05T10:49:00.000Z"
+stopped_at: Completed Phase 37 unified memory tiers
+last_updated: "2026-05-05T10:53:00.000Z"
 last_activity: 2026-05-05
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 42
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
+  percent: 56
 ---
 
 # State: Agent Kitchen
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
 **Core value:** Any agent framework plugs into Kitchen — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
-**Current focus:** Phase 37 — Unified Memory mem0 graph + Neo4j
+**Current focus:** Phase 38 — Operating Profiles + Docker Full-Stack
 
 ## Current Position
 
-Phase: 36 (langgraph-orchestration-service) — COMPLETE
-Plan: 2 of 2
-Status: Ready for Phase 37 planning/execution
+Phase: 37 (unified-memory-mem0-graph-neo4j) — COMPLETE
+Plan: 1 of 1
+Status: Ready for Phase 38 planning/execution
 Last activity: 2026-05-05
 
 ## Roadmap Summary (v2.0)
@@ -37,13 +37,13 @@ Last activity: 2026-05-05
 | 34 | Universal REST API + canonical agent registry | REST-01..06, REG-00..03 (10) — COMPLETE |
 | 35 | A2A protocol + Google ADK support | A2A-01..08 (8) — COMPLETE |
 | 36 | LangGraph orchestration (Python) + HIL | ORCH-01..07 (7) — COMPLETE |
-| 37 | Unified memory — mem0 graph + Neo4j | MEM-01..05 (5) |
+| 37 | Unified memory — mem0 graph + Neo4j | MEM-01..05 (5) — COMPLETE |
 | 38 | Env config audit + Docker full-stack | INFRA-01..04 (4) |
 | 39 | Developer setup experience | DEV-01..02 (2) |
 | 40 | Documentation + architecture diagrams | DOCS-01..08 (8) |
 | 41 | OSS polish (license, CI, security, templates) | OSS-01..05 (5) |
 
-**Completed so far:** Phase 34, Phase 35, and Phase 36.
+**Completed so far:** Phase 34, Phase 35, Phase 36, and Phase 37.
 
 ## Performance Metrics
 
@@ -52,7 +52,7 @@ Last activity: 2026-05-05
 - Total v2.0 plans completed: 8
 - Phase 35 execution completed: 2026-05-05
 - Phase 36 completed: 2026-05-05
-- Latest Phase 36 gate: Python orchestration tests, Kitchen orchestration route/component tests, lint, and build passed
+- Latest Phase 37 gate: memory tier tests, Kitchen lint, and build passed
 
 ## Accumulated Context
 
@@ -81,7 +81,7 @@ Last activity: 2026-05-05
 
 ### Pending Todos
 
-- Phase 37: activate mem0 graph layer with Neo4j and add explicit memory tier routing.
+- Phase 38: add operating profiles and Docker full-stack wiring for Kitchen, mem0, Neo4j, voice, knowledge MCP, and orchestration.
 
 ### Blockers/Concerns
 
@@ -95,4 +95,4 @@ Last activity: 2026-05-05
 Last session: 2026-05-05T09:27:41Z
 Stopped at: Completed 35-04-PLAN.md
 Resume file: None
-Next action: Phase 37 memory tier planning/execution, with code-review gate after the phase
+Next action: Phase 38 operating profiles + Docker full-stack, with code-review gate after the phase

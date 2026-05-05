@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { KpiCard } from "@/components/ledger/kpi-card";
-import { useMemoryStats } from "@/lib/api-client";
+import { useMemoryStats, useMemoryTierHealth } from "@/lib/api-client";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +39,7 @@ type ButtonState = "idle" | "loading" | "success" | "error";
 
 export function MemoryIntelligencePanel() {
   const { data, isLoading } = useMemoryStats();
+  const tierHealth = useMemoryTierHealth();
   const queryClient = useQueryClient();
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
 
@@ -62,6 +63,7 @@ export function MemoryIntelligencePanel() {
   const lastRun = data?.lastRun ?? null;
   const pendingUnconsolidated = data?.pendingUnconsolidated ?? 0;
   const tierStats = data?.tierStats ?? [];
+  const healthTiers = tierHealth.data?.tiers ?? [];
   const consolidationModel = data?.consolidationModel ?? null;
   const sources = data?.sources ?? [];
 
@@ -164,6 +166,39 @@ export function MemoryIntelligencePanel() {
               valueColor={statusColor}
             />
           </div>
+
+          {/* Ingested sources */}
+          {healthTiers.length > 0 && (
+            <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Tier Health
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {healthTiers.map((tier) => (
+                  <div key={tier.tier} className="rounded-md border border-slate-700/50 bg-slate-800/40 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium capitalize text-slate-300">{tier.tier}</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                          tier.status === "up"
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : tier.status === "not_configured"
+                              ? "bg-amber-500/15 text-amber-400"
+                              : "bg-rose-500/15 text-rose-400"
+                        }`}
+                      >
+                        {tier.status}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{tier.backend}</p>
+                    {typeof tier.count === "number" && (
+                      <p className="mt-1 text-xs text-slate-400">{tier.count.toLocaleString()} writes</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Ingested sources */}
           {sources.length > 0 && (

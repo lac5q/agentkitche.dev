@@ -1,0 +1,87 @@
+// @vitest-environment node
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+async function loadSearchRoute() {
+  vi.resetModules();
+  return import("../search/route");
+}
+
+async function loadGraphRoute() {
+  vi.resetModules();
+  return import("../graph/route");
+}
+
+async function loadHealthRoute() {
+  vi.resetModules();
+  return import("../health/route");
+}
+
+describe("memory tier routes", () => {
+  beforeEach(() => {
+    process.env.MEM0_URL = "http://mem0.test";
+    process.env.NEO4J_HTTP_URL = "http://neo4j.test";
+    process.env.NEO4J_USERNAME = "neo4j";
+    process.env.NEO4J_PASSWORD = "secret";
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ok: true, results: [{ id: "m1" }] })));
+  });
+
+  afterEach(() => {
+    delete process.env.MEM0_URL;
+    delete process.env.NEO4J_HTTP_URL;
+    delete process.env.NEO4J_USERNAME;
+    delete process.env.NEO4J_PASSWORD;
+    vi.unstubAllGlobals();
+  });
+
+  it("searches the vector tier through mem0", async () => {
+    const { GET } = await loadSearchRoute();
+
+    const response = await GET(new Request("http://localhost/api/memory/search?q=agent&limit=3"));
+    const body = await response.json();
+    const outbound = JSON.parse(vi.mocked(fetch).mock.calls[0][1]?.body as string);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, tier: "vector" });
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe("http://mem0.test/memory/search");
+    expect(outbound).toMatchObject({ query: "agent", limit: 3 });
+  });
+
+  it("queries graph memory through Neo4j HTTP with parameterized search", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ results: [{ data: [{ row: [{ name: "Luis" }, [], []] }] }] })
+    );
+    const { GET } = await loadGraphRoute();
+
+    const response = await GET(new Request("http://localhost/api/memory/graph?q=Luis&limit=2"));
+    const body = await response.json();
+    const outbound = JSON.parse(vi.mocked(fetch).mock.calls[0][1]?.body as string);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, tier: "graph" });
+    expect(vi.mocked(fetch).mock.calls[0][0]).toBe("http://neo4j.test/db/neo4j/tx/commit");
+    expect(outbound.statements[0].parameters).toMatchObject({ q: "luis", limit: 2 });
+  });
+
+  it("reports all memory tier health states", async () => {
+    const { GET } = await loadHealthRoute();
+
+    const response = await GET(new Request("http://localhost/api/memory/health"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.tiers.map((tier: { tier: string }) => tier.tier)).toEqual(["vector", "graph", "episodic"]);
+  });
+
+  it("requires operator authorization for non-local memory reads", async () => {
+    process.env.KITCHEN_OPERATOR_API_KEY = "operator-secret";
+    const searchRoute = await loadSearchRoute();
+    const graphRoute = await loadGraphRoute();
+    const healthRoute = await loadHealthRoute();
+
+    expect((await searchRoute.GET(new Request("https://kitchen.example/api/memory/search?q=secret"))).status).toBe(403);
+    expect((await graphRoute.GET(new Request("https://kitchen.example/api/memory/graph?q=secret"))).status).toBe(403);
+    expect((await healthRoute.GET(new Request("https://kitchen.example/api/memory/health"))).status).toBe(403);
+
+    delete process.env.KITCHEN_OPERATOR_API_KEY;
+  });
+});

@@ -1,5 +1,6 @@
 import { authenticateAgentHeaders, recordMemoryWrite } from "@/lib/agent-registry";
 import { MEM0_URL } from "@/lib/constants";
+import { buildTieredMemoryPayload, resolveMemoryTier } from "@/lib/memory/tiers";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,14 @@ export async function POST(request: Request) {
 
   let mem0Response: Response;
   let result: Record<string, unknown>;
+  const tieredBody = buildTieredMemoryPayload(body);
+  const tier = resolveMemoryTier(tieredBody);
+
   try {
     mem0Response = await fetch(`${MEM0_URL}/memory/add`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify(tieredBody),
       signal: AbortSignal.timeout(5000),
     });
     result = (await mem0Response.json().catch(() => ({}))) as Record<string, unknown>;
@@ -39,12 +43,12 @@ export async function POST(request: Request) {
   recordMemoryWrite(
     agent.id,
     {
-      type: typeof body.type === "string" ? body.type : undefined,
+      type: tier,
       content: typeof body.content === "string" ? body.content : undefined,
-      metadata: isRecord(body.metadata) ? body.metadata : {},
+      metadata: isRecord(tieredBody.metadata) ? tieredBody.metadata : {},
     },
     result
   );
 
-  return Response.json({ ok: true, result, timestamp: new Date().toISOString() });
+  return Response.json({ ok: true, tier, result, timestamp: new Date().toISOString() });
 }

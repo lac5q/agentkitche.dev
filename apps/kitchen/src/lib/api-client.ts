@@ -38,6 +38,15 @@ export interface ResolveOrchestrationHilInput {
   decision: "approve" | "reject";
 }
 
+export interface MemoryTierHealth {
+  tier: "vector" | "graph" | "episodic";
+  backend: string;
+  status: "up" | "down" | "not_configured";
+  detail?: string;
+  count?: number | null;
+  lastWrite?: string | null;
+}
+
 async function fetchJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
@@ -508,6 +517,18 @@ export function useMemoryStats() {
         sources: Array<{ agent_id: string; cnt: number }>;
         timestamp: string;
       }>("/api/memory-stats"),
+    refetchInterval: 30000,
+  });
+}
+
+export function useMemoryTierHealth() {
+  return useQuery({
+    queryKey: ["memory-tier-health"],
+    queryFn: () =>
+      fetchJSON<{
+        tiers: MemoryTierHealth[];
+        timestamp: string;
+      }>("/api/memory/health"),
     refetchInterval: 30000,
   });
 }

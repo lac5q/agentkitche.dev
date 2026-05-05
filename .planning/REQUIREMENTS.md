@@ -44,11 +44,11 @@
 
 ### Unified Memory
 
-- [ ] **MEM-01**: mem0 graph layer activated with Neo4j as backend
-- [ ] **MEM-02**: `POST /api/memory/add` routes writes to correct tier based on explicit routing rules (vector for semantic facts, graph for entity relationships, episodic for conversation/event logs)
-- [ ] **MEM-03**: `GET /api/memory/search` — semantic similarity search against Qdrant Cloud (vector tier)
-- [ ] **MEM-04**: `GET /api/memory/graph` — entity and relationship queries against Neo4j (graph tier)
-- [ ] **MEM-05**: Memory tier health panel in Kitchen UI showing status, document/node counts, and last write time for each tier (vector, graph, episodic)
+- [x] **MEM-01**: mem0 graph layer activated with Neo4j as backend
+- [x] **MEM-02**: `POST /api/memory/add` routes writes to correct tier based on explicit routing rules (vector for semantic facts, graph for entity relationships, episodic for conversation/event logs)
+- [x] **MEM-03**: `GET /api/memory/search` — semantic similarity search against Qdrant Cloud (vector tier)
+- [x] **MEM-04**: `GET /api/memory/graph` — entity and relationship queries against Neo4j (graph tier)
+- [x] **MEM-05**: Memory tier health panel in Kitchen UI showing status, document/node counts, and last write time for each tier (vector, graph, episodic)
 
 ### Operating Profiles
 
@@ -119,7 +119,8 @@
 | A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08 | Phase 35 | Complete |
 | ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07 | Phase 36 | Complete |
 | PROFILE-03 | Phase 36 | Partial |
-| MEM-01, MEM-02, MEM-03, MEM-04, MEM-05, PROFILE-03 | Phase 37 | Pending |
+| MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 | Phase 37 | Complete |
+| PROFILE-03 | Phase 37 | Partial |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Pending |
 | DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Pending |
 | DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Pending |
