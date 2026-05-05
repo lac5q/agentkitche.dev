@@ -11,7 +11,7 @@
 - [x] **A2A-02**: Kitchen implements A2A v1 task API with correct spec method names (`tasks/send`, `tasks/get`, `tasks/cancel` verified against A2A v1 spec)
 - [x] **A2A-03**: External agent can register with Kitchen via A2A protocol
 - [x] **A2A-04**: Kitchen can discover registered A2A agents and their declared capabilities
-- [ ] **A2A-05**: Kitchen can delegate tasks to registered A2A agents
+- [x] **A2A-05**: Kitchen can delegate tasks to registered A2A agents
 - [x] **A2A-06**: Google ADK agents register via A2A and appear as nodes in Flow diagram
 - [x] **A2A-07**: A2A task progress streams via SSE (server-sent events)
 - [x] **A2A-08**: A2A endpoints enforce agent identity and per-task authorization (security scheme defined in agent card)
@@ -114,9 +114,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REST-01, REST-02, REST-03, REST-04, REST-05, REST-06 | Phase 34 | Pending |
-| REG-00, REG-01, REG-02, REG-03 | Phase 34 | Pending |
-| A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08 | Phase 35 | Pending |
+| REST-01, REST-02, REST-03, REST-04, REST-05, REST-06 | Phase 34 | Complete |
+| REG-00, REG-01, REG-02, REG-03 | Phase 34 | Complete |
+| A2A-01, A2A-02, A2A-03, A2A-04, A2A-05, A2A-06, A2A-07, A2A-08 | Phase 35 | Complete |
 | ORCH-01, ORCH-02, ORCH-03, ORCH-04, ORCH-05, ORCH-06, ORCH-07, PROFILE-03 | Phase 36 | Pending |
 | MEM-01, MEM-02, MEM-03, MEM-04, MEM-05, PROFILE-03 | Phase 37 | Pending |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Pending |

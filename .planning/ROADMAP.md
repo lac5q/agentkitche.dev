@@ -15,8 +15,8 @@
 
 ### v2.0 A2A Hub — Open Source (Phases 34-41)
 
-- [ ] **Phase 34: Universal REST API + Canonical Agent Registry** — Framework-agnostic REST endpoints, dynamic agent roster, single canonical registry model
-- [ ] **Phase 35: A2A Protocol Implementation + Google ADK** — Agent card, A2A v1 task API, ADK agents register and surface in Flow
+- [x] **Phase 34: Universal REST API + Canonical Agent Registry** — Framework-agnostic REST endpoints, dynamic agent roster, single canonical registry model
+- [x] **Phase 35: A2A Protocol Implementation + Google ADK** — Agent card, A2A v1 task API, ADK agents register and surface in Flow
 - [ ] **Phase 36: LangGraph Orchestration Service** — Python StateGraph, SqliteSaver checkpointing, HIL approve/reject, capability routing
 - [ ] **Phase 37: Unified Memory — mem0 Graph + Neo4j** — Three-tier `/api/memory/*` covering vector (Qdrant Cloud) + graph (Neo4j) + episodic (SQLite)
 - [ ] **Phase 38: Operating Profiles + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, default/custom install profiles, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
@@ -125,7 +125,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
   3. All REST endpoints (`/api/heartbeat`, `/api/skills/report`, `/api/memory/add`, `/api/tool-attention/record`) reject requests with missing or invalid per-agent API keys
   4. Source contains zero hardcoded agent identifiers — the Flow page roster is sourced from the canonical registry DB
   5. A2A registration (Phase 35) and UI registration both write through the same canonical registry service (REG-00 contract verified by tests)
-**Plans**: TBD
+**Plans**: 3/3 complete
 **UI hint**: yes
 
 ### Phase 35: A2A Protocol Implementation + Google ADK Support
@@ -139,7 +139,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
   4. Kitchen can list registered A2A agents via discovery and successfully delegate a task to one of them
   5. Unauthenticated and unauthorized A2A task requests are rejected per the security scheme declared in the agent card
   6. Kitchen's A2A card, remote-agent registration, ADK fixture, and delegation client use config-derived base URLs/ports/network policy instead of hardcoded localhost assumptions
-**Plans**: TBD
+**Plans**: 4/4 complete
 **UI hint**: yes
 
 ### Phase 36: LangGraph Orchestration Service (Python, Checkpoint + HIL)
