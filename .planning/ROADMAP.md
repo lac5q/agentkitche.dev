@@ -21,7 +21,7 @@
 - [x] **Phase 37: Unified Memory — mem0 Graph + Neo4j** — Three-tier `/api/memory/*` covering vector (Qdrant Cloud) + graph (Neo4j) + episodic (SQLite)
 - [x] **Phase 38: Operating Profiles + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, default/custom install profiles, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
 - [x] **Phase 39: Developer Setup Experience** — `setup.sh` prereq detection + profile-aware scaffolding, first-run wizard for keys + first agent
-- [ ] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, install profile guide, per-framework integration guides, REST + memory references
+- [x] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, install profile guide, per-framework integration guides, REST + memory references
 - [ ] **Phase 41: OSS Polish** — MIT license, CONTRIBUTING, SECURITY, issue templates, public CI with Docker compose smoke
 
 <details>
@@ -203,7 +203,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
   4. REST API reference documents every endpoint with auth and request/response examples
   5. Memory architecture guide explains the three tiers, routing rules, when to use each, and the Neo4j schema
   6. Documentation explains supported operating profiles, how to override defaults, and when to choose private-network versus HTTPS deployment
-**Plans**: TBD
+**Plans**: 1/1 complete
 
 ### Phase 41: OSS Polish
 **Goal**: The repo is ready for public release — licensed, contributable, with security policy, issue templates, and a public CI that runs typecheck, lint, tests, and a Docker compose smoke on every PR.

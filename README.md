@@ -1,261 +1,214 @@
-# Agent Kitchen 🍳
+# Agent Kitchen
 
-> A beautiful, restaurant-themed observability dashboard for AI agent infrastructure.
+Agent Kitchen is an open-source operations hub for multi-agent systems. It gives a startup team one place to register agents, expose A2A-compatible task endpoints, track heartbeats, route memory writes, inspect memory health, and hand work to a LangGraph orchestration service when a task needs durable coordination.
 
-Monitor your entire agent fleet — local and remote — from one place. Track agent health, memory, knowledge bases, token economics, self-learning optimization (APO), and system architecture in real time.
+The default deployment model is intentionally practical: run Kitchen on a trusted private network such as Tailscale, register each agent into the canonical registry, and let agents communicate over authenticated HTTP/A2A. HTTPS public deployment is supported, but private-network deployment is the recommended first production shape.
 
-![Kitchen Floor](./docs/screenshots/kitchen-floor.png)
+## What Kitchen Does
 
----
+- **Canonical agent registry:** DB-backed roster for local, REST, UI, and A2A agents.
+- **A2A hub:** Agent card discovery, JSON-RPC endpoint, task lifecycle routes, SSE task updates, and outbound A2A delegation.
+- **REST shim:** Framework-agnostic endpoints for agents that do not speak A2A yet.
+- **Memory routing:** Vector memory through mem0/Qdrant Cloud, graph memory through mem0/Neo4j, and episodic/audit memory in Kitchen SQLite.
+- **Orchestration boundary:** Kitchen delegates complex routed work to a Python LangGraph service with checkpointing and human-in-the-loop approval.
+- **Operator UI:** Registry, Flow, memory intelligence, dispatch, ledger, library, skills, and APO observability views.
 
-## What It Is
+## Five-Minute Quickstart
 
-Agent Kitchen is a **Next.js dashboard** that gives you a single pane of glass for your AI agent infrastructure. Whether you're running one agent or twenty, local or across Tailscale tunnels, Agent Kitchen shows you:
+Prerequisites:
 
-- **Who's online** — live heartbeat status for every agent
-- **What they're doing** — current tasks, recent lessons, memory counts
-- **How much it costs** — token economics, model mix, savings calculator
-- **What's in their head** — memory explorer, conversation history, activity heatmap
-- **What they know** — knowledge base health, coverage gaps, freshness alerts
-- **How they talk** — animated system flow diagram with live activity feed
-- **How they improve** — APO proposal queue, cron cycle stats, log viewer
-
-All data is fetched **live** from your filesystem and HTTP endpoints. No database required (except an optional SQLite store for conversations).
-
----
-
-## Screenshots
-
-| View | What You See |
-|------|-------------|
-| **Kitchen Floor** (`/`) | Real-time agent grid — status, heartbeats, current tasks, lessons, memory counts |
-| ![Kitchen Floor](./docs/screenshots/kitchen-floor.png) | |
-| **The Ledger** (`/ledger`) | Token economics — RTK savings, model mix, cost calculator |
-| ![Ledger](./docs/screenshots/ledger.png) | |
-| **The Flow** (`/flow`) | Animated system architecture — live data, interactive demo mode, voice & chat panel |
-| ![Flow](./docs/screenshots/flow.png) | |
-| **The Library** (`/library`) | Knowledge base health — collection treemap, freshness alerts, coverage gaps |
-| ![Library](./docs/screenshots/library.png) | |
-| **Notebook Wall** (`/notebooks`) | Memory explorer — auto-memory files, daily notes, activity heatmap |
-| ![Notebooks](./docs/screenshots/notebooks.png) | |
-| **The Cookbooks** (`/cookbooks`) | Agent skill library — browse, install, and manage agent capabilities |
-| ![Cookbooks](./docs/screenshots/cookbooks.png) | |
-| **The Sous Vide** (`/apo`) | Agent Lightning APO — self-learning proposals, cron cycle stats, log viewer |
-| ![APO](./docs/screenshots/apo.png) | |
-| **The Dispatch** (`/dispatch`) | Send tasks to remote agents, view delegation status, lineage timeline |
-| ![Dispatch](./docs/screenshots/dispatch.png) | |
-
----
-
-## Quick Start
+- Node.js and npm
+- Python 3
+- Docker with Docker Compose
+- Qdrant Cloud URL and API key for vector memory
 
 ```bash
 git clone https://github.com/lac5q/agent-kitchen.git
 cd agent-kitchen
 npm install
-cp .env.example .env.local
-# Edit .env.local with your paths
-npm run dev
+./setup.sh --wizard
+./setup.sh
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open Kitchen:
 
-For production:
+```text
+http://localhost:3000
+```
+
+For a local production-style server without Docker orchestration:
 
 ```bash
-npm run build
-npm start
+npm --prefix apps/kitchen run build
+KITCHEN_PUBLIC_BASE_URL=http://localhost:3002 \
+KITCHEN_A2A_ENDPOINT_BASE_URL=http://localhost:3002 \
+npm --prefix apps/kitchen run start -- --port 3002
 ```
 
----
+## Register Your First Agent
 
-## Configuration
+Kitchen has two agent concepts:
 
-Agent Kitchen is fully config-driven. No code changes needed to adapt it to your setup.
+- **Canonical registry agents:** Agents stored in SQLite by `/api/agents/register` or `/api/a2a/agents/register`. The `/agents` page shows this canonical registry.
+- **Legacy remote agents:** Older entries in `agents.config.json` that are polled by `/api/remote-agents`. These are not automatically canonical agents.
 
-### 1. Environment Variables (`.env.local`)
+If `/agents` only shows one agent, check whether the others are still only in `agents.config.json`, whether their host values are placeholders, or whether they have not been registered into the canonical registry.
 
-Copy `.env.example` and fill in your paths:
+Register a REST-shim agent:
 
-```env
-# Path to your agent config directories (each subfolder = one agent)
-AGENT_CONFIGS_PATH=/Users/yourname/github/knowledge/agent-configs
-
-# Path to your knowledge repository
-KNOWLEDGE_BASE_PATH=/Users/yourname/github/knowledge
-
-# Claude Code auto-memory location
-CLAUDE_MEMORY_PATH=/Users/yourname/.claude/projects
-
-# mem0 semantic memory API (optional)
-MEM0_URL=http://localhost:3201
-
-# Agent Lightning / APO (optional)
-APO_PROPOSALS_PATH=/Users/yourname/.openclaw/skills/proposals
-APO_CRON_LOG_PATH=/Users/yourname/.openclaw/logs/agent-lightning-cron.log
-
-# LLM for memory consolidation (optional)
-ANTHROPIC_API_KEY=your_key_here
-CONSOLIDATION_MODEL=claude-haiku-4-5-20251001
+```bash
+curl -X POST http://localhost:3000/api/agents/register \
+  -H 'Content-Type: application/json' \
+  -H 'x-kitchen-operator-key: <operator-key>' \
+  -d '{
+    "id": "worker-1",
+    "name": "Worker 1",
+    "role": "Research and implementation agent",
+    "platform": "codex",
+    "protocol": "rest",
+    "location": "tailscale",
+    "host": "100.64.0.10",
+    "port": 8787,
+    "healthEndpoint": "/health"
+  }'
 ```
 
-### 2. Remote Agents (`agents.config.json`)
+The response includes an API key when `issueApiKey` is not false. Store it securely; agents use it as `Authorization: Bearer <api-key>` for write/reporting endpoints.
 
-Edit `agents.config.json` to register your remote agents:
+Register an A2A agent by card URL:
 
-```json
-{
-  "remoteAgents": [
-    {
-      "id": "my-agent",
-      "name": "My Agent",
-      "role": "Line Cook (Engineering)",
-      "platform": "claude",
-      "location": "tailscale",
-      "host": "100.x.x.x",
-      "port": 18789,
-      "healthEndpoint": "/health"
-    }
-  ]
-}
+```bash
+curl -X POST http://localhost:3000/api/a2a/agents/register \
+  -H 'Content-Type: application/json' \
+  -H 'x-kitchen-operator-key: <operator-key>' \
+  -d '{
+    "cardUrl": "http://agent.tailnet:8000/.well-known/agent-card.json",
+    "source": "a2a"
+  }'
 ```
 
-Supported locations:
-- `"local"` — same machine, accessed via `localhost`
-- `"tailscale"` — Tailscale mesh network (100.x.x.x IPs)
-- `"cloudflare"` — Cloudflare tunnel (`tunnelUrl` required)
+## Architecture
 
-### 3. Knowledge Collections (`collections.config.json`)
+```mermaid
+flowchart LR
+  subgraph Agents["Agent Frameworks"]
+    Claude["Claude Code"]
+    ADK["Google ADK"]
+    LG["LangGraph Agents"]
+    Crew["CrewAI / AutoGen"]
+    Custom["Custom HTTP Agents"]
+  end
 
-Edit `collections.config.json` to list your knowledge base directories:
+  subgraph Kitchen["Agent Kitchen"]
+    UI["Operator UI"]
+    Registry["Canonical Registry SQLite"]
+    A2A["A2A HTTP + JSON-RPC Broker"]
+    REST["REST Shim"]
+    Audit["Heartbeat / Skill / Memory Reports"]
+  end
 
-```json
-{
-  "collections": [
-    { "name": "my-docs", "category": "business" },
-    { "name": "agent-configs", "category": "agents" },
-    { "name": "skills", "category": "product" }
-  ]
-}
+  subgraph Memory["Memory Tiers"]
+    Vector["Vector: mem0 + Qdrant Cloud"]
+    Graph["Graph: mem0 + Neo4j"]
+    Episodic["Episodic: Kitchen SQLite"]
+  end
+
+  subgraph Orchestration["Orchestration"]
+    LangGraph["Python LangGraph Service"]
+    Checkpoint["SqliteSaver Checkpoints"]
+    HIL["Human Approval Queue"]
+  end
+
+  Claude --> A2A
+  ADK --> A2A
+  LG --> A2A
+  Crew --> REST
+  Custom --> REST
+  UI --> Registry
+  A2A --> Registry
+  REST --> Registry
+  Audit --> Registry
+  REST --> Memory
+  A2A --> Memory
+  UI --> Orchestration
+  Orchestration --> LangGraph
+  LangGraph --> Checkpoint
+  LangGraph --> HIL
+  Memory --> UI
 ```
 
-Categories: `business` | `agents` | `marketing` | `product` | `other`
+Detailed docs:
 
-### 4. Agent Directory Structure
+- [Architecture](docs/architecture.md)
+- [Install profiles](docs/install-profiles.md)
+- [REST API reference](docs/rest-api.md)
+- [Memory architecture](docs/memory-architecture.md)
+- [Claude Code integration](docs/integrations/claude-code.md)
+- [Google ADK integration](docs/integrations/google-adk.md)
+- [LangGraph integration](docs/integrations/langgraph.md)
+- [CrewAI and AutoGen integration](docs/integrations/crewai-autogen.md)
 
-For local agents, Agent Kitchen reads these files from each agent's config directory:
+## A2A Versus REST Shim
 
-```
-agent-configs/
-└── my-agent/
-    ├── HEARTBEAT.md         # Latest heartbeat content
-    ├── HEARTBEAT_STATE.md   # Current task (first line shown on card)
-    ├── LESSONS.md           # Lessons learned (count displayed)
-    └── memory/
-        └── YYYY-MM-DD.md   # Daily memory entries
-```
+Use **A2A** when the agent framework can expose or consume an agent card and task lifecycle. This is the preferred path for Claude Code-style agents, Google ADK agents, LangGraph agents, and future standards-compatible systems.
 
-Any directory under `AGENT_CONFIGS_PATH` becomes an agent card on the Kitchen Floor.
+Use **REST shim** when the framework does not yet speak A2A or when you only need reporting: heartbeat, memory writes, skill outcomes, and registry visibility.
 
----
+## Operating Profiles
 
-## Data Sources & API Routes
+Kitchen supports these profiles:
 
-| Route | Source | Refresh |
-|-------|--------|---------|
-| `/api/agents` | Filesystem: agent config dirs | 5s |
-| `/api/remote-agents` | HTTP poll: all entries in `agents.config.json` | 10s |
-| `/api/tokens` | `rtk gain` CLI ([RTK](https://github.com/lac5q/rtk)) | 30s |
-| `/api/memory` | `~/.claude/projects/*/memory/` + mem0 | 15s |
-| `/api/knowledge` | Filesystem: knowledge base collections | 60s |
-| `/api/apo` | `~/.openclaw/skills/proposals/` + cron log | 30s |
-| `/api/health` | Ping all services | 10s |
+- `local-dev`: one developer machine; loopback registry writes can work without an operator key.
+- `single-host`: all services on one server or VM; operator key required.
+- `private-network`: recommended startup deployment for multiple machines on Tailscale or LAN.
+- `cloud-https`: internet-reachable deployment behind HTTPS reverse proxy or tunnel.
+- `custom`: operator-defined topology with explicit environment values.
 
-All data is fetched live — no caching layer, read-only.
+See [Install profiles](docs/install-profiles.md).
 
----
+## Security Model
 
-## Tech Stack
-
-| Layer | Tech |
-|-------|------|
-| Framework | Next.js 16 (App Router) |
-| Styling | Tailwind CSS 4 |
-| Components | shadcn/ui (base-ui) |
-| Charts | Recharts |
-| Animation | Framer Motion |
-| Data fetching | TanStack Query |
-| Database | better-sqlite3 (optional, for conversations) |
-| Testing | Vitest + React Testing Library + Playwright |
-
----
-
-## Compatible Agent Systems
-
-Agent Kitchen works with any agent system that:
-- Stores agent configs as directories with markdown files
-- Exposes a `/health` HTTP endpoint on each agent node
-- Optionally: runs [RTK](https://github.com/lac5q/rtk), [mem0](https://github.com/mem0ai/mem0), or an APO loop
-
-Known compatible setups:
-- **OpenClaw** — full support (local + remote agents, APO)
-- **Claude Code** — auto-memory files read from `~/.claude/projects/`
-- **Any HTTP agent** — add to `agents.config.json` with a health endpoint
-
----
+- Registry writes require `KITCHEN_OPERATOR_API_KEY` outside local loopback.
+- Agent write/reporting endpoints require per-agent bearer credentials minted by the registry.
+- Memory read endpoints require operator authorization because they can expose sensitive context.
+- Prefer Tailscale/private networks for startup deployments; use HTTPS and explicit operator keys for cloud exposure.
+- Treat agent cards as untrusted input; Kitchen validates card URL policy, payload size, required fields, and registration authorization.
 
 ## Development
 
 ```bash
-npm run dev      # Start dev server (port 3000)
-npm run build    # Production build
-npm start        # Start production server (port 3002)
-npm test         # Run tests (Vitest)
+npm run dev
+npm run test
+npm run lint
+npm run build
+npm run profiles:check
+npm run first-run:check
 ```
 
----
+Useful local URLs:
+
+- Dashboard: `http://localhost:3000`
+- Production local server: `http://localhost:3002`
+- A2A card: `/.well-known/agent-card.json`
+- Registry UI: `/agents`
+- Flow UI: `/flow`
 
 ## Project Structure
 
-```
+```text
 agent-kitchen/
-├── apps/
-│   └── kitchen/          # Next.js dashboard app
-│       └── src/          # App Router pages, components, lib, types
-├── services/
-│   ├── memory/           # mem0 FastAPI service + MCP wrapper
-│   ├── knowledge-mcp/    # Progressive knowledge/tool-attention MCP facade
-│   └── voice-server/     # Optional Python voice service
-├── data/                 # SQLite database (gitignored)
-├── docs/
-│   ├── screenshots/      # Dashboard screenshots for README
-│   ├── handover/         # Developer handover docs
-│   └── superpowers/      # Design specs and plans
-├── agents.config.json    # Remote agent registry
-├── collections.config.json # Knowledge base collections
-├── .env.example          # Environment variable template
-└── start.sh              # Production startup script (Next.js + voice servers)
+├── apps/kitchen/              # Next.js UI and API routes
+├── services/orchestration/    # Python LangGraph orchestration service
+├── services/memory/           # mem0 service wrapper
+├── services/knowledge-mcp/    # Knowledge/tool-attention MCP facade
+├── services/voice-server/     # Optional voice service
+├── config/                    # Operating profiles
+├── docker/                    # Service Dockerfiles
+├── docs/                      # User and architecture docs
+├── scripts/                   # Setup and validation scripts
+└── data/                      # Local SQLite state, gitignored
 ```
-
----
-
-## Security
-
-This repository includes automated secret scanning. See [`.github/workflows/secret-guard.yml`](./.github/workflows/secret-guard.yml) for the full configuration.
-
-The following patterns are blocked from ever entering the codebase:
-- API keys (`sk-...`, `AIza...`, `ghp_...`)
-- AWS credentials (`AKIA...`)
-- Private keys (`-----BEGIN PRIVATE KEY-----`)
-- IP addresses (`100.x.x.x`, `10.x.x.x` — Tailscale/internal ranges)
-- Domains with known internal patterns
-- Email addresses and phone numbers
-- Generic password assignments
-
-If you fork this repo, the same checks will run on your PRs.
-
----
 
 ## License
 
-MIT — fork it, extend it, make it yours.
+License and OSS governance are finalized in Phase 41.

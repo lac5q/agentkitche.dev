@@ -71,14 +71,14 @@
 
 ### Documentation
 
-- [ ] **DOCS-01**: README rewrite — what Kitchen is, 5-minute quickstart, architecture overview, when to use A2A vs REST shim
-- [ ] **DOCS-02**: Architecture diagram — A2A hub, memory tiers (vector/graph/episodic), LangGraph orchestration layer, supported agent frameworks
-- [ ] **DOCS-03**: Integration guide — Claude Code agents (A2A path)
-- [ ] **DOCS-04**: Integration guide — Google ADK agents (A2A path)
-- [ ] **DOCS-05**: Integration guide — LangGraph agents (A2A path + LangGraph-to-LangGraph delegation)
-- [ ] **DOCS-06**: Integration guide — CrewAI and AutoGen agents (REST shim path)
-- [ ] **DOCS-07**: REST API reference — all endpoints, authentication, request/response examples
-- [ ] **DOCS-08**: Memory architecture guide — three tiers, routing rules, when to use each, Neo4j schema
+- [x] **DOCS-01**: README rewrite — what Kitchen is, 5-minute quickstart, architecture overview, when to use A2A vs REST shim
+- [x] **DOCS-02**: Architecture diagram — A2A hub, memory tiers (vector/graph/episodic), LangGraph orchestration layer, supported agent frameworks
+- [x] **DOCS-03**: Integration guide — Claude Code agents (A2A path)
+- [x] **DOCS-04**: Integration guide — Google ADK agents (A2A path)
+- [x] **DOCS-05**: Integration guide — LangGraph agents (A2A path + LangGraph-to-LangGraph delegation)
+- [x] **DOCS-06**: Integration guide — CrewAI and AutoGen agents (REST shim path)
+- [x] **DOCS-07**: REST API reference — all endpoints, authentication, request/response examples
+- [x] **DOCS-08**: Memory architecture guide — three tiers, routing rules, when to use each, Neo4j schema
 
 ### OSS Polish
 
@@ -121,7 +121,7 @@
 | MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 | Phase 37 | Complete |
 | INFRA-01, INFRA-02, INFRA-03, INFRA-04, PROFILE-01, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 38 | Complete |
 | DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04 | Phase 39 | Complete |
-| DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Pending |
+| DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05, DOCS-06, DOCS-07, DOCS-08, PROFILE-02, PROFILE-03, PROFILE-04 | Phase 40 | Complete |
 | OSS-01, OSS-02, OSS-03, OSS-04, OSS-05 | Phase 41 | Pending |
 
 **Coverage:**
