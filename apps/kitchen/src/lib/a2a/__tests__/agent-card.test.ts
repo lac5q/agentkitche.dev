@@ -94,3 +94,27 @@ describe("buildKitchenAgentCard", () => {
     );
   });
 });
+
+describe("well-known A2A agent card routes", () => {
+  it("returns the canonical Kitchen card", async () => {
+    const { GET } = await import("../../../app/.well-known/agent-card.json/route");
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.name).toBe("Agent Kitchen");
+    expect(body.extensions.kitchen.cardPaths.canonical).toBe(A2A_CANONICAL_AGENT_CARD_PATH);
+    expect(body.extensions.kitchen.compatibilityAlias).toBeUndefined();
+  });
+
+  it("returns a compatibility alias card at the legacy roadmap path", async () => {
+    const { GET } = await import("../../../app/.well-known/agent.json/route");
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.name).toBe("Agent Kitchen");
+    expect(body.extensions.kitchen.cardPaths.compatibility).toBe(A2A_COMPAT_AGENT_CARD_PATH);
+    expect(body.extensions.kitchen.compatibilityAlias).toBe(true);
+  });
+});
