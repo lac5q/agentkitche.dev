@@ -1,0 +1,58 @@
+{
+  "name": "ADK Check Prime Agent",
+  "description": "Google ADK-style A2A sample agent that checks whether an integer is prime.",
+  "version": "1.0",
+  "url": "http://localhost:8001/a2a/check_prime_agent",
+  "preferredTransport": "HTTP+JSON",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": ["text", "application/json"],
+  "defaultOutputModes": ["text", "application/json"],
+  "securitySchemes": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "Kitchen agent API key",
+      "description": "Use a Kitchen-issued bearer/API key for machine-to-machine A2A requests."
+    },
+    "apiKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "Send Authorization: Bearer <token>."
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "skills": [
+    {
+      "id": "check_prime",
+      "name": "Check Prime",
+      "description": "Determine whether a provided integer is prime and explain the result.",
+      "tags": ["math", "prime", "adk", "a2a"],
+      "examples": ["Is 97 prime?", "Check whether 1001 is prime"],
+      "inputModes": ["text", "application/json"],
+      "outputModes": ["text", "application/json"]
+    }
+  ],
+  "extensions": {
+    "googleAdk": {
+      "sample": true,
+      "agentId": "check_prime_agent"
+    },
+    "kitchen": {
+      "profile": "local-dev",
+      "source": "adk",
+      "cardPaths": {
+        "canonical": "/.well-known/agent-card.json",
+        "compatibility": "/.well-known/agent.json"
+      }
+    }
+  }
+}
