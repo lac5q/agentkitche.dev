@@ -94,12 +94,14 @@ export interface RemoteAgentConfig {
   name: string;
   role: string;
   platform: AgentPlatform;
+  protocol?: AgentProtocol;
   location: AgentLocation;
   host: string;
   port: number;
   healthEndpoint: string;
   tunnelUrl?: string;
   skills?: AgentCardSkill[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface RegisteredAgentCapability {

@@ -417,10 +417,27 @@ export function recordToolOutcome(agentId: string, payload: ToolOutcomeInput): v
 }
 
 function toRemoteAgentConfig(agent: RegisteredAgent): RemoteAgentConfig | null {
+  const endpointRaw =
+    agent.metadata.a2a &&
+    typeof agent.metadata.a2a === "object" &&
+    !Array.isArray(agent.metadata.a2a) &&
+    typeof (agent.metadata.a2a as Record<string, unknown>).endpointUrl === "string"
+      ? ((agent.metadata.a2a as Record<string, unknown>).endpointUrl as string)
+      : null;
+  const endpointUrl = endpointRaw
+    ? (() => {
+        try {
+          return new URL(endpointRaw);
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
   if (
-    (agent.location !== "tailscale" && agent.location !== "cloudflare") ||
-    !agent.host ||
-    !agent.port
+    (agent.protocol !== "a2a" && agent.location !== "tailscale" && agent.location !== "cloudflare") ||
+    (!agent.host && !endpointUrl) ||
+    (!agent.port && !endpointUrl)
   ) {
     return null;
   }
@@ -430,11 +447,13 @@ function toRemoteAgentConfig(agent: RegisteredAgent): RemoteAgentConfig | null {
     name: agent.name,
     role: agent.role,
     platform: agent.platform,
+    protocol: agent.protocol,
     location: agent.location,
-    host: agent.host,
-    port: agent.port,
+    host: agent.host ?? endpointUrl!.hostname,
+    port: agent.port ?? (endpointUrl!.port ? Number(endpointUrl!.port) : endpointUrl!.protocol === "https:" ? 443 : 80),
     healthEndpoint: agent.healthEndpoint ?? DEFAULT_HEALTH_ENDPOINT,
     tunnelUrl: agent.tunnelUrl ?? undefined,
+    metadata: agent.metadata,
     skills: agent.capabilities.map(
       (capability): AgentCardSkill => ({
         id: capability.id,

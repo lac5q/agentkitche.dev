@@ -1,4 +1,4 @@
-import type { AgentPlatform } from "@/types";
+import type { AgentPlatform, RemoteAgentConfig } from "@/types";
 
 export interface DispatchTask {
   task_id: string;
@@ -21,5 +21,5 @@ export interface DispatchResult {
 export interface AgentAdapter {
   readonly platform: AgentPlatform | AgentPlatform[];
   readonly name: string;
-  dispatch(task: DispatchTask): Promise<DispatchResult>;
+  dispatch(task: DispatchTask, agent?: RemoteAgentConfig): Promise<DispatchResult>;
 }
