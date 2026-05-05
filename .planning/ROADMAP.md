@@ -255,7 +255,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 | 32 | v1.7 | 4/4 | Complete | 2026-05-04 |
 | 33 | v1.7 | 1/1 | Complete | 2026-05-04 |
 | 34 | v2.0 | 3/3 | Complete    | 2026-05-05 |
-| 35 | v2.0 | 0/? | Not started | — |
+| 35 | v2.0 | 1/4 | In Progress|  |
 | 36 | v2.0 | 0/? | Not started | — |
 | 37 | v2.0 | 0/? | Not started | — |
 | 38 | v2.0 | 0/? | Not started | — |
