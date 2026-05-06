@@ -10,6 +10,9 @@ const client = new Anthropic();
 const AGENT_CONFIGS_PATH =
   process.env.AGENT_CONFIGS_PATH ||
   `${process.env.HOME}/github/knowledge/agent-configs`;
+const PMO_AGENT_CONFIGS_PATH =
+  process.env.PMO_AGENT_CONFIGS_PATH ||
+  `${process.env.HOME}/github/PMO/agents`;
 
 async function tryRead(filePath: string, maxLines = 150): Promise<string | null> {
   try {
@@ -24,7 +27,18 @@ async function tryRead(filePath: string, maxLines = 150): Promise<string | null>
 }
 
 async function buildAgentContext(agentId: string): Promise<string> {
-  const dir = path.join(AGENT_CONFIGS_PATH, agentId);
+  const dirs = [
+    path.join(AGENT_CONFIGS_PATH, agentId),
+    path.join(PMO_AGENT_CONFIGS_PATH, agentId),
+  ];
+
+  let dir = dirs[0];
+  for (const candidate of dirs) {
+    if (await tryRead(path.join(candidate, "SOUL.md"), 1)) {
+      dir = candidate;
+      break;
+    }
+  }
 
   const [soul, memory, lessons, heartbeatState, heartbeat] = await Promise.all([
     tryRead(path.join(dir, "SOUL.md")),

@@ -12,6 +12,118 @@ interface ChatMessage {
   pending?: boolean;
 }
 
+type VoiceAgent = {
+  id: string;
+  name: string;
+  role?: string;
+  company?: string | null;
+  platform?: string;
+  protocol?: string;
+  masterId?: string;
+  metadata?: Record<string, unknown>;
+};
+
+interface VoiceAgentOption {
+  agent: VoiceAgent;
+  label: string;
+  detail: string;
+  group: "CLIs" | "Runtime subagents" | "Paperclip project agents" | "Kitchen / system";
+}
+
+const CLI_AGENT_IDS = new Set([
+  "claude-sonnet-engineer",
+  "codex-cli-agent",
+  "cursor-ide-agent",
+  "gemini-senior-engineer",
+  "qwen-engineer",
+]);
+
+const GROUP_ORDER: Record<VoiceAgentOption["group"], number> = {
+  "CLIs": 0,
+  "Runtime subagents": 1,
+  "Paperclip project agents": 2,
+  "Kitchen / system": 3,
+};
+
+function titleFromId(id: string): string {
+  return id
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function metadataString(agent: VoiceAgent, key: string): string | null {
+  const value = agent.metadata?.[key];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function projectLabel(agent: VoiceAgent): string {
+  const project = metadataString(agent, "project") ?? metadataString(agent, "workspace");
+  if (project) return project;
+
+  const sourcePath = metadataString(agent, "path");
+  if (sourcePath?.includes("/PMO/")) return "PMO";
+  if (sourcePath?.includes("/knowledge/")) return "Knowledge";
+
+  return agent.company ?? "Project";
+}
+
+function isCliAgent(agent: VoiceAgent): boolean {
+  const role = agent.role?.toLowerCase() ?? "";
+  return CLI_AGENT_IDS.has(agent.id) || role.includes(" cli ") || role.includes(" ide ");
+}
+
+function isRuntimeSubagent(agent: VoiceAgent): boolean {
+  return agent.platform === "hermes" || agent.platform === "openclaw" || Boolean(agent.masterId);
+}
+
+function cliLabel(agent: VoiceAgent): string {
+  if (agent.id === "claude-sonnet-engineer") return "Claude CLI - Sonnet Engineer";
+  if (agent.id === "codex-cli-agent") return "Codex CLI - Agent";
+  if (agent.id === "cursor-ide-agent") return "Cursor IDE - Agent";
+  if (agent.id === "qwen-engineer") return "Qwen CLI - Engineer";
+  if (agent.id === "gemini-senior-engineer") return "Gemini CLI - Senior Engineer";
+  return `${PLATFORM_LABELS[agent.platform ?? ""] ?? titleFromId(agent.platform ?? "CLI")} CLI - ${agent.name}`;
+}
+
+function buildVoiceAgentOption(agent: VoiceAgent): VoiceAgentOption {
+  const platformLabel = PLATFORM_LABELS[agent.platform ?? ""] ?? titleFromId(agent.platform ?? "agent");
+  const source = metadataString(agent, "source");
+
+  if (isCliAgent(agent)) {
+    return {
+      agent,
+      label: cliLabel(agent),
+      detail: agent.role ?? "Command-line interface identity",
+      group: "CLIs",
+    };
+  }
+
+  if (isRuntimeSubagent(agent)) {
+    return {
+      agent,
+      label: `${platformLabel} subagent - ${agent.name}`,
+      detail: agent.masterId ? `Subagent of ${agent.masterId}` : agent.role ?? `${platformLabel} runtime agent`,
+      group: "Runtime subagents",
+    };
+  }
+
+  if (source === "pmo-agents") {
+    return {
+      agent,
+      label: `PC (${projectLabel(agent)}) - ${agent.name}`,
+      detail: agent.role ?? "Paperclip project agent",
+      group: "Paperclip project agents",
+    };
+  }
+
+  return {
+    agent,
+    label: `Kitchen system - ${agent.name}`,
+    detail: agent.role ?? `${platformLabel} ${agent.protocol ?? "agent"}`,
+    group: "Kitchen / system",
+  };
+}
+
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
 function MicIcon({ className }: { className?: string }) {
@@ -87,16 +199,15 @@ async function streamChat(
 
 export function VoicePanel() {
   const { data: agentsData } = useAgents();
-  const rawAgents = agentsData?.agents;
+  const rawAgents = agentsData?.agents as VoiceAgent[] | undefined;
 
-  const agents = useMemo(() => {
-    return [...(rawAgents ?? [])].sort((a, b) => {
-      const runtimeA = PLATFORM_LABELS[a.platform as string] ?? a.platform ?? "zzz";
-      const runtimeB = PLATFORM_LABELS[b.platform as string] ?? b.platform ?? "zzz";
-      const aLabel = `${runtimeA} ${a.name}`;
-      const bLabel = `${runtimeB} ${b.name}`;
-      return aLabel.localeCompare(bLabel);
-    });
+  const agentOptions = useMemo(() => {
+    return [...(rawAgents ?? [])]
+      .map(buildVoiceAgentOption)
+      .sort((a, b) =>
+        GROUP_ORDER[a.group] - GROUP_ORDER[b.group] ||
+        a.label.localeCompare(b.label)
+      );
   }, [rawAgents]);
 
   const [collapsed, setCollapsed] = useState(false);
@@ -119,14 +230,16 @@ export function VoicePanel() {
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const selectedAgentId = selectedAgent || agents[0]?.id || "";
+  const selectedAgentIsAvailable = agentOptions.some((option) => option.agent.id === selectedAgent);
+  const selectedAgentId = selectedAgentIsAvailable ? selectedAgent : agentOptions[0]?.agent.id || "";
+  const selectedOption = agentOptions.find((option) => option.agent.id === selectedAgentId);
 
   // auto-scroll
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history]);
 
-  const selectedAgentLabel = agents.find((a) => a.id === selectedAgentId)?.name ?? selectedAgentId;
+  const selectedAgentLabel = selectedOption?.label ?? selectedAgentId;
 
   // ── Send a message (used by both chat input and voice recognition) ──────────
   const send = useCallback(async (msg: string) => {
@@ -264,14 +377,25 @@ export function VoicePanel() {
             onChange={(e) => { setSelectedAgent(e.target.value); setHistory([]); }}
             className="ml-1 rounded-md border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500/50"
           >
-            {agents.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.platform
-                  ? `${PLATFORM_LABELS[a.platform as string] ?? a.platform} → ${a.name}`
-                  : a.name}
-              </option>
-            ))}
+            {(["CLIs", "Runtime subagents", "Paperclip project agents", "Kitchen / system"] as VoiceAgentOption["group"][]).map((group) => {
+              const groupOptions = agentOptions.filter((option) => option.group === group);
+              if (groupOptions.length === 0) return null;
+              return (
+                <optgroup key={group} label={group}>
+                  {groupOptions.map((option) => (
+                    <option key={option.agent.id} value={option.agent.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
           </select>
+          {selectedOption && (
+            <span className="hidden max-w-[22rem] truncate text-[11px] text-slate-500 md:inline">
+              {selectedOption.detail}
+            </span>
+          )}
         </div>
         <button
           onClick={() => setCollapsed((c) => !c)}

@@ -14,8 +14,33 @@ import { useAgents } from "@/lib/api-client";
 const mockUseAgents = vi.mocked(useAgents);
 
 const FIXTURE_AGENTS = [
-  { id: "kitchen", name: "Kitchen Floor", company: null, platform: "claude" },
-  { id: "sophia",  name: "Sophia",        company: "Epilogue", platform: "claude" },
+  {
+    id: "claude-sonnet-engineer",
+    name: "Claude Sonnet Engineer",
+    role: "SOUL.md -- Claude Sonnet Engineer",
+    company: null,
+    platform: "claude",
+    protocol: "local",
+    metadata: { source: "pmo-agents", path: "/Users/lcalderon/github/PMO/agents/claude-sonnet-engineer" },
+  },
+  {
+    id: "content-creator",
+    name: "Content Creator",
+    role: "SOUL.md -- content-creator",
+    company: null,
+    platform: "codex",
+    protocol: "local",
+    metadata: { source: "pmo-agents", path: "/Users/lcalderon/github/PMO/agents/content-creator" },
+  },
+  {
+    id: "sophia",
+    name: "Sophia",
+    role: "Sous Chef (Marketing)",
+    company: "Epilogue",
+    platform: "openclaw",
+    protocol: "rest",
+    metadata: { source: "agents.config.json" },
+  },
 ];
 
 beforeEach(() => {
@@ -30,6 +55,13 @@ describe("VoicePanel", () => {
     render(<VoicePanel />);
     expect(screen.getByText("Voice & Chat")).toBeInTheDocument();
     expect(screen.getByRole("combobox")).toBeInTheDocument();
+  });
+
+  it("labels CLIs, Paperclip project agents, and runtime subagents distinctly", () => {
+    render(<VoicePanel />);
+    expect(screen.getByRole("option", { name: "Claude CLI - Sonnet Engineer" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "PC (PMO) - Content Creator" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "OpenClaw subagent - Sophia" })).toBeInTheDocument();
   });
 
   it("shows chat and voice tab buttons", () => {
