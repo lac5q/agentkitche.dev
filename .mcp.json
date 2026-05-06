@@ -22,8 +22,10 @@
       "command": "npx",
       "args": [
         "-y",
-        "@agentmemory/agentmemory",
-        "standalone"
+        "-p",
+        "@agentmemory/agentmemory@0.9.4",
+        "agentmemory",
+        "mcp"
       ]
     }
   }

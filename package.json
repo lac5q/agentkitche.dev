@@ -18,5 +18,9 @@
     "install:skill-curation": "node scripts/install-skill-curation-launchd.mjs",
     "profiles:check": "node scripts/validate-operating-profiles.mjs",
     "first-run:check": "node scripts/first-run-wizard.mjs --check"
+  },
+  "overrides": {
+    "ip-address": "10.2.0",
+    "postcss": "8.5.14"
   }
 }

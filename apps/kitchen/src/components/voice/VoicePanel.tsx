@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { useAgents } from "@/lib/api-client";
 import { PLATFORM_LABELS } from "@/lib/constants";
 
@@ -87,15 +87,17 @@ async function streamChat(
 
 export function VoicePanel() {
   const { data: agentsData } = useAgents();
-  const rawAgents = agentsData?.agents ?? [];
+  const rawAgents = agentsData?.agents;
 
-  const agents = [...rawAgents].sort((a, b) => {
-    const runtimeA = PLATFORM_LABELS[a.platform as string] ?? a.platform ?? "zzz";
-    const runtimeB = PLATFORM_LABELS[b.platform as string] ?? b.platform ?? "zzz";
-    const aLabel = `${runtimeA} ${a.name}`;
-    const bLabel = `${runtimeB} ${b.name}`;
-    return aLabel.localeCompare(bLabel);
-  });
+  const agents = useMemo(() => {
+    return [...(rawAgents ?? [])].sort((a, b) => {
+      const runtimeA = PLATFORM_LABELS[a.platform as string] ?? a.platform ?? "zzz";
+      const runtimeB = PLATFORM_LABELS[b.platform as string] ?? b.platform ?? "zzz";
+      const aLabel = `${runtimeA} ${a.name}`;
+      const bLabel = `${runtimeB} ${b.name}`;
+      return aLabel.localeCompare(bLabel);
+    });
+  }, [rawAgents]);
 
   const [collapsed, setCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "voice">("chat");
@@ -117,17 +119,14 @@ export function VoicePanel() {
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // default agent
-  useEffect(() => {
-    if (!selectedAgent && agents.length > 0) setSelectedAgent(agents[0].id);
-  }, [agents, selectedAgent]);
+  const selectedAgentId = selectedAgent || agents[0]?.id || "";
 
   // auto-scroll
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history]);
 
-  const selectedAgentLabel = agents.find((a) => a.id === selectedAgent)?.name ?? selectedAgent;
+  const selectedAgentLabel = agents.find((a) => a.id === selectedAgentId)?.name ?? selectedAgentId;
 
   // ── Send a message (used by both chat input and voice recognition) ──────────
   const send = useCallback(async (msg: string) => {
@@ -141,7 +140,7 @@ export function VoicePanel() {
     try {
       const snapshot = history.filter((m) => !m.pending);
       let assistantText = "";
-      await streamChat(msg, selectedAgent, snapshot, (text) => {
+      await streamChat(msg, selectedAgentId, snapshot, (text) => {
         assistantText = text;
         setHistory((h) => {
           const updated = [...h];
@@ -161,7 +160,7 @@ export function VoicePanel() {
     } finally {
       setLoading(false);
     }
-  }, [loading, history, selectedAgent]);
+  }, [loading, history, selectedAgentId]);
 
   // ── Chat tab: send on Enter ───────────────────────────────────────────────
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -193,7 +192,7 @@ export function VoicePanel() {
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, agentId: selectedAgent }),
+        body: JSON.stringify({ text, agentId: selectedAgentId }),
       });
       if (!res.ok) throw new Error(`TTS ${res.status}`);
       const blob = await res.blob();
@@ -206,7 +205,7 @@ export function VoicePanel() {
     } catch {
       setSpeaking(false);
     }
-  }, [selectedAgent]);
+  }, [selectedAgentId, setSpeaking]);
 
   const startListening = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -248,7 +247,7 @@ export function VoicePanel() {
     rec.onerror = () => { stopListening(); };
     rec.onend = () => { setListening(false); setInterimText(""); };
     rec.start();
-  }, [listening, stopListening, send, speak]);
+  }, [listening, stopListening, send, speak, setSpeaking]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -261,7 +260,7 @@ export function VoicePanel() {
             Voice &amp; Chat
           </span>
           <select
-            value={selectedAgent}
+            value={selectedAgentId}
             onChange={(e) => { setSelectedAgent(e.target.value); setHistory([]); }}
             className="ml-1 rounded-md border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500/50"
           >
