@@ -1,49 +1,87 @@
 # Agent Kitchen
 
-> A local-first control plane for startups running many agents across many machines.
-
-Agent Kitchen is an open-source operations hub for multi-agent systems. It gives a team one durable place to register agents, expose A2A-compatible task endpoints, track liveness, route memory writes, inspect knowledge and memory health, and hand complex work to orchestration when coordination needs to survive beyond a single prompt.
-
-Kitchen is built for the messy middle between experiments and production: Claude Code on one machine, OpenClaw or Hermes on another, Google ADK services on a private network, a LangGraph router on a server, and a founder who needs to see what is alive, what is stuck, and what can safely receive work.
+<p align="center">
+  <strong>The local-first control plane for operating real multi-agent fleets.</strong>
+</p>
 
 <p align="center">
+  Register agents, inspect liveness, dispatch work, broker A2A tasks, route memory, and keep a startup-sized agent society from becoming soup.
+</p>
+
+<p align="center">
+  <a href="https://github.com/lac5q/agent-kitchen/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-10b981.svg"></a>
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black.svg">
+  <img alt="A2A ready" src="https://img.shields.io/badge/A2A-ready-0ea5e9.svg">
+  <img alt="Local first" src="https://img.shields.io/badge/local--first-yes-f59e0b.svg">
+  <img alt="Security" src="https://img.shields.io/badge/security-operator--gated-ef4444.svg">
+</p>
+
+<p align="center">
+  <a href="#demo">Demo</a> |
   <a href="#quickstart">Quickstart</a> |
+  <a href="#why-star-this-repo">Why Star</a> |
   <a href="#architecture">Architecture</a> |
-  <a href="#agent-registry">Agent Registry</a> |
   <a href="#security-model">Security</a> |
   <a href="#docs">Docs</a>
 </p>
 
 ---
 
-## Why Kitchen Exists
+## Demo
 
-Most agent stacks are excellent at creating one agent. Startups quickly run into a different problem: operating a small society of agents.
+Agent Kitchen is a dashboard and API surface for the part of agent systems that usually lives in scattered terminal tabs, notebooks, cron logs, local databases, and half-remembered shell scripts.
 
-Kitchen focuses on the operating layer:
+<p align="center">
+  <img src="docs/screenshots/readme-flow.png" alt="Agent Kitchen Flow map showing agents, memory, gateways, skills, dispatch paths, and system health" width="900">
+</p>
 
-- Which agents exist?
-- Which machine are they on?
-- Which protocol do they speak?
-- Are they alive?
-- What can they do?
-- Which memory system should receive their reports?
-- Which tasks need a broker, a human approval gate, or durable orchestration?
+<p align="center">
+  <em>The Flow map gives operators a live topology of agents, infrastructure, memory, skills, and task paths.</em>
+</p>
 
-Kitchen does not try to replace your agent framework. It gives your frameworks a shared registry, transport surface, memory boundary, and operator dashboard.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/readme-dispatch.png" alt="Dispatch page with A2A agent cards and live delegations"></td>
+    <td width="50%"><img src="docs/screenshots/readme-library.png" alt="Library page with knowledge collections, health, freshness alerts, and growth trends"></td>
+  </tr>
+  <tr>
+    <td><strong>Dispatch</strong><br>Send tasks to registered agents and inspect live delegation state.</td>
+    <td><strong>Library</strong><br>Track knowledge files, memory health, freshness gaps, and collection growth.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/readme-apo.png" alt="Agent Lightning APO proposals with approve workflow"></td>
+    <td width="50%"><img src="docs/screenshots/readme-ledger.png" alt="Ledger page with memory and system status panels"></td>
+  </tr>
+  <tr>
+    <td><strong>APO review</strong><br>Approve self-learning proposals before they modify skills or agent instructions.</td>
+    <td><strong>Ledger</strong><br>Watch memory, recall, audit, and operational signals from one place.</td>
+  </tr>
+</table>
 
-```mermaid
-flowchart LR
-  Human["Operator"] --> UI["Kitchen UI"]
-  UI --> Registry["Canonical Agent Registry"]
-  Registry --> Agents["Agent Fleet"]
-  Agents --> Reports["Heartbeats, skills, memory, outcomes"]
-  Reports --> Kitchen["Kitchen APIs"]
-  Kitchen --> Memory["Memory Tiers"]
-  Kitchen --> Broker["A2A + REST Broker"]
-  Broker --> Orchestration["LangGraph / durable routing"]
-  Orchestration --> Human
-```
+> Want a video? A short demo recording is planned. Until then, the screenshots above are captured from the live local app and represent the intended operator experience.
+
+## Why Star This Repo
+
+Star Agent Kitchen if you are building agent systems that are moving from clever demos into daily operations.
+
+- **You run more than one agent.** Claude Code, Codex, OpenClaw, Hermes, Google ADK, LangGraph, CrewAI, AutoGen, custom HTTP workers: Kitchen gives them one roster.
+- **You care where agents live.** Local machine, VM, Tailscale host, Cloudflare tunnel, LAN box, cloud URL: the registry keeps location and reachability explicit.
+- **You want standards without waiting for everyone.** A2A is the preferred path; REST shims keep non-A2A agents useful today.
+- **You need memory boundaries.** Knowledge files, vector memory, graph memory, episodic memory, and audit logs are separated on purpose.
+- **You want operator control.** Registry writes, destructive actions, and self-learning proposals are gated instead of casually automated.
+- **You believe agents need infrastructure.** Not just prompts. Not just chat. A system of record.
+
+## What You Can Do In 5 Minutes
+
+After setup, you can:
+
+1. Open the Kitchen UI.
+2. Register a local or remote agent.
+3. See it appear in the canonical registry.
+4. Send heartbeats, memory writes, or skill reports through REST.
+5. Ingest an A2A agent card and dispatch a task.
+6. Inspect memory and knowledge health from the Library.
+7. Review APO proposals before they modify skills.
 
 ## What Kitchen Does
 
@@ -52,10 +90,19 @@ flowchart LR
 - **REST shim:** Framework-agnostic endpoints for agents that do not speak A2A yet.
 - **Dispatch:** Send work to registered agents and inspect live delegation history.
 - **Flow map:** Visual system topology for agents, memory, skills, dispatch, and infrastructure.
-- **Knowledge Library:** Live file counts for configured knowledge collections such as skills, projects, recordings, emails, and docs.
+- **Knowledge Library:** File counts, freshness alerts, collection maps, and growth trends for configured knowledge folders.
 - **Memory routing:** Vector memory through mem0/Qdrant, graph memory through Neo4j, and episodic/audit memory in Kitchen SQLite.
-- **APO review:** Review and approve self-learning skill improvement proposals.
+- **APO review:** Approve self-learning skill improvement proposals before they are applied.
 - **Operator security:** Operator-gated registry writes plus per-agent bearer keys for write/reporting endpoints.
+
+## What Kitchen Is Not
+
+- Not a replacement for Claude Code, Codex, OpenClaw, Hermes, Google ADK, LangGraph, CrewAI, or AutoGen.
+- Not a hosted SaaS control plane.
+- Not an excuse to expose your agents directly to the public internet.
+- Not finished. It is useful, hackable, and moving fast.
+
+Kitchen is the operating layer between frameworks.
 
 ## Architecture
 
@@ -187,17 +234,9 @@ Kitchen is designed to start private and become public only when you mean it.
 
 ```mermaid
 flowchart LR
-  subgraph Private["Recommended startup shape"]
-    Founder["Founder laptop"]
-    Server["Kitchen server"]
-    Agents["Agent machines"]
-    Tailnet["Tailscale / private LAN"]
-  end
-
-  Founder <--> Tailnet
-  Server <--> Tailnet
-  Agents <--> Tailnet
-
+  Founder["Founder laptop"] <--> Tailnet["Tailscale / private LAN"]
+  Server["Kitchen server"] <--> Tailnet
+  Agents["Agent machines"] <--> Tailnet
   Tailnet --> Auth["Operator key + per-agent bearer keys"]
   Auth --> Kitchen["Agent Kitchen"]
 ```
@@ -215,8 +254,6 @@ See [Install profiles](docs/install-profiles.md).
 ## Agent Registry
 
 Kitchen has one canonical registry. The `/agents` page shows this DB-backed roster, not ad hoc files.
-
-There are two common ways to register agents.
 
 ### Register a REST agent
 
@@ -250,10 +287,6 @@ curl -X POST http://localhost:3000/api/a2a/agents/register \
 ```
 
 The response may include an API key unless `issueApiKey` is false. Store it securely. Kitchen never displays stored bearer tokens after creation.
-
-### Legacy remote agents
-
-Older `agents.config.json` entries are legacy remote polling config. They are useful as migration input, but they are not the canonical registry until you register them through the API or ingest an A2A card.
 
 If `/agents` shows fewer agents than expected, check:
 
@@ -363,10 +396,30 @@ agent-kitchen/
 - [LangGraph integration](docs/integrations/langgraph.md)
 - [CrewAI and AutoGen integration](docs/integrations/crewai-autogen.md)
 
-## Status
+## Roadmap
 
-Agent Kitchen is actively evolving. The current focus is making the registry, A2A transport, memory routing, and operator UI sturdy enough for a real multi-agent startup deployment while keeping the system hackable for local workflows.
+Near-term focus:
+
+- More A2A compatibility fixtures and interop tests.
+- Cleaner first-run onboarding for non-localhost deployments.
+- Better demo recording and hosted screenshot gallery.
+- More adapters for popular agent runtimes.
+- Hardened production profile examples for Tailscale, Docker, and HTTPS reverse proxies.
+
+## Contributing
+
+This project is early, but useful contributions are very welcome.
+
+Good first contribution areas:
+
+- Add an adapter for an agent framework you use.
+- Improve setup docs for your deployment shape.
+- Add screenshots or recordings from a real multi-machine setup.
+- Add A2A compatibility fixtures.
+- Improve security tests around registry writes and memory reads.
+
+If Agent Kitchen helps you run more than one agent without losing the plot, please star the repo. It helps the project find the people building the same weird, useful future.
 
 ## License
 
-License and OSS governance are finalized in Phase 41.
+MIT. See [LICENSE](LICENSE).
