@@ -209,4 +209,31 @@
   .ak-workspace pre {
     color: #0f172a;
   }
+
+  .flow-controls-paperclip {
+    overflow: hidden;
+    border: 1px solid #dbeafe !important;
+    border-radius: 14px !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
+  }
+
+  .flow-controls-paperclip button {
+    width: 34px !important;
+    height: 34px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    color: #334155 !important;
+  }
+
+  .flow-controls-paperclip button:hover {
+    background: #ecfeff !important;
+    color: #075985 !important;
+  }
+
+  .flow-controls-paperclip button svg {
+    fill: currentColor;
+    max-width: 14px;
+    max-height: 14px;
+  }
 }

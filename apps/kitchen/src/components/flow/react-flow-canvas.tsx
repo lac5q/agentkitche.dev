@@ -5,7 +5,6 @@ import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
   type Node,
   type Edge,
   type NodeTypes,
@@ -68,6 +67,63 @@ function agentStats(agent: RegisteredFlowAgent): Record<string, string | number>
   };
 }
 
+const STATUS_THEME = {
+  active: {
+    accent: "#06b6d4",
+    text: "#075985",
+    bg: "#ecfeff",
+    ring: "rgba(6, 182, 212, 0.28)",
+  },
+  idle: {
+    accent: "#f59e0b",
+    text: "#92400e",
+    bg: "#fffbeb",
+    ring: "rgba(245, 158, 11, 0.22)",
+  },
+  dormant: {
+    accent: "#cbd5e1",
+    text: "#475569",
+    bg: "#f8fafc",
+    ring: "rgba(148, 163, 184, 0.18)",
+  },
+  error: {
+    accent: "#f43f5e",
+    text: "#be123c",
+    bg: "#fff1f2",
+    ring: "rgba(244, 63, 94, 0.22)",
+  },
+} as const;
+
+const NODE_ICONS: Record<string, string> = {
+  request: "✉",
+  gateways: "▤",
+  manager: "⌘",
+  output: "↗",
+  tunnels: "◌",
+  taskboard: "□",
+  notebooks: "●",
+  librarian: "⌕",
+  cookbooks: "▰",
+  "tool-gateway": "⌑",
+  apo: "⚡",
+  gitnexus: "◇",
+  llmwiki: "◫",
+  "local-agents": "CLI",
+};
+
+function agentIcon(agent: RegisteredFlowAgent) {
+  const haystack = `${agent.platform ?? ""} ${agent.protocol ?? ""} ${agent.name} ${agent.id}`.toLowerCase();
+  if (haystack.includes("codex")) return "Cx";
+  if (haystack.includes("claude")) return "Cl";
+  if (haystack.includes("qwen")) return "Qw";
+  if (haystack.includes("gemini")) return "Gm";
+  if (haystack.includes("hermes")) return "He";
+  if (haystack.includes("openclaw") || haystack.includes("claw")) return "Oc";
+  if (haystack.includes("adk")) return "ADK";
+  const words = agent.name.match(/[A-Za-z0-9]+/g) ?? [agent.id];
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("") || "AI";
+}
+
 // Custom node component
 function FlowNode({ data }: {
   data: {
@@ -78,34 +134,50 @@ function FlowNode({ data }: {
     highlighted: boolean;
   }
 }) {
-  const STATUS_COLORS = { active: "#10b981", idle: "#f59e0b", dormant: "#64748b", error: "#f43f5e" };
-  const color = STATUS_COLORS[data.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.dormant;
+  const theme = STATUS_THEME[data.status as keyof typeof STATUS_THEME] || STATUS_THEME.dormant;
   const isActive = data.status === "active" || data.highlighted;
+  const displayIcon = data.icon || NODE_ICONS[data.label.toLowerCase()] || "AI";
+  const isTextIcon = /^[A-Z0-9]{2,3}$/i.test(displayIcon);
 
   return (
-    <div className="flex flex-col items-center" style={{ width: 90 }}>
-      <Handle type="target" position={Position.Left} style={{ opacity: 0, top: 40 }} />
+    <div className="flex flex-col items-center" style={{ width: 112 }}>
+      <Handle type="target" position={Position.Left} style={{ opacity: 0, top: 36 }} />
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       <div
-        className="flex items-center justify-center rounded-2xl cursor-pointer"
+        className="relative flex cursor-pointer items-center justify-center rounded-2xl"
         style={{
-          width: 80,
-          height: 80,
-          background: "#0f172a",
-          border: `2px solid ${data.highlighted ? "#f59e0b" : color}`,
-          boxShadow: isActive ? `0 0 16px ${data.highlighted ? "#f59e0b" : color}60` : "none",
+          width: 76,
+          height: 76,
+          background: data.highlighted ? "#ecfeff" : "#ffffff",
+          border: `1px solid ${data.highlighted ? "#67e8f9" : "#dbeafe"}`,
+          boxShadow: isActive
+            ? `0 18px 36px ${theme.ring}, 0 0 0 4px ${theme.ring}`
+            : "0 12px 28px rgba(15, 23, 42, 0.08)",
           transition: "all 0.2s",
         }}
       >
-        <span style={{ fontSize: 28 }}>{data.icon}</span>
+        <span
+          className="absolute left-2 top-2 h-2 w-2 rounded-full"
+          style={{ background: theme.accent }}
+        />
+        <span
+          className={isTextIcon ? "font-semibold tracking-tight" : ""}
+          style={{
+            color: theme.text,
+            fontSize: isTextIcon ? 18 : 28,
+            lineHeight: 1,
+          }}
+        >
+          {displayIcon}
+        </span>
       </div>
-      <p style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", marginTop: 4, textAlign: "center", maxWidth: 88 }} className="truncate">
+      <p style={{ fontSize: 11, fontWeight: 650, color: "#0f172a", marginTop: 7, textAlign: "center", maxWidth: 108 }} className="truncate">
         {data.label}
       </p>
-      <p style={{ fontSize: 8, color: "#64748b", textAlign: "center", maxWidth: 88 }} className="truncate">
+      <p style={{ fontSize: 9, color: "#64748b", textAlign: "center", maxWidth: 108 }} className="truncate">
         {data.subtitle}
       </p>
-      <Handle type="source" position={Position.Right} style={{ opacity: 0, top: 40 }} />
+      <Handle type="source" position={Position.Right} style={{ opacity: 0, top: 36 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>
   );
@@ -124,8 +196,8 @@ function GroupBoxNode({ data }: {
     onToggleCollapse?: () => void;
   }
 }) {
-  const borderColor = data.collapsed && data.aggregateColor ? data.aggregateColor : "#334155";
-  const bgColor = data.collapsed ? "rgba(15, 23, 42, 0.7)" : "rgba(15, 23, 42, 0.4)";
+  const borderColor = data.collapsed && data.aggregateColor ? data.aggregateColor : "#bfdbfe";
+  const bgColor = data.collapsed ? "rgba(239, 246, 255, 0.9)" : "rgba(248, 250, 252, 0.72)";
 
   return (
     <div
@@ -133,12 +205,13 @@ function GroupBoxNode({ data }: {
       style={{
         width: data.width,
         height: data.collapsed ? 40 : data.height,
-        border: `1.5px dashed ${borderColor}`,
-        borderRadius: 12,
+        border: `1px dashed ${borderColor}`,
+        borderRadius: 18,
         background: bgColor,
         position: "relative",
         cursor: "pointer",
         transition: "all 0.2s",
+        boxShadow: data.collapsed ? "0 10px 24px rgba(15, 23, 42, 0.06)" : "none",
       }}
     >
       <span
@@ -146,11 +219,11 @@ function GroupBoxNode({ data }: {
           position: "absolute",
           top: 6,
           left: 12,
-          fontSize: 9,
-          fontWeight: 600,
-          color: data.collapsed ? (data.aggregateColor ?? "#475569") : "#475569",
+          fontSize: 10,
+          fontWeight: 700,
+          color: data.collapsed ? (data.aggregateColor ?? "#64748b") : "#64748b",
           textTransform: "uppercase",
-          letterSpacing: "0.05em",
+          letterSpacing: "0.12em",
         }}
       >
         {data.label}
@@ -161,7 +234,7 @@ function GroupBoxNode({ data }: {
           top: 6,
           right: 12,
           fontSize: 9,
-          color: "#475569",
+          color: "#94a3b8",
         }}
       >
         {data.collapsed ? "▶" : "▼"}
@@ -175,12 +248,12 @@ const nodeTypes: NodeTypes = { flowNode: FlowNode, groupBoxNode: GroupBoxNode };
 // Layout constants — agent group
 const agentSpacing = 120;
 const agentStartX = 100;
-const agentY = 280;
+const agentY = 380;
 
 // Layout constants — dev tool group
 const DEV_TOOL_SPACING = 160;
 const DEV_TOOL_START_X = 160;
-const DEV_TOOL_Y = 560;
+const DEV_TOOL_Y = 680;
 interface ReactFlowCanvasProps {
   services: HealthStatus[];
   agentCount: number;
@@ -203,30 +276,126 @@ interface ReactFlowCanvasProps {
 const EDGE_COLORS = {
   request: "#f59e0b",
   knowledge: "#10b981",
-  memory: "#0ea5e9",
-  apo: "#8b5cf6",
+  memory: "#0284c7",
+  apo: "#6366f1",
+  tools: "#06b6d4",
 };
 
-function minimapNodeColor(node: Node): string {
-  if (node.type === "groupBoxNode") return "transparent";
-  const status = (node.data as { status?: string }).status;
-  return status === "active"
-    ? "#34d399"
-    : status === "error"
-      ? "#fb7185"
-      : status === "idle"
-        ? "#fbbf24"
-        : "#64748b";
+function edgeStroke(edge: Edge) {
+  const stroke = edge.style?.stroke;
+  return typeof stroke === "string" ? stroke : "#94a3b8";
 }
 
-function minimapNodeStrokeColor(node: Node): string {
-  if (node.type === "groupBoxNode") return "transparent";
+function nodeAccent(node: Node) {
   const status = (node.data as { status?: string }).status;
-  return status === "active"
-    ? "#a7f3d0"
-    : status === "error"
-      ? "#fecdd3"
-      : "#cbd5e1";
+  return (STATUS_THEME[status as keyof typeof STATUS_THEME] || STATUS_THEME.dormant).accent;
+}
+
+function absoluteNodePosition(node: Node, nodeById: Map<string, Node>) {
+  let x = node.position.x;
+  let y = node.position.y;
+  let parentId = node.parentId;
+  while (parentId) {
+    const parent = nodeById.get(parentId);
+    if (!parent) break;
+    x += parent.position.x;
+    y += parent.position.y;
+    parentId = parent.parentId;
+  }
+  return { x, y };
+}
+
+function MiniOverview({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) {
+  const visibleNodes = nodes.filter((node) => !node.hidden);
+  const nodeById = new Map(visibleNodes.map((node) => [node.id, node]));
+  const points = visibleNodes.flatMap((node) => {
+    const position = absoluteNodePosition(node, nodeById);
+    const width = typeof node.data?.width === "number" ? node.data.width : 80;
+    const height = typeof node.data?.height === "number" ? node.data.height : 80;
+    return [
+      { x: position.x, y: position.y },
+      { x: position.x + width, y: position.y + height },
+    ];
+  });
+
+  if (points.length === 0) return null;
+
+  const minX = Math.min(...points.map((point) => point.x));
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxX = Math.max(...points.map((point) => point.x));
+  const maxY = Math.max(...points.map((point) => point.y));
+  const width = Math.max(maxX - minX, 1);
+  const height = Math.max(maxY - minY, 1);
+  const pad = 28;
+  const viewBox = `${minX - pad} ${minY - pad} ${width + pad * 2} ${height + pad * 2}`;
+
+  const flowNodes = visibleNodes.filter((node) => node.type !== "groupBoxNode");
+
+  return (
+    <div className="pointer-events-none absolute bottom-4 right-4 z-10 w-56 rounded-xl border border-sky-100 bg-white/95 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Mini view</span>
+        <span className="text-[10px] text-slate-400">{flowNodes.length} nodes</span>
+      </div>
+      <svg viewBox={viewBox} className="h-28 w-full overflow-visible rounded-lg bg-slate-50">
+        <rect x={minX - pad} y={minY - pad} width={width + pad * 2} height={height + pad * 2} rx="18" fill="#f8fafc" />
+        {edges.map((edge) => {
+          const source = nodeById.get(edge.source);
+          const target = nodeById.get(edge.target);
+          if (!source || !target) return null;
+          const sourcePosition = absoluteNodePosition(source, nodeById);
+          const targetPosition = absoluteNodePosition(target, nodeById);
+          return (
+            <line
+              key={edge.id}
+              x1={sourcePosition.x + 38}
+              y1={sourcePosition.y + 38}
+              x2={targetPosition.x + 38}
+              y2={targetPosition.y + 38}
+              stroke={edgeStroke(edge)}
+              strokeOpacity="0.36"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          );
+        })}
+        {visibleNodes.filter((node) => node.type === "groupBoxNode").map((node) => {
+          const position = absoluteNodePosition(node, nodeById);
+          const widthValue = typeof node.data?.width === "number" ? node.data.width : 160;
+          const heightValue = typeof node.data?.height === "number" ? node.data.height : 80;
+          return (
+            <rect
+              key={node.id}
+              x={position.x}
+              y={position.y}
+              width={widthValue}
+              height={heightValue}
+              rx="18"
+              fill="#e0f2fe"
+              fillOpacity="0.24"
+              stroke="#bae6fd"
+              strokeWidth="3"
+              strokeDasharray="10 8"
+            />
+          );
+        })}
+        {flowNodes.map((node) => {
+          const position = absoluteNodePosition(node, nodeById);
+          return (
+            <circle
+              key={node.id}
+              cx={position.x + 38}
+              cy={position.y + 38}
+              r="16"
+              fill={nodeAccent(node)}
+              stroke="#ffffff"
+              strokeWidth="5"
+            />
+          );
+        })}
+      </svg>
+    </div>
+  );
 }
 
 export function ReactFlowCanvas({
@@ -294,14 +463,14 @@ export function ReactFlowCanvas({
   const nodes: Node[] = useMemo(() => {
     // Ungrouped static nodes — these stay at absolute coordinates and do NOT get parentId
     const staticNodes: Node[] = [
-      { id: "request",   position: { x: 20,  y: 100 }, data: { label: "User / Telegram", subtitle: "input channel",        icon: "📨", status: getStatus("request"),   highlighted: highlightedNode === "request"   }, type: "flowNode" },
-      { id: "gateways",  position: { x: 160, y: 100 }, data: { label: "Gateways",         subtitle: "registered entrypoints", icon: "🚪", status: getStatus("gateways"),  highlighted: highlightedNode === "gateways"  }, type: "flowNode" },
-      { id: "manager",   position: { x: 560, y: 100 }, data: { label: "Paperclip",        subtitle: "orchestrator",         icon: "📞", status: getStatus("manager"),   highlighted: highlightedNode === "manager"   }, type: "flowNode" },
-      { id: "output",    position: { x: 720, y: 100 }, data: { label: "Response",         subtitle: "Discord · Telegram",   icon: "📤", status: getStatus("output"),    highlighted: highlightedNode === "output"    }, type: "flowNode" },
-      { id: "tunnels",   position: { x: 20,  y: 420 }, data: { label: "CF Tunnels",       subtitle: "your-tunnel.domain",  icon: "📡", status: getStatus("tunnels"),   highlighted: highlightedNode === "tunnels"   }, type: "flowNode" },
-      { id: "taskboard", position: { x: 160, y: 420 }, data: { label: "Task Board",       subtitle: "Nerve Kanban",         icon: "📋", status: getStatus("taskboard"), highlighted: highlightedNode === "taskboard" }, type: "flowNode" },
-      { id: "notebooks", position: { x: 460, y: 420 }, data: { label: "mem0",             subtitle: "semantic memory",      icon: "🧠", status: getStatus("notebooks"), highlighted: highlightedNode === "notebooks" }, type: "flowNode" },
-      { id: "librarian", position: { x: 600, y: 420 }, data: { label: "QMD",              subtitle: "3,445 docs",           icon: "🔍", status: getStatus("librarian"), highlighted: highlightedNode === "librarian" }, type: "flowNode" },
+      { id: "request",   position: { x: 20,  y: 170 }, data: { label: "User / Telegram", subtitle: "input channel",        icon: NODE_ICONS.request, status: getStatus("request"),   highlighted: highlightedNode === "request"   }, type: "flowNode" },
+      { id: "gateways",  position: { x: 160, y: 170 }, data: { label: "Gateways",         subtitle: "registered entrypoints", icon: NODE_ICONS.gateways, status: getStatus("gateways"),  highlighted: highlightedNode === "gateways"  }, type: "flowNode" },
+      { id: "manager",   position: { x: 560, y: 170 }, data: { label: "Paperclip",        subtitle: "orchestrator",         icon: NODE_ICONS.manager, status: getStatus("manager"),   highlighted: highlightedNode === "manager"   }, type: "flowNode" },
+      { id: "output",    position: { x: 720, y: 170 }, data: { label: "Response",         subtitle: "Discord · Telegram",   icon: NODE_ICONS.output, status: getStatus("output"),    highlighted: highlightedNode === "output"    }, type: "flowNode" },
+      { id: "tunnels",   position: { x: 20,  y: 520 }, data: { label: "CF Tunnels",       subtitle: "your-tunnel.domain",  icon: NODE_ICONS.tunnels, status: getStatus("tunnels"),   highlighted: highlightedNode === "tunnels"   }, type: "flowNode" },
+      { id: "taskboard", position: { x: 160, y: 520 }, data: { label: "Task Board",       subtitle: "Nerve Kanban",         icon: NODE_ICONS.taskboard, status: getStatus("taskboard"), highlighted: highlightedNode === "taskboard" }, type: "flowNode" },
+      { id: "notebooks", position: { x: 460, y: 520 }, data: { label: "mem0",             subtitle: "semantic memory",      icon: NODE_ICONS.notebooks, status: getStatus("notebooks"), highlighted: highlightedNode === "notebooks" }, type: "flowNode" },
+      { id: "librarian", position: { x: 600, y: 520 }, data: { label: "QMD",              subtitle: "3,445 docs",           icon: NODE_ICONS.librarian, status: getStatus("librarian"), highlighted: highlightedNode === "librarian" }, type: "flowNode" },
     ];
 
     // Compute aggregate health colors for each group from their children's statuses
@@ -360,7 +529,7 @@ export function ReactFlowCanvas({
       data: {
         label: agent.name,
         subtitle: agentSubtitle(agent),
-        icon: agent.name.slice(0, 2).toUpperCase(),
+        icon: agentIcon(agent),
         status: agent.status === "active" ? "active" : "dormant",
         highlighted: highlightedNode === `agent-${agent.id}`,
       },
@@ -378,7 +547,7 @@ export function ReactFlowCanvas({
       data: {
         label: `${localActiveCount} Active`,
         subtitle: `${localTotalCount} local chefs`,
-        icon: "👨‍🍳",
+        icon: NODE_ICONS["local-agents"],
         status: localActiveCount > 0 ? "active" : "idle",
         highlighted: highlightedNode === "local-agents",
       },
@@ -389,11 +558,11 @@ export function ReactFlowCanvas({
     // Absolute: { x: DEV_TOOL_START_X + i * DEV_TOOL_SPACING, y: DEV_TOOL_Y }
     // Relative:  { x: 15 + i * DEV_TOOL_SPACING, y: 32 }
     const devToolNodes: Node[] = [
-      { id: "cookbooks", data: { label: "Skills",          subtitle: skillCount > 0 ? `${skillCount} skills · ${coverageGapsCount} gaps` : "skillshare", icon: "📚", status: getStatus("cookbooks"), highlighted: highlightedNode === "cookbooks" } },
-      { id: "tool-gateway", data: { label: "Tool Gateway", subtitle: toolCapabilityCount > 0 ? `${toolCapabilityCount} caps · ${toolWorkspaceCount} spaces` : "progressive MCP", icon: "🧰", status: getStatus("tool-gateway"), highlighted: highlightedNode === "tool-gateway" } },
-      { id: "apo",       data: { label: "Agent Lightning", subtitle: "APO · hourly",        icon: "⚡", status: getStatus("apo"),       highlighted: highlightedNode === "apo"       } },
-      { id: "gitnexus",  data: { label: "GitNexus",        subtitle: "code graph",          icon: "🗺️", status: getStatus("gitnexus"),  highlighted: highlightedNode === "gitnexus"  } },
-      { id: "llmwiki",   data: { label: "LLM Wiki",        subtitle: "knowledge wiki",      icon: "📖", status: getStatus("llmwiki"),   highlighted: highlightedNode === "llmwiki"   } },
+      { id: "cookbooks", data: { label: "Skills",          subtitle: skillCount > 0 ? `${skillCount} skills · ${coverageGapsCount} gaps` : "skillshare", icon: NODE_ICONS.cookbooks, status: getStatus("cookbooks"), highlighted: highlightedNode === "cookbooks" } },
+      { id: "tool-gateway", data: { label: "Tool Gateway", subtitle: toolCapabilityCount > 0 ? `${toolCapabilityCount} caps · ${toolWorkspaceCount} spaces` : "progressive MCP", icon: NODE_ICONS["tool-gateway"], status: getStatus("tool-gateway"), highlighted: highlightedNode === "tool-gateway" } },
+      { id: "apo",       data: { label: "Agent Lightning", subtitle: "APO · hourly",        icon: NODE_ICONS.apo, status: getStatus("apo"),       highlighted: highlightedNode === "apo"       } },
+      { id: "gitnexus",  data: { label: "GitNexus",        subtitle: "code graph",          icon: NODE_ICONS.gitnexus, status: getStatus("gitnexus"),  highlighted: highlightedNode === "gitnexus"  } },
+      { id: "llmwiki",   data: { label: "LLM Wiki",        subtitle: "knowledge wiki",      icon: NODE_ICONS.llmwiki, status: getStatus("llmwiki"),   highlighted: highlightedNode === "llmwiki"   } },
     ].map((node, i) => ({
       ...node,
       parentId: "group-devtools",
@@ -438,7 +607,7 @@ export function ReactFlowCanvas({
 
     const extraEdges: Edge[] = [
       { id: "agents-apo",  source: "local-agents", target: "apo",      animated: true, style: { stroke: EDGE_COLORS.apo,       strokeWidth: 1.5 } },
-      { id: "agents-tools", source: "local-agents", target: "tool-gateway", animated: true, style: { stroke: "#06b6d4", strokeWidth: 1.5 } },
+      { id: "agents-tools", source: "local-agents", target: "tool-gateway", animated: true, style: { stroke: EDGE_COLORS.tools, strokeWidth: 1.5 } },
       { id: "agents-gnx",  source: "local-agents", target: "gitnexus", animated: true, style: { stroke: EDGE_COLORS.knowledge, strokeWidth: 1.5 } },
       { id: "agents-wiki", source: "local-agents", target: "llmwiki",  animated: true, style: { stroke: EDGE_COLORS.knowledge, strokeWidth: 1.5 } },
     ];
@@ -458,43 +627,25 @@ export function ReactFlowCanvas({
   }, [onNodeClick]);
 
   return (
-    <div style={{ width: "100%", height: 620, borderRadius: 12, overflow: "hidden", border: "1px solid #1e293b" }}>
+    <div className="relative h-[640px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+      <div className="pointer-events-none absolute left-5 top-4 z-10 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 shadow-sm">
+        Live topology
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         onNodeClick={handleNodeClick}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
+        defaultViewport={{ x: 220, y: 15, zoom: 0.72 }}
         minZoom={0.3}
         maxZoom={2}
         attributionPosition="bottom-left"
-        colorMode="dark"
+        colorMode="light"
       >
-        <Background color="#1e293b" gap={24} variant={BackgroundVariant.Dots} />
-        <Controls className="bg-slate-900 border border-slate-800" />
-        <MiniMap
-          ariaLabel="Flow overview minimap"
-          pannable
-          zoomable
-          bgColor="#020617"
-          maskColor="rgba(15, 23, 42, 0.35)"
-          maskStrokeColor="#f59e0b"
-          maskStrokeWidth={2}
-          nodeColor={minimapNodeColor}
-          nodeStrokeColor={minimapNodeStrokeColor}
-          nodeStrokeWidth={3}
-          nodeBorderRadius={10}
-          offsetScale={10}
-          style={{
-            width: 220,
-            height: 160,
-            border: "1px solid #334155",
-            borderRadius: 8,
-            boxShadow: "0 0 0 1px rgba(245, 158, 11, 0.12), 0 18px 40px rgba(0, 0, 0, 0.45)",
-          }}
-        />
+        <Background color="#dbeafe" gap={28} size={1.2} variant={BackgroundVariant.Dots} />
+        <Controls className="flow-controls-paperclip" />
       </ReactFlow>
+      <MiniOverview nodes={nodes} edges={edges} />
     </div>
   );
 }
