@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # launchd entrypoint for agent-kitchen.
-# Exits 0 (without launching) if :3002 is already held by another process,
-# so launchd's KeepAlive does not pile up duplicate kitchens during a respawn storm.
+# Runs the real Next server as the launchd-tracked process. Avoid npm wrapper
+# chains here: if next-server exits but npm survives, launchd thinks Kitchen is
+# still healthy while nothing is listening on :3002.
 
 set -u
 PORT="${PORT:-3002}"
@@ -24,4 +25,4 @@ if existing_pid=$(lsof -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null | head -1); then
 fi
 
 cd "$REPO_DIR"
-exec /opt/homebrew/bin/npm start
+exec /opt/homebrew/bin/node "$REPO_DIR/node_modules/next/dist/bin/next" start "$REPO_DIR/apps/kitchen" --port "$PORT"
