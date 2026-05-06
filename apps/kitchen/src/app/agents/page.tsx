@@ -44,9 +44,9 @@ export default function AgentRegistryPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">Agent Registry</h1>
+        <h1 className="text-2xl font-bold text-amber-500">Hire Crew</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Canonical roster, REST keys, capabilities, and liveness
+          Agent registry, REST keys, capabilities, and liveness
         </p>
       </div>
 

@@ -10,7 +10,7 @@ interface TopBarProps {
 
 export function TopBar({ services, onMenuClick }: TopBarProps) {
   return (
-    <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-800 bg-slate-950/80 px-4 backdrop-blur-sm lg:left-72 lg:px-6">
+    <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-[#fbfbf8]/90 px-4 text-slate-950 backdrop-blur-md lg:left-72 lg:px-6">
       <div className="flex items-center gap-3">
         {/* Hamburger — mobile only */}
         {onMenuClick && (
@@ -32,7 +32,7 @@ export function TopBar({ services, onMenuClick }: TopBarProps) {
             </svg>
           </button>
         )}
-        <h2 className="text-sm font-medium text-slate-300">System Health</h2>
+        <h2 className="text-sm font-semibold text-slate-950">System Health</h2>
       </div>
       <div className="flex items-center gap-4">
         {services.map((svc) => (

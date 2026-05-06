@@ -14,7 +14,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <TopBar services={services} onMenuClick={() => setSidebarOpen(true)} />
-      <main className="mt-14 min-h-screen p-4 lg:ml-72 lg:p-6">{children}</main>
+      <main className="ak-workspace mt-14 min-h-screen p-4 lg:ml-72 lg:p-6">{children}</main>
     </>
   );
 }
