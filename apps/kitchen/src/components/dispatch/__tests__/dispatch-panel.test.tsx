@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
@@ -12,8 +12,31 @@ vi.mock("@/components/ui/sheet", () => ({
   SheetDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
-const MOCK_AGENTS = [
-  { id: "sophia", name: "Sophia", role: "developer", platform: "openclaw", location: "tailscale", host: "h", port: 3100, healthEndpoint: "/health" },
+const MOCK_AGENTS = [{
+  id: "sophia",
+  name: "Sophia",
+  role: "developer",
+  platform: "openclaw",
+  protocol: "a2a",
+  status: "active",
+  location: "tailscale",
+  host: "h",
+  port: 3100,
+  healthEndpoint: "/health",
+  capabilities: [],
+}];
+
+let mockCards = [
+  {
+    name: "Sophia",
+    description: "Sophia — developer agent (openclaw)",
+    version: "1",
+    url: "http://sophia.local:3100",
+    capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: true },
+    authentication: { schemes: ["none"] },
+    skills: [{ id: "code-execute", name: "Code Execution", description: "Write and execute code", tags: ["code"] }],
+    extensions: { kitchen: { id: "sophia", platform: "openclaw", location: "tailscale", role: "developer" } },
+  },
 ];
 
 const MOCK_DELEGATIONS = [
@@ -35,18 +58,7 @@ vi.mock("@/lib/api-client", () => ({
   useLineage: () => ({ data: undefined, isLoading: false }),
   useAgentCards: () => ({
     data: {
-      cards: [
-        {
-          name: "Sophia",
-          description: "Sophia — developer agent (openclaw)",
-          version: "1",
-          url: "http://sophia.local:3100",
-          capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: true },
-          authentication: { schemes: ["none"] },
-          skills: [{ id: "code-execute", name: "Code Execution", description: "Write and execute code", tags: ["code"] }],
-          extensions: { kitchen: { id: "sophia", platform: "openclaw", location: "tailscale", role: "developer" } },
-        },
-      ],
+      cards: mockCards,
       timestamp: "2026-04-19T10:00:00Z",
     },
     isLoading: false,
@@ -55,6 +67,21 @@ vi.mock("@/lib/api-client", () => ({
 
 import { DispatchPanel } from "../dispatch-panel";
 import { AgentCardsPanel } from "../agent-cards-panel";
+
+beforeEach(() => {
+  mockCards = [
+    {
+      name: "Sophia",
+      description: "Sophia — developer agent (openclaw)",
+      version: "1",
+      url: "http://sophia.local:3100",
+      capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: true },
+      authentication: { schemes: ["none"] },
+      skills: [{ id: "code-execute", name: "Code Execution", description: "Write and execute code", tags: ["code"] }],
+      extensions: { kitchen: { id: "sophia", platform: "openclaw", location: "tailscale", role: "developer" } },
+    },
+  ];
+});
 
 function wrap(ui: React.ReactElement) {
   const qc = new QueryClient();
@@ -91,5 +118,14 @@ describe("AgentCardsPanel", () => {
     wrap(<AgentCardsPanel />);
     expect(screen.getByText("Sophia")).toBeInTheDocument();
     expect(screen.getByText("Code Execution")).toBeInTheDocument();
+  });
+
+  it("shows registered dispatch agents when no A2A cards exist", () => {
+    mockCards = [];
+    wrap(<AgentCardsPanel />);
+
+    expect(screen.getByText(/No A2A cards are registered yet/i)).toBeInTheDocument();
+    expect(screen.getByText("Registered Dispatch Agents")).toBeInTheDocument();
+    expect(screen.getByText("developer")).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "gitnexus": {
-      "command": "/opt/homebrew/bin/gitnexus",
+      "command": "gitnexus",
       "args": ["mcp"]
     },
     "mem0": {
@@ -19,9 +19,11 @@
       ]
     },
     "agentmemory": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "/opt/homebrew/lib/node_modules/@agentmemory/agentmemory/dist/standalone.mjs"
+        "-y",
+        "@agentmemory/agentmemory",
+        "standalone"
       ]
     }
   }

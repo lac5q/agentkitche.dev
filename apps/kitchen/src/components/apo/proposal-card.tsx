@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import type React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useApproveApoProposalMutation } from "@/lib/api-client";
 import type { ApoProposal } from "@/types";
 
 function formatDateTime(dateStr: string): string {
@@ -20,6 +21,12 @@ interface ProposalCardProps {
 export function ProposalCard({ proposal, onClick }: ProposalCardProps) {
   const isPending = proposal.status === "pending";
   const preview = proposal.content.slice(0, 200).replace(/#+\s/g, "").trim();
+  const approveProposal = useApproveApoProposalMutation();
+
+  function handleApprove(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    approveProposal.mutate(proposal.id);
+  }
 
   return (
     <Card
@@ -57,7 +64,24 @@ export function ProposalCard({ proposal, onClick }: ProposalCardProps) {
             {preview}
             {proposal.content.length > 200 && "…"}
           </p>
+          {approveProposal.isError && (
+            <p className="mt-2 text-xs text-rose-400">
+              {approveProposal.error instanceof Error
+                ? approveProposal.error.message
+                : "Approval failed"}
+            </p>
+          )}
         </div>
+        {isPending && (
+          <button
+            type="button"
+            onClick={handleApprove}
+            disabled={approveProposal.isPending}
+            className="shrink-0 rounded-md border border-emerald-500/50 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:border-emerald-400 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {approveProposal.isPending ? "Approving…" : "Approve"}
+          </button>
+        )}
       </div>
     </Card>
   );

@@ -53,6 +53,7 @@ describe("GET /api/knowledge", () => {
     const body = await response.json();
 
     expect(body.totalDocs).toBe(4);
+    expect(body.totalFiles).toBe(4);
     expect(body.collections.find((collection: { name: string }) => collection.name === "skills").docCount).toBe(3);
     expect(body.collections.find((collection: { name: string }) => collection.name === "meet-recordings").docCount).toBe(1);
     expect(body.collections.find((collection: { name: string }) => collection.name === "missing").docCount).toBe(0);

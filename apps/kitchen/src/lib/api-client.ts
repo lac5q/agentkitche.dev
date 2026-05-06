@@ -61,7 +61,11 @@ async function mutateJSON<T>(url: string, init: RequestInit): Promise<T> {
       ...(init.headers ?? {}),
     },
   });
-  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: unknown } | null;
+    const detail = typeof body?.error === "string" ? body.error : `${res.status}`;
+    throw new Error(`${url}: ${detail}`);
+  }
   return res.json();
 }
 
@@ -174,6 +178,7 @@ export function useKnowledge() {
       fetchJSON<{
         collections: KnowledgeCollection[];
         totalDocs: number;
+        totalFiles: number;
         totalCollections: number;
         timestamp: string;
       }>("/api/knowledge"),
@@ -257,6 +262,30 @@ export function useApo() {
         timestamp: string;
       }>("/api/apo"),
     refetchInterval: 30000, // 30s
+  });
+}
+
+export function approveApoProposal(proposalId: string) {
+  return mutateJSON<{
+    ok: boolean;
+    proposalId: string;
+    skillId: string;
+    archived: boolean;
+    applied: boolean;
+    timestamp: string;
+  }>("/api/apo", {
+    method: "POST",
+    body: JSON.stringify({ action: "approve", proposalId }),
+  });
+}
+
+export function useApproveApoProposalMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: approveApoProposal,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["apo"] });
+    },
   });
 }
 
@@ -554,6 +583,29 @@ export function useTimeSeries(metric: TimeSeriesMetric, window: TimeSeriesWindow
         timestamp: string;
       }>(`/api/time-series?metric=${metric}&window=${window}`),
     refetchInterval: POLL_INTERVALS.knowledge, // 60s -- analytics don't need real-time
+  });
+}
+
+export interface CollectionTrend {
+  name: string;
+  category: KnowledgeCollection["category"];
+  totalFiles: number;
+  recentFiles: number;
+  lastUpdated: string | null;
+  points: Array<{ bucket: string; value: number; cumulative: number }>;
+}
+
+export function useKnowledgeTrends(window: TimeSeriesWindow, limit = 12) {
+  return useQuery({
+    queryKey: ["knowledge-trends", window, limit],
+    queryFn: () =>
+      fetchJSON<{
+        collections: CollectionTrend[];
+        window: TimeSeriesWindow;
+        buckets: string[];
+        timestamp: string;
+      }>(`/api/knowledge/trends?window=${window}&limit=${limit}`),
+    refetchInterval: POLL_INTERVALS.knowledge,
   });
 }
 

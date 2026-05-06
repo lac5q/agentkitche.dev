@@ -8,6 +8,7 @@ import { GitNexusPanel } from "@/components/library/gitnexus-panel";
 import { SqliteHealthPanel } from "@/components/ledger/sqlite-health-panel";
 import { MemoryIntelligencePanel } from "@/components/ledger/memory-intelligence-panel";
 import { LibraryAnalyticsPanel } from "@/components/library/analytics-panel";
+import { CollectionTrendsPanel } from "@/components/library/collection-trends-panel";
 import { InfoTip } from "@/components/ui/info-tip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -25,7 +26,7 @@ export default function LibraryPage() {
   }
 
   const collections = data?.collections ?? [];
-  const totalDocs = data?.totalDocs ?? 0;
+  const totalFiles = data?.totalFiles ?? data?.totalDocs ?? 0;
 
   const top10 = collections.slice(0, 10);
   const maxCount = top10.length > 0 ? top10[0].docCount : 1;
@@ -36,7 +37,7 @@ export default function LibraryPage() {
       <div>
         <h1 className="text-2xl font-bold text-amber-500">The Library</h1>
         <p className="text-slate-400 mt-1 text-sm">
-          Knowledge base collections and document health
+          Knowledge files, collection health, and separate memory stores
         </p>
       </div>
 
@@ -44,7 +45,7 @@ export default function LibraryPage() {
       <section>
         <h2 className="flex items-center text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
           Top Collections
-          <InfoTip text="Top 10 QMD collections ranked by document count. Each card shows the collection name and doc count; the bar fill is proportional to the largest collection. Collections are folders in ~/github/knowledge/ with at least one .md file." />
+          <InfoTip text="Top 10 QMD collections ranked by live file count. Each card shows the collection name and file count; the bar fill is proportional to the largest collection. Collections are configured folders in ~/github/knowledge/ containing .md, .mdx, or .txt files." />
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {top10.map((collection) => (
@@ -62,7 +63,7 @@ export default function LibraryPage() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <h2 className="flex items-center mb-3 text-sm font-semibold text-slate-400 uppercase tracking-wider">
             Collection Map
-            <InfoTip text="Treemap of all QMD collections sized by document count — larger tiles mean more docs. Color groups related collections by category. Hover a tile to see the exact count. Data sourced live from the knowledge API." />
+            <InfoTip text="Treemap of all QMD collections sized by live file count — larger tiles mean more files. Color groups related collections by category. Hover a tile to see the exact count. Data sourced live from the knowledge API." />
           </h2>
           <CollectionTreemap collections={collections} />
         </div>
@@ -71,7 +72,7 @@ export default function LibraryPage() {
           <h2 className="mb-3 text-sm font-semibold text-slate-400 uppercase tracking-wider">
             Health &amp; Stats
           </h2>
-          <HealthPanel collections={collections} totalDocs={totalDocs} />
+          <HealthPanel collections={collections} totalFiles={totalFiles} />
         </div>
       </section>
 
@@ -98,7 +99,8 @@ export default function LibraryPage() {
       </section>
 
       {/* Usage Trends */}
-      <section>
+      <section className="space-y-6">
+        <CollectionTrendsPanel />
         <LibraryAnalyticsPanel />
       </section>
     </div>

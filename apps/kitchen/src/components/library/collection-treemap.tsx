@@ -103,7 +103,7 @@ function CustomContent(props: TreemapNode) {
             fill="#cbd5e1"
             style={{ pointerEvents: "none" }}
           >
-            {docCount} docs
+            {docCount} files
           </text>
         </>
       )}
@@ -123,7 +123,7 @@ function CustomTooltip({
   return (
     <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs shadow-xl">
       <p className="font-semibold text-slate-100">{item.name}</p>
-      <p className="text-slate-400 mt-0.5">{item.docCount} docs</p>
+      <p className="text-slate-400 mt-0.5">{item.docCount} files</p>
     </div>
   );
 }
