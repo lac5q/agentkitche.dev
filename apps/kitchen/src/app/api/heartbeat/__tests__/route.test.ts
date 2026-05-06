@@ -171,7 +171,7 @@ describe("POST /api/heartbeat", () => {
     );
 
     expect(res.status).toBe(200);
-    const [agent] = listRegisteredAgents();
+    const agent = listRegisteredAgents().find((a) => a.id === "heartbeat-agent");
     expect(agent).toMatchObject({
       id: "heartbeat-agent",
       status: "active",

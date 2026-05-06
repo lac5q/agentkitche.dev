@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/api-client", () => ({
   useMemoryStats: vi.fn(),
+  useMemoryTierHealth: vi.fn(() => ({ data: undefined, isLoading: false })),
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
