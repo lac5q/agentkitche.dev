@@ -124,7 +124,7 @@ Each task was committed atomically:
 - `npm --prefix apps/kitchen run test -- src/lib/a2a/__tests__/agent-card.test.ts src/app/api/agents/__tests__/card.test.ts` - passed, 11 tests.
 - `npm --prefix apps/kitchen run lint` - passed with 12 pre-existing warnings.
 - `npm --prefix apps/kitchen run build` - passed with known pre-existing Turbopack NFT warning.
-- Acceptance checks for files, env section, task states, skill IDs, and absence of `/Users/lcalderon` in new A2A source/route files all passed.
+- Acceptance checks for files, env section, task states, skill IDs, and absence of placeholder user paths in new A2A source/route files all passed.
 
 ## User Setup Required
 

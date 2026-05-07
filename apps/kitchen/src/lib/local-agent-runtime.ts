@@ -18,7 +18,7 @@ export interface LocalAgentRuntimeSummary {
 }
 
 const SHELL_WRAPPER_RE = /(?:^|\s)(?:\/bin\/(?:ba|z)?sh|bash|zsh|sh)\s+-c\s/i;
-const DESKTOP_APP_RE = /\/Applications\/(?:Claude|Codex)\.app\//i;
+const DESKTOP_APP_RE = /\/Applications\/(?:Claude|Codex)\.app\/|(?:^|\s)\.\/Codex Computer Use\.app\//i;
 
 function parsePsOutput(output: string): ProcessRow[] {
   return output
@@ -33,18 +33,36 @@ function parsePsOutput(output: string): ProcessRow[] {
 }
 
 function isDirectCliProcess(command: string): boolean {
-  return !SHELL_WRAPPER_RE.test(command) && !DESKTOP_APP_RE.test(command);
+  return !SHELL_WRAPPER_RE.test(command) && !DESKTOP_APP_RE.test(command) && !command.startsWith("tmux ");
+}
+
+function tokenBaseName(token: string | undefined): string {
+  return (token ?? "")
+    .replace(/^["']|["']$/g, "")
+    .split("/")
+    .pop()
+    ?.toLowerCase() ?? "";
+}
+
+function isDirectExecutable(command: string, names: string[]): boolean {
+  const [executable, firstArg] = command.trim().split(/\s+/, 2);
+  const executableName = tokenBaseName(executable);
+  if (names.includes(executableName)) return true;
+  if ((executableName === "node" || executableName === "bun") && names.includes(tokenBaseName(firstArg))) {
+    return true;
+  }
+  return false;
 }
 
 function detectCliPlatform(command: string): AgentPlatform | null {
   if (!isDirectCliProcess(command)) return null;
   if (/\bhermes_cli\.main\b|(?:^|\s)(?:\S*\/)?hermes(?:\s|$)/i.test(command)) return "hermes";
-  if (/(?:^|\s)(?:node\s+)?(?:\S*\/)?qwen(?:\s|$)/i.test(command)) return "qwen";
-  if (/(?:^|\s)(?:\S*\/)?claude(?:\s|$)/i.test(command)) return "claude";
-  if (/(?:^|\s)(?:\S*\/)?codex(?:\s|$)/i.test(command)) return "codex";
-  if (/(?:^|\s)(?:node\s+)?(?:\S*\/)?gemini(?:\s|$)/i.test(command)) return "gemini";
-  if (/(?:^|\s)(?:\S*\/)?(?:opencode|opencode-ai)(?:\s|$)/i.test(command)) return "opencode";
-  if (/(?:^|\s)(?:\S*\/)?openclaw(?:\s|$)/i.test(command)) return "openclaw";
+  if (isDirectExecutable(command, ["qwen"])) return "qwen";
+  if (isDirectExecutable(command, ["claude"])) return "claude";
+  if (isDirectExecutable(command, ["codex"])) return "codex";
+  if (isDirectExecutable(command, ["gemini"])) return "gemini";
+  if (isDirectExecutable(command, ["opencode", "opencode-ai"])) return "opencode";
+  if (isDirectExecutable(command, ["openclaw"])) return "openclaw";
   return null;
 }
 

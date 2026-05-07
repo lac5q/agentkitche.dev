@@ -21,7 +21,7 @@ const FIXTURE_AGENTS = [
     company: null,
     platform: "claude",
     protocol: "local",
-    metadata: { source: "pmo-agents", path: "/Users/lcalderon/github/PMO/agents/claude-sonnet-engineer" },
+    metadata: { source: "pmo-agents", path: "/Users/yourname/github/PMO/agents/claude-sonnet-engineer" },
   },
   {
     id: "content-creator",
@@ -30,7 +30,7 @@ const FIXTURE_AGENTS = [
     company: null,
     platform: "codex",
     protocol: "local",
-    metadata: { source: "pmo-agents", path: "/Users/lcalderon/github/PMO/agents/content-creator" },
+    metadata: { source: "pmo-agents", path: "/Users/yourname/github/PMO/agents/content-creator" },
   },
   {
     id: "sophia",
