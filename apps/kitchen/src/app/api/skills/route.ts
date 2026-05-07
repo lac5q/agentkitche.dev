@@ -38,6 +38,7 @@ export async function GET() {
   let lastPruned: string | null = null;
   let lastUpdated: string | null = null;
   let skillUsage: Record<string, unknown> = {};
+  let hasUsageTelemetry = false;
   try {
     const raw = await readFile(SKILL_SYNC_STATE, "utf-8");
     const state = JSON.parse(raw);
@@ -45,23 +46,13 @@ export async function GET() {
     lastUpdated = state.last_sync ?? null;
     if (state.skill_usage && typeof state.skill_usage === "object") {
       skillUsage = state.skill_usage as Record<string, unknown>;
+      hasUsageTelemetry = Object.keys(skillUsage).length > 0;
     }
   } catch {
     /* state file may not exist — null is correct, skillUsage stays {} */
   }
 
-  // 3. Compute coverage gaps — skills with no usage or unused for 30+ days
-  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  const coverageGaps: string[] = skillDirNames.filter(name => {
-    const raw = skillUsage[name];
-    if (raw == null) return true;                          // never used
-    const ts = typeof raw === "number" ? raw : new Date(String(raw)).getTime();
-    if (!Number.isFinite(ts)) return true;                 // malformed timestamp → treat as unused
-    return (now - ts) > THIRTY_DAYS_MS;                    // stale (strictly > 30 days)
-  });
-
-  // 4. Parse JSONL for contribution stats
+  // 3. Parse JSONL for contribution stats and recent skill activity signals.
   let recentContributions: Array<{
     skill: string;
     contributor: string;
@@ -106,6 +97,34 @@ export async function GET() {
   } catch {
     /* JSONL empty or missing — all zeros is correct initial state */
   }
+
+  const usageActions = new Set(["used", "invoked", "synced", "failed", "contributed"]);
+  for (const ev of events) {
+    if (!skillDirNames.includes(ev.skill) || !usageActions.has(ev.action)) continue;
+    const ts = new Date(ev.timestamp).getTime();
+    if (!Number.isFinite(ts)) continue;
+    const existing = skillUsage[ev.skill];
+    const existingTs = typeof existing === "number" ? existing : new Date(String(existing)).getTime();
+    if (!Number.isFinite(existingTs) || ts > existingTs) {
+      skillUsage[ev.skill] = ev.timestamp;
+    }
+    hasUsageTelemetry = true;
+  }
+
+  // 4. Compute coverage gaps only when usage telemetry exists. Missing telemetry is not evidence
+  // that every skill is stale; show it as untracked instead of a false 100% gap.
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const coverageGaps: string[] = hasUsageTelemetry
+    ? skillDirNames.filter(name => {
+        const raw = skillUsage[name];
+        if (raw == null) return true;                          // never used while telemetry exists
+        const ts = typeof raw === "number" ? raw : new Date(String(raw)).getTime();
+        if (!Number.isFinite(ts)) return true;                 // malformed timestamp -> treat as unused
+        return (now - ts) > THIRTY_DAYS_MS;                    // stale (strictly > 30 days)
+      })
+    : [];
+  const coverageTelemetryStatus = hasUsageTelemetry ? "tracked" : "untracked";
 
   // 5. Parse failures.log for agent/error_type aggregates (SKILL-06)
   let failuresByAgent: Record<string, number> = {};
@@ -154,6 +173,7 @@ export async function GET() {
     lastPruned,
     staleCandidates,
     coverageGaps,
+    coverageTelemetryStatus,
     lastUpdated,
     failuresByAgent,
     failuresByErrorType,

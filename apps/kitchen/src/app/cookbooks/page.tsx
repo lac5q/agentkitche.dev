@@ -24,6 +24,7 @@ export default function CookbooksPage() {
   const totalSkills = data?.totalSkills ?? 0;
   const allSkills = data?.allSkills ?? [];
   const coverageGaps = data?.coverageGaps ?? [];
+  const coverageTelemetryStatus = data?.coverageTelemetryStatus ?? "tracked";
   const failuresByAgent = data?.failuresByAgent ?? {};
   const failuresByErrorType = data?.failuresByErrorType ?? {};
   const lastUpdated = data?.lastUpdated ?? null;
@@ -51,6 +52,7 @@ export default function CookbooksPage() {
         <HealthPanel
           totalSkills={totalSkills}
           coverageGaps={coverageGaps}
+          coverageTelemetryStatus={coverageTelemetryStatus}
           failuresByAgent={failuresByAgent}
           failuresByErrorType={failuresByErrorType}
           lastUpdated={lastUpdated}
@@ -101,6 +103,7 @@ export default function CookbooksPage() {
           totalSkills={totalSkills}
           allSkills={allSkills}
           coverageGaps={coverageGaps}
+          coverageTelemetryStatus={coverageTelemetryStatus}
         />
       </section>
     </div>

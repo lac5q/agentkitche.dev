@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export interface HealthPanelProps {
   totalSkills: number;
   coverageGaps: string[];
+  coverageTelemetryStatus?: "tracked" | "untracked";
   failuresByAgent: Record<string, number>;
   failuresByErrorType: Record<string, number>;
   lastUpdated: string | null;
@@ -32,6 +33,7 @@ function formatDate(dateStr: string | null): string {
 export function HealthPanel({
   totalSkills,
   coverageGaps,
+  coverageTelemetryStatus = "tracked",
   failuresByAgent,
   failuresByErrorType,
   lastUpdated,
@@ -39,6 +41,7 @@ export function HealthPanel({
   skillBudget,
 }: HealthPanelProps) {
   const gapCount = coverageGaps.length;
+  const isCoverageTracked = coverageTelemetryStatus === "tracked";
   const budgetPercent = skillBudget ? Math.round(skillBudget.utilization * 100) : 0;
   const budgetColor =
     skillBudget?.status === "over"
@@ -65,12 +68,14 @@ export function HealthPanel({
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <p className="flex items-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
             Coverage Gaps
-            <InfoTip text="Skills that have not been invoked or updated in 30+ days. These may be obsolete or under-promoted — candidates for review, promotion, or removal." />
+            <InfoTip text="Skills not seen in usage or contribution telemetry for 30+ days. If telemetry is unavailable, this card shows untracked instead of counting every skill as stale." />
           </p>
           <p className={`text-2xl font-bold ${gapCount > 0 ? "text-amber-500" : "text-slate-400"}`}>
-            {gapCount}
+            {isCoverageTracked ? gapCount : "n/a"}
           </p>
-          <p className="text-xs text-slate-500 mt-1">unused 30+ days</p>
+          <p className="text-xs text-slate-500 mt-1">
+            {isCoverageTracked ? "unused 30+ days" : "usage telemetry missing"}
+          </p>
         </div>
 
         {/* Stale Candidates */}
@@ -82,11 +87,11 @@ export function HealthPanel({
           <p className="text-2xl font-bold text-slate-400">{staleCandidates}</p>
         </div>
 
-        {/* Skill Context Budget */}
+        {/* Skill Catalog Budget */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <p className="flex items-center text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-            Context Budget
-            <InfoTip text="Estimated model-visible skill metadata usage after deduping skill names. Keep this under 100% to avoid startup truncation warnings." />
+            Catalog Budget
+            <InfoTip text="Estimated model-visible skill catalog metadata after deduping skill names. This is a startup catalog budget, not the current chat context meter." />
           </p>
           <p className={`text-2xl font-bold ${budgetColor}`}>
             {skillBudget ? `${budgetPercent}%` : "n/a"}

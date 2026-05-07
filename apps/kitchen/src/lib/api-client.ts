@@ -364,6 +364,7 @@ export function useSkills() {
         lastPruned: string | null;
         staleCandidates: number;
         coverageGaps: string[];
+        coverageTelemetryStatus: "tracked" | "untracked";
         lastUpdated: string | null;
         failuresByAgent: Record<string, number>;
         failuresByErrorType: Record<string, number>;

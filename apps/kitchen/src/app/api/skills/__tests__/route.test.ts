@@ -392,17 +392,24 @@ describe("coverageGaps", () => {
   // We add a third rejection to be safe where chains are explicit.
 
   it("includes skills never used", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-13T00:00:00Z"));
     mockReaddir.mockResolvedValue([
       makeDirEntry("bash-scripting", true),
       makeDirEntry("python-async", true),
     ] as never);
     mockReadFile
-      .mockResolvedValueOnce(JSON.stringify({ last_sync: "2026-04-11T04:00:15.000000", last_prune: "2026-04-06T05:00:08.000000", skill_usage: {} }) as never)
+      .mockResolvedValueOnce(JSON.stringify({
+        last_sync: "2026-04-11T04:00:15.000000",
+        last_prune: "2026-04-06T05:00:08.000000",
+        skill_usage: { "python-async": "2026-04-10T00:00:00Z" },
+      }) as never)
       .mockRejectedValueOnce(enoent())
       .mockRejectedValueOnce(enoent());
     const res = await GET();
     const body = await res.json();
-    expect(new Set(body.coverageGaps)).toEqual(new Set(["bash-scripting", "python-async"]));
+    expect(body.coverageGaps).toEqual(["bash-scripting"]);
+    expect(body.coverageTelemetryStatus).toBe("tracked");
   });
 
   it("includes skills unused for 30+ days and excludes fresh skills", async () => {
@@ -459,7 +466,7 @@ describe("coverageGaps", () => {
     expect(body2.coverageGaps).toContain("boundary-skill");
   });
 
-  it("falls back to full skill list when skill-sync-state.json is missing", async () => {
+  it("reports coverage as untracked when skill-sync-state.json is missing", async () => {
     mockReaddir.mockResolvedValue([
       makeDirEntry("a", true),
       makeDirEntry("b", true),
@@ -471,10 +478,11 @@ describe("coverageGaps", () => {
       .mockRejectedValueOnce(enoent());  // (3) failures.log
     const res = await GET();
     const body = await res.json();
-    expect(new Set(body.coverageGaps)).toEqual(new Set(["a", "b", "c"]));
+    expect(body.coverageGaps).toEqual([]);
+    expect(body.coverageTelemetryStatus).toBe("untracked");
   });
 
-  it("falls back to full skill list when skill_usage key is absent from state", async () => {
+  it("reports coverage as untracked when skill_usage key is absent from state", async () => {
     mockReaddir.mockResolvedValue([
       makeDirEntry("a", true),
       makeDirEntry("b", true),
@@ -485,7 +493,8 @@ describe("coverageGaps", () => {
       .mockRejectedValueOnce(enoent());
     const res = await GET();
     const body = await res.json();
-    expect(new Set(body.coverageGaps)).toEqual(new Set(["a", "b"]));
+    expect(body.coverageGaps).toEqual([]);
+    expect(body.coverageTelemetryStatus).toBe("untracked");
   });
 
   it("returns [] when SKILLS_PATH is inaccessible", async () => {
@@ -511,7 +520,33 @@ describe("coverageGaps", () => {
       .mockRejectedValueOnce(enoent());
     const res = await GET();
     const body = await res.json();
-    expect(body.coverageGaps).toEqual(["real-skill"]);
+    expect(body.coverageGaps).toEqual([]);
+    expect(body.coverageTelemetryStatus).toBe("untracked");
+  });
+
+  it("uses contribution activity as fresh usage telemetry", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-13T00:00:00Z"));
+    mockReaddir.mockResolvedValue([
+      makeDirEntry("active-skill", true),
+      makeDirEntry("quiet-skill", true),
+    ] as never);
+    const events = [
+      {
+        skill: "active-skill",
+        action: "contributed",
+        contributor: "codex",
+        timestamp: "2026-04-12T00:00:00Z",
+      },
+    ];
+    mockReadFile
+      .mockResolvedValueOnce(JSON.stringify({ skill_usage: {} }) as never)
+      .mockResolvedValueOnce(makeJsonl(events) as never)
+      .mockRejectedValueOnce(enoent());
+    const res = await GET();
+    const body = await res.json();
+    expect(body.coverageTelemetryStatus).toBe("tracked");
+    expect(body.coverageGaps).toEqual(["quiet-skill"]);
   });
 
   it("tolerates malformed skill_usage entries — treats bad-date as stale gap", async () => {

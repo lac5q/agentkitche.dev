@@ -4,11 +4,18 @@ export interface SkillsListProps {
   totalSkills: number;
   allSkills: string[];
   coverageGaps: string[];
+  coverageTelemetryStatus?: "tracked" | "untracked";
 }
 
-export function SkillsList({ totalSkills, allSkills, coverageGaps }: SkillsListProps) {
+export function SkillsList({
+  totalSkills,
+  allSkills,
+  coverageGaps,
+  coverageTelemetryStatus = "tracked",
+}: SkillsListProps) {
   const gapSet = new Set(coverageGaps);
   const gapCount = coverageGaps.length;
+  const isCoverageTracked = coverageTelemetryStatus === "tracked";
 
   return (
     <div className="space-y-4">
@@ -18,7 +25,7 @@ export function SkillsList({ totalSkills, allSkills, coverageGaps }: SkillsListP
           {totalSkills} skills
         </span>
         <span className="rounded-full bg-slate-800 border border-slate-700 px-3 py-1 text-xs font-semibold text-slate-400">
-          {gapCount} gaps
+          {isCoverageTracked ? `${gapCount} gaps` : "gaps untracked"}
         </span>
       </div>
 
