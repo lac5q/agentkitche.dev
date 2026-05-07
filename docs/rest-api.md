@@ -24,6 +24,79 @@ Authorization: Bearer <agent-api-key>
 
 Agent API keys are minted by `/api/agents/register` or `/api/a2a/agents/register` when `issueApiKey` is true or omitted.
 
+## One-command Onboarding
+
+### `POST /api/onboarding/invite`
+
+Creates a short-lived signed invite and returns a shell command that an agent can run. Requires operator auth.
+
+Request:
+
+```json
+{
+  "agentId": "maria",
+  "name": "Maria",
+  "role": "Research and implementation partner",
+  "platform": "openclaw",
+  "protocol": "rest",
+  "ttlMinutes": 15,
+  "mcpUrl": "https://kitchen.example/mcp"
+}
+```
+
+Response:
+
+```json
+{
+  "ok": true,
+  "token": "signed-onboarding-token",
+  "expiresAt": "2026-05-05T00:15:00.000Z",
+  "command": "curl -fsSL 'https://kitchen.example/api/onboarding/script?token=...' | bash -s -- --id 'maria' ...",
+  "mcpUrl": "https://kitchen.example/mcp"
+}
+```
+
+### `GET /api/onboarding/script?token=...`
+
+Serves the bootstrap shell script for a valid invite token. The script posts to `/api/onboarding/register`, stores the one-time agent API key in `~/.agent-kitchen/<agent-id>.env`, and can install MCP config for `hermes`, `openclaw`, `claude`, `gemini`, `qwen`, `codex`, `stdout`, `none`, or a specific `file:/path`.
+
+The default `--mcp-target auto` maps from `platform` to the matching runtime installer. Runtime CLI commands are preferred over static config edits when available; fallback writes are scoped to each runtime's user config. The script also writes `~/.agent-kitchen/<agent-id>.onboarding-report.json` with the method used, so operators can see when a runtime CLI changed and a fallback was needed.
+
+### `POST /api/onboarding/register`
+
+Consumes a valid invite token and registers the agent without exposing the operator key to the agent.
+
+Request:
+
+```json
+{
+  "token": "signed-onboarding-token",
+  "id": "maria",
+  "name": "Maria",
+  "role": "Research and implementation partner",
+  "platform": "openclaw",
+  "protocol": "rest",
+  "location": "local"
+}
+```
+
+Response includes the registered agent, a one-time `apiKey`, and an MCP config:
+
+```json
+{
+  "ok": true,
+  "agent": { "id": "maria" },
+  "apiKey": "ak_maria_...",
+  "mcp": {
+    "mcpServers": {
+      "agentkitchen": {
+        "url": "https://kitchen.example/mcp"
+      }
+    }
+  }
+}
+```
+
 ## Registry
 
 ### `GET /api/agents`

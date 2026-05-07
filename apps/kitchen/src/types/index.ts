@@ -1,5 +1,5 @@
 export type AgentStatus = "active" | "idle" | "dormant" | "error";
-export type AgentPlatform = "claude" | "codex" | "qwen" | "gemini" | "opencode" | "hermes" | "openclaw";
+export type AgentPlatform = "claude" | "codex" | "qwen" | "gemini" | "opencode" | "hermes" | "openclaw" | "chatgpt";
 export type AgentProtocol = "rest" | "a2a" | "ui" | "local";
 
 export interface Agent {

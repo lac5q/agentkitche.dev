@@ -306,6 +306,31 @@ curl -X POST http://localhost:3000/api/a2a/agents/register \
 
 The response may include an API key unless `issueApiKey` is false. Store it securely. Kitchen never displays stored bearer tokens after creation.
 
+### One-command agent onboarding
+
+For agents that can run shell commands, create a short-lived invite and hand the returned command to the agent. The invite registers the agent, mints its per-agent API key, and returns an Agent Kitchen MCP config.
+
+```bash
+curl -X POST http://localhost:3000/api/onboarding/invite \
+  -H 'Content-Type: application/json' \
+  -H 'x-kitchen-operator-key: <operator-key>' \
+  -d '{
+    "agentId": "maria",
+    "name": "Maria",
+    "role": "Research and implementation partner",
+    "platform": "openclaw",
+    "ttlMinutes": 15
+  }'
+```
+
+Give the `command` from the response to the agent. The command looks like:
+
+```bash
+curl -fsSL 'https://kitchen.example/api/onboarding/script?token=...' | bash -s -- --id 'maria' --name 'Maria' --role 'Research and implementation partner' --platform 'openclaw' --mcp-target 'auto'
+```
+
+The default `--mcp-target auto` selects the right installer from the platform: `hermes`, `openclaw`, `claude`, `gemini`, `qwen`, `codex`, or `stdout` for `chatgpt`. The bootstrap prefers each runtime's own MCP command when available and falls back to narrow config writes, so newer runtime installers can keep working without changing the invite command. Use `--mcp-target file:/path/to/mcp.json`, `--mcp-target stdout`, or `AGENT_KITCHEN_MCP_TARGET=...` to override. ChatGPT cannot run the shell command directly; for ChatGPT, use the returned `mcpUrl` as the custom connector URL in ChatGPT Apps & Connectors.
+
 If `/agents` shows fewer agents than expected, check:
 
 - The agent has been registered into the canonical registry.

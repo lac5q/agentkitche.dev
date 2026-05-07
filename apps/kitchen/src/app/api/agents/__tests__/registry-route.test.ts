@@ -159,4 +159,28 @@ describe("agent registry routes", () => {
     expect(acceptedDelete.status).toBe(200);
     expect((await (await agentsRoute.GET()).json()).agents).toHaveLength(0);
   });
+
+  it("accepts ChatGPT as a first-class registered agent platform", async () => {
+    const { agentsRoute, registerRoute } = await loadRoutes();
+
+    const registerResponse = await registerRoute.POST(
+      new Request("http://localhost/api/agents/register", {
+        method: "POST",
+        body: JSON.stringify({
+          id: "chatgpt",
+          name: "ChatGPT",
+          role: "Interactive planning and research agent",
+          platform: "chatgpt",
+          protocol: "rest",
+          issueApiKey: false,
+        }),
+      })
+    );
+
+    expect(registerResponse.status).toBe(200);
+    const listResponse = await agentsRoute.GET();
+    expect((await listResponse.json()).agents).toEqual([
+      expect.objectContaining({ id: "chatgpt", platform: "chatgpt" }),
+    ]);
+  });
 });
