@@ -18,7 +18,7 @@ except Exception:  # pragma: no cover - environment compatibility
         from mcp.server.fastmcp import FastMCP  # type: ignore
     except Exception:  # pragma: no cover - lets smoke tests import wrappers without MCP installed
         class FastMCP:  # type: ignore[no-redef]
-            def __init__(self, _name: str):
+            def __init__(self, _name: str, *args, **kwargs):
                 pass
 
             def tool(self):
@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover - environment compatibility
             def prompt(self):
                 return lambda fn: fn
 
-            def run(self):
+            def run(self, *args, **kwargs):
                 raise RuntimeError("FastMCP runtime is not installed")
 
 try:
@@ -53,7 +53,61 @@ except ImportError:  # pragma: no cover - allows `python knowledge_system/mcp_se
     from knowledge_system import tool_attention
 
 
-mcp = FastMCP("knowledge-system")
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    try:
+        return int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer, got {raw!r}") from exc
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _normalize_transport(value: str) -> str:
+    transport = value.strip().lower().replace("_", "-")
+    aliases = {
+        "http": "streamable-http",
+        "streamable": "streamable-http",
+        "streamablehttp": "streamable-http",
+    }
+    transport = aliases.get(transport, transport)
+    if transport not in {"stdio", "sse", "streamable-http"}:
+        raise ValueError("KITCHEN_MCP_TRANSPORT must be one of: stdio, sse, streamable-http")
+    return transport
+
+
+def _server_transport() -> str:
+    return _normalize_transport(os.environ.get("KITCHEN_MCP_TRANSPORT", "stdio"))
+
+
+def _server_options() -> dict:
+    """Return FastMCP options controlled by env for local or remote clients."""
+    return {
+        "host": os.environ.get("KITCHEN_MCP_HOST", "127.0.0.1"),
+        "port": _env_int("KITCHEN_MCP_PORT", 8765),
+        "streamable_http_path": os.environ.get("KITCHEN_MCP_STREAMABLE_HTTP_PATH", "/mcp"),
+        "sse_path": os.environ.get("KITCHEN_MCP_SSE_PATH", "/sse"),
+        "message_path": os.environ.get("KITCHEN_MCP_MESSAGE_PATH", "/messages/"),
+        "stateless_http": _env_bool("KITCHEN_MCP_STATELESS_HTTP", False),
+    }
+
+
+def _build_mcp() -> FastMCP:
+    options = _server_options()
+    try:
+        return FastMCP("knowledge-system", **options)
+    except TypeError:  # pragma: no cover - older FastMCP compatibility
+        return FastMCP("knowledge-system")
+
+
+mcp = _build_mcp()
 
 
 def _root() -> Path:
@@ -339,5 +393,13 @@ def knowledge_system_orientation() -> str:
     )
 
 
+def run_server() -> None:
+    """Run the MCP server using env-selected stdio, SSE, or Streamable HTTP transport."""
+    try:
+        mcp.run(transport=_server_transport())
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
+
 if __name__ == "__main__":
-    mcp.run()
+    run_server()

@@ -1,0 +1,99 @@
+# Agent Kitchen as an MCP Server
+
+Agent Kitchen exposes a small MCP facade named `agentkitchen` for knowledge, memory, and progressive tool discovery. It supports both:
+
+- **stdio**: best when the MCP client runs on the same machine or has a local clone.
+- **Streamable HTTP**: best for Maria/Sophia or any agent on another machine over Tailscale/LAN.
+
+The server entry point is:
+
+```bash
+scripts/agentkitchen-mcp.sh
+```
+
+It keeps stdout clean for MCP JSON-RPC, installs missing Python MCP dependencies into `.venv` if needed, and defaults `KNOWLEDGE_ROOT` to `~/github/knowledge` when present.
+
+## Option A — local stdio client
+
+Use this when the agent client can run commands on the same filesystem as the Agent Kitchen clone.
+
+```json
+{
+  "mcpServers": {
+    "agentkitchen": {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/scripts/agentkitchen-mcp.sh\""
+      ]
+    }
+  }
+}
+```
+
+For Hermes, the equivalent config is:
+
+```yaml
+mcp_servers:
+  agentkitchen:
+    command: /bin/bash
+    args:
+      - -lc
+      - exec "${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/scripts/agentkitchen-mcp.sh"
+```
+
+## Option B — remote Streamable HTTP client
+
+Use this when Maria/Sophia are on a different machine.
+
+On the Agent Kitchen host:
+
+```bash
+cd ~/github/agent-kitchen
+npm run mcp:http
+# or: ./scripts/agentkitchen-mcp.sh --http --host 0.0.0.0 --port 8765
+```
+
+Then on Maria/Sophia's machine, add:
+
+```json
+{
+  "mcpServers": {
+    "agentkitchen": {
+      "url": "http://<kitchen-tailscale-host-or-ip>:8765/mcp"
+    }
+  }
+}
+```
+
+For Hermes on Maria/Sophia's machine:
+
+```yaml
+mcp_servers:
+  agentkitchen:
+    url: http://<kitchen-tailscale-host-or-ip>:8765/mcp
+```
+
+Replace `<kitchen-tailscale-host-or-ip>` with the Kitchen machine's Tailscale DNS name or 100.x Tailscale IP.
+
+## Smoke tests
+
+Local stdio config parse:
+
+```bash
+bash -n scripts/agentkitchen-mcp.sh
+```
+
+Remote HTTP server health via MCP initialize is easiest with an MCP-aware client, but a basic HTTP reachability check should return an MCP response rather than connection refused:
+
+```bash
+curl -i http://<kitchen-host>:8765/mcp
+```
+
+Expected: HTTP reaches the FastMCP endpoint. Some clients require a POST/session handshake, so a plain GET may return 405/406; that is still better than connection refused.
+
+## Security notes
+
+- Prefer Tailscale/private LAN. Do not expose this directly to the public internet.
+- `memory_search` can reveal sensitive memory if the backing mem0 service is reachable; treat the HTTP MCP endpoint as trusted-internal only.
+- For public/tunnel use, put it behind HTTPS and an auth proxy before sharing the URL.

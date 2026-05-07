@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "agentkitchen": {
+      "url": "http://<kitchen-tailscale-host-or-ip>:8765/mcp"
+    }
+  }
+}

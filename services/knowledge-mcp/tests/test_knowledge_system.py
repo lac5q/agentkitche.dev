@@ -120,6 +120,36 @@ def test_core_tools_stay_small_for_progressive_disclosure():
     ]
 
 
+def test_mcp_transport_env_supports_stdio_and_remote_http(monkeypatch):
+    monkeypatch.delenv("KITCHEN_MCP_TRANSPORT", raising=False)
+    assert mcp_server._server_transport() == "stdio"
+
+    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "http")
+    assert mcp_server._server_transport() == "streamable-http"
+
+    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "streamable_http")
+    assert mcp_server._server_transport() == "streamable-http"
+
+    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "sse")
+    assert mcp_server._server_transport() == "sse"
+
+
+def test_mcp_server_options_are_env_configurable(monkeypatch):
+    monkeypatch.setenv("KITCHEN_MCP_HOST", "0.0.0.0")
+    monkeypatch.setenv("KITCHEN_MCP_PORT", "8765")
+    monkeypatch.setenv("KITCHEN_MCP_STREAMABLE_HTTP_PATH", "/mcp")
+    monkeypatch.setenv("KITCHEN_MCP_STATELESS_HTTP", "true")
+
+    assert mcp_server._server_options() == {
+        "host": "0.0.0.0",
+        "port": 8765,
+        "streamable_http_path": "/mcp",
+        "sse_path": "/sse",
+        "message_path": "/messages/",
+        "stateless_http": True,
+    }
+
+
 def test_capability_registry_hides_deep_tools_until_requested():
     core = get_capabilities()
     assert core["mode"] == "core"

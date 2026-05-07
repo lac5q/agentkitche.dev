@@ -6,10 +6,6 @@
         "-lc",
         "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/scripts/agentkitchen-mcp.sh\""
       ]
-    },
-    "gitnexus": {
-      "command": "gitnexus",
-      "args": ["mcp"]
     }
   }
 }

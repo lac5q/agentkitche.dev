@@ -445,6 +445,7 @@ agent-kitchen/
 - [Claude Code integration](docs/integrations/claude-code.md)
 - [Google ADK integration](docs/integrations/google-adk.md)
 - [LangGraph integration](docs/integrations/langgraph.md)
+- [Agent Kitchen MCP server](docs/integrations/mcp.md)
 - [CrewAI and AutoGen integration](docs/integrations/crewai-autogen.md)
 
 ## Upcoming Features
