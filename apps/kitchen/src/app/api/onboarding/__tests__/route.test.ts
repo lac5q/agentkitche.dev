@@ -89,6 +89,28 @@ describe("agent onboarding routes", () => {
     expect(body.command).not.toContain("--role ");
   });
 
+  it("uses forwarded public origin when minting invites behind a proxy", async () => {
+    const { inviteRoute } = await loadRoutes();
+
+    const response = await inviteRoute.POST(
+      new Request("https://localhost:3002/api/onboarding/invite", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-host": "kitchen.epiloguecapital.com",
+          "x-forwarded-proto": "https",
+          "x-kitchen-operator-key": "operator-secret",
+        },
+        body: JSON.stringify({ platform: "hermes", ttlMinutes: 60 }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.command).toContain("https://kitchen.epiloguecapital.com/api/onboarding/script?token=");
+    expect(body.mcpUrl).toBe("https://kitchen.epiloguecapital.com/mcp");
+  });
+
   it("registers an agent from an onboarding token and returns MCP config without storing the raw key in registry output", async () => {
     const { inviteRoute, registerRoute, agentsRoute } = await loadRoutes();
 

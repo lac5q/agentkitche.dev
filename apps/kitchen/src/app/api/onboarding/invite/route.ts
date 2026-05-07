@@ -13,6 +13,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function originFromRequest(request: Request): string {
   const url = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  if (forwardedHost) {
+    const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || url.protocol.replace(/:$/, "");
+    return `${forwardedProto}://${forwardedHost}`;
+  }
   return `${url.protocol}//${url.host}`;
 }
 
