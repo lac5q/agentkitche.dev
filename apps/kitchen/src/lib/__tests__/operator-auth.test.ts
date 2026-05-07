@@ -12,6 +12,16 @@ describe("authorizeRegistryWrite", () => {
     expect(authorizeRegistryWrite(new Request("http://127.0.0.1/api/agents/register"))).toBe(true);
   });
 
+  it("does not treat a public forwarded host as local loopback", () => {
+    expect(
+      authorizeRegistryWrite(
+        new Request("http://localhost/api/agents/register", {
+          headers: { "x-forwarded-host": "kitchen.example.com" },
+        })
+      )
+    ).toBe(false);
+  });
+
   it("blocks non-local registry writes unless the operator key matches", () => {
     process.env.KITCHEN_OPERATOR_API_KEY = "operator-secret";
 

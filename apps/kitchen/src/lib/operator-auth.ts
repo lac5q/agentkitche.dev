@@ -4,7 +4,23 @@ function isLoopbackHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
+function forwardedHost(request: Request): string | null {
+  const forwardedHostHeader = request.headers.get("x-forwarded-host");
+  const host = forwardedHostHeader?.split(",")[0]?.trim();
+  return host || null;
+}
+
+function hostnameFromHostHeader(value: string): string {
+  if (value.startsWith("[")) {
+    return value.slice(1, value.indexOf("]"));
+  }
+  return value.split(":")[0] ?? value;
+}
+
 function getRequestHostname(request: Request): string | null {
+  const host = forwardedHost(request);
+  if (host) return hostnameFromHostHeader(host);
+
   try {
     return new URL(request.url).hostname;
   } catch {
