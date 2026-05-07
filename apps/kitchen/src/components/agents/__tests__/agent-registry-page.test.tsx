@@ -75,7 +75,7 @@ const agents: RegisteredAgent[] = [
         outboundAuth: { envKey: "REMOTE_A2A_TOKEN", token: "Bearer leaked", apiKey: "ak_leaked" },
       },
     },
-    host: "100.64.0.9",
+    host: "worker.tailnet",
     port: 8001,
     healthEndpoint: "/.well-known/agent-card.json",
     tunnelUrl: null,

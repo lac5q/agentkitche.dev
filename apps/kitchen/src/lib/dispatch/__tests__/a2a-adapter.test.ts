@@ -28,7 +28,7 @@ function makeRemoteAgent(): RemoteAgentConfig {
     platform: "gemini",
     protocol: "a2a",
     location: "tailscale",
-    host: "100.64.0.9",
+    host: "worker.tailnet",
     port: 8001,
     healthEndpoint: "/health",
     metadata: {

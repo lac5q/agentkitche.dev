@@ -152,7 +152,7 @@ describe("agent registry service", () => {
       platform: "claude",
       protocol: "rest",
       location: "tailscale",
-      host: "100.64.0.10",
+      host: "agent.tailnet",
       port: 3100,
       healthEndpoint: "/health",
       capabilities: [
@@ -165,7 +165,7 @@ describe("agent registry service", () => {
         id: "remote-agent",
         name: "Remote Agent",
         location: "tailscale",
-        host: "100.64.0.10",
+        host: "agent.tailnet",
         port: 3100,
         healthEndpoint: "/health",
       }),

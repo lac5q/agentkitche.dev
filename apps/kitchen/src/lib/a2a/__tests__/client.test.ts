@@ -32,7 +32,7 @@ function makeAgent(metadata: Record<string, unknown> = {}): RegisteredAgent {
     latencyMs: null,
     capabilities: [],
     metadata,
-    host: "100.64.0.9",
+    host: "worker.tailnet",
     port: 8001,
     healthEndpoint: "/health",
     tunnelUrl: null,

@@ -12,6 +12,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { PLATFORM_LABELS } from "@/lib/constants";
 import type { Agent, RegisteredAgent } from "@/types";
 
+interface AgentsResponseExtras {
+  localRuntime?: {
+    activeCliCount: number;
+  };
+}
+
 function section(title: string, agents: RegisteredAgent[]) {
   return agents.length > 0 ? [{ title, agents: agents as Agent[] }] : [];
 }
@@ -124,8 +130,12 @@ export default function KitchenFloor() {
   const { data, isLoading } = useAgents();
   const allAgents = (data?.agents || []) as RegisteredAgent[];
   const activeAgents = allAgents.filter((a) => a.status === "active");
+  const localRuntimeActive =
+    ((data as (typeof data & AgentsResponseExtras) | undefined)?.localRuntime?.activeCliCount) ?? 0;
+  const activeRegisteredRemote = activeAgents.filter((agent) => agent.isRemote || agent.location !== "local").length;
+  const activeRegisteredLocal = activeAgents.length - activeRegisteredRemote;
 
-  const active = activeAgents.length;
+  const active = activeRegisteredRemote + Math.max(activeRegisteredLocal, localRuntimeActive);
   const errors = allAgents.filter((a) => a.status === "error").length;
   const tasks = allAgents.filter((a) => a.currentTask).length;
   const hierarchySections = buildHierarchySections(allAgents);
@@ -140,7 +150,13 @@ export default function KitchenFloor() {
         </h1>
         <p className="text-sm text-slate-400">Real-time agent status board</p>
       </div>
-      <SummaryBar total={allAgents.length} active={active} tasks={tasks} errors={errors} />
+      <SummaryBar
+        total={allAgents.length}
+        active={active}
+        tasks={tasks}
+        errors={errors}
+        localRuntimeActive={localRuntimeActive}
+      />
       {!isLoading && allAgents.length > 0 && <HarnessOverview agents={allAgents} />}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

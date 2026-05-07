@@ -286,7 +286,7 @@ curl -X POST http://localhost:3000/api/agents/register \
     "platform": "codex",
     "protocol": "rest",
     "location": "tailscale",
-    "host": "100.64.0.10",
+    "host": "agent.tailnet",
     "port": 8787,
     "healthEndpoint": "/health"
   }'
