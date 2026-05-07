@@ -225,6 +225,9 @@ describe("agent onboarding routes", () => {
     expect(scriptResponse.status).toBe(200);
     const script = await scriptResponse.text();
     expect(script).toContain("KITCHEN_URL=\"https://kitchen.example.test\"");
+    expect(script).toContain("curl -fsSL \"${KITCHEN_URL}/api/onboarding/register\"");
+    expect(script).toContain("MCP_TARGET=\"${AGENT_KITCHEN_MCP_TARGET:-auto}\"");
+    expect(script).not.toContain("\\${");
     expect(script).toContain("AGENT_KITCHEN_AGENT_ID");
     expect(script).toContain("AGENT_KITCHEN_AGENT_NAME");
     expect(script).toContain("\"claude\": \"claude\"");

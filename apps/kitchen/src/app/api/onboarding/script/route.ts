@@ -271,7 +271,7 @@ print(f"Agent Kitchen onboarded {agent_id}")
 print(f"Credentials written to {env_path}")
 print(f"Onboarding report written to {report_path}")
 PY
-`;
+`.replaceAll("\\${", "${");
 
 export async function GET(request: Request) {
   const token = new URL(request.url).searchParams.get("token") ?? "";
