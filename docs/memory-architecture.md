@@ -58,6 +58,27 @@ Use:
 
 If no tier is supplied, Kitchen normalizes metadata and chooses the safest default for the current payload.
 
+## Progressive Capability Boundaries
+
+Tool-attention and memory are related, but they are not the same store.
+
+- Progressive capability catalog entries describe which tools and systems are available, such as `mcp-server:gitnexus` or `capability:agent-lightning`.
+- Tool-attention outcomes record whether a capability helped or failed for a task type.
+- Memory stores compact durable lessons and preferences derived from use.
+
+Do not store generated GitNexus code graphs, full impact reports, APO proposal bodies, approved skill patches, or raw tool outputs in memory. Those belong in their source systems: GitNexus indexes, APO proposal folders, audit logs, or source control.
+
+Good memory examples:
+
+- "GitNexus helped with impact analysis for agent-kitchen refactors."
+- "Agent Lightning approval workflow is preferred for recurring skill fixes."
+
+Bad memory examples:
+
+- Full GitNexus symbol graphs or process traces.
+- Full APO proposal markdown.
+- Full skill patch contents.
+
 ## Read Path
 
 - `/api/memory/search` reads vector memory.

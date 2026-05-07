@@ -161,6 +161,21 @@ export interface ApoProposal {
   timestamp: string;
   content: string;
   status: "pending" | "approved" | "archived";
+  tracking?: ApoProposalTracking;
+}
+
+export interface ApoProposalTracking {
+  phase: "pending" | "queued" | "implemented";
+  label: string;
+  description: string;
+  timestamp: string;
+  approvedAt?: string;
+  implementedAt?: string;
+  archivedAt?: string;
+  targetPath?: string;
+  targetKind?: "skill" | "agent";
+  executorCli?: string;
+  applied?: boolean;
 }
 
 export interface ApoCycleStats {
@@ -253,6 +268,7 @@ export interface ToolAttentionCapability {
   id: string;
   name: string;
   type: string;
+  category?: string;
   source: string;
   description: string;
   status: "available" | "candidate" | "missing" | "invalid" | "degraded";

@@ -78,6 +78,47 @@ npm run first-run:check
 
 `setup.sh` validates required tools, copies `.env.example` when needed, validates the selected profile, checks Qdrant unless `SKIP_QDRANT_CHECK=1`, and starts Docker Compose unless `START_SERVICES=0`.
 
+## Optional Progressive Capabilities
+
+Kitchen can also check bundled-but-optional capabilities during setup:
+
+```env
+KITCHEN_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
+```
+
+Supported v1 values are `gitnexus` and `agent-lightning`. These checks only warn; they do not make setup fail. GitNexus stays discoverable through `.mcp.json` as `mcp-server:gitnexus`, and Agent Lightning/APO is surfaced as `capability:agent-lightning` in the progressive tool catalog.
+
+The setup check intentionally does not install GitNexus, run GitNexus reindexing, install APO cron jobs, or apply APO proposals. It only reports whether the local machine is ready to use the optional capability and gives actionable warnings when paths, scripts, registries, or logs are missing.
+
+Keep generated GitNexus indexes and APO proposal bodies out of memory. Use memory only for compact preferences and outcome lessons, such as which capability helped for a task type.
+
+### GitNexus Boundary
+
+Keep GitNexus as its own MCP server:
+
+```json
+{
+  "mcpServers": {
+    "gitnexus": {
+      "command": "gitnexus",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Agent Kitchen reads that registration and advertises `mcp-server:gitnexus` through tool-attention. This keeps code graph indexing, stale-index checks, and repo intelligence in GitNexus while Kitchen stays the progressive discovery and operator-control layer.
+
+### Agent Lightning Boundary
+
+Agent Lightning/APO remains a human-gated proposal workflow. Kitchen surfaces it as `capability:agent-lightning`, reads proposal/log paths from the existing APO environment variables, and uses the existing worker command:
+
+```bash
+npm --prefix apps/kitchen run apo:worker -- --executor qwen
+```
+
+Approving proposals and processing the approved queue remain explicit operator actions.
+
 ## Common Confusion: Registry Has Fewer Agents Than Expected
 
 The `/agents` page shows canonical registry agents only. Older `agents.config.json` entries are legacy remote poll targets. To make those agents first-class in Kitchen, register them through `/api/agents/register` or ingest their A2A card through `/api/a2a/agents/register`.

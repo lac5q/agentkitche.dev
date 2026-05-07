@@ -7,6 +7,7 @@ import { stdin as input, stdout as output } from 'node:process';
 const profiles = JSON.parse(fs.readFileSync('config/operating-profiles.json', 'utf8'));
 const envExample = fs.readFileSync('.env.example', 'utf8');
 const envFile = process.env.ENV_FILE || '.env';
+const supportedOptionalCapabilities = new Set(['gitnexus', 'agent-lightning']);
 
 function parseArgs() {
   const args = new Set(process.argv.slice(2));
@@ -25,6 +26,9 @@ function validateWizardInputs(values) {
   if (!values.QDRANT_API_KEY || values.QDRANT_API_KEY.startsWith('your-')) errors.push('QDRANT_API_KEY is required');
   if (!values.NEO4J_PASSWORD || values.NEO4J_PASSWORD === 'change-me') errors.push('NEO4J_PASSWORD must be changed');
   if (!values.KITCHEN_OPERATOR_API_KEY || values.KITCHEN_OPERATOR_API_KEY === 'change-me') errors.push('KITCHEN_OPERATOR_API_KEY must be changed');
+  const optionalCapabilities = String(values.KITCHEN_OPTIONAL_CAPABILITIES || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const unsupported = optionalCapabilities.filter((item) => !supportedOptionalCapabilities.has(item));
+  if (unsupported.length) errors.push(`Unsupported optional capabilities: ${unsupported.join(', ')}`);
   return errors;
 }
 
@@ -86,6 +90,7 @@ async function promptForValues() {
     const neo4jPassword = await secretQuestion('Neo4j password (input hidden): ');
     const operatorKey = await secretQuestion('Kitchen operator API key (input hidden): ');
     const geminiKey = await secretQuestion('Gemini API key (optional, input hidden, press Enter to skip): ');
+    const optionalCapabilities = await rl.question('Optional capabilities [gitnexus,agent-lightning] (blank to skip): ');
     const firstAgentId = await rl.question('First agent id to prepare (optional): ');
     return {
       KITCHEN_A2A_PROFILE: profile.trim() || 'private-network',
@@ -93,6 +98,7 @@ async function promptForValues() {
       QDRANT_API_KEY: qdrantKey.trim(),
       NEO4J_PASSWORD: neo4jPassword.trim(),
       KITCHEN_OPERATOR_API_KEY: operatorKey.trim(),
+      KITCHEN_OPTIONAL_CAPABILITIES: optionalCapabilities.trim(),
       GEMINI_API_KEY: geminiKey.trim() || 'your-gemini-key-here',
       FIRST_AGENT_ID: firstAgentId.trim(),
     };
@@ -110,6 +116,7 @@ async function main() {
       QDRANT_API_KEY: 'dummy-key',
       NEO4J_PASSWORD: 'neo4j-secret',
       KITCHEN_OPERATOR_API_KEY: 'operator-secret',
+      KITCHEN_OPTIONAL_CAPABILITIES: 'gitnexus,agent-lightning',
     };
     const errors = validateWizardInputs(sample);
     if (errors.length) throw new Error(errors.join('; '));

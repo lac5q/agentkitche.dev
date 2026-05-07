@@ -91,11 +91,22 @@ describe("POST /api/apo approve", () => {
 
     expect(response.status).toBe(200);
     expect(body.stats).toMatchObject({ pendingProposals: 0, approvedProposals: 1, archivedProposals: 0 });
-    expect(body.proposals[0]).toMatchObject({ id: proposalFilename, status: "approved" });
+    expect(body.proposals[0]).toMatchObject({
+      id: proposalFilename,
+      status: "approved",
+      tracking: {
+        phase: "queued",
+        label: "Queued for worker",
+        executorCli: "qwen",
+        targetKind: "skill",
+        targetPath: path.join(skillsPath, "ceo", "SKILL.md"),
+      },
+    });
+    expect(body.proposals[0].tracking.approvedAt).toEqual(expect.any(String));
   });
 
   it("applies queued approved proposals and archives them from the worker action", async () => {
-    const { POST } = await loadRoute();
+    const { GET, POST } = await loadRoute();
 
     await POST(makeApproveRequest({ action: "approve", proposalId: proposalFilename }));
     const response = await POST(makeApproveRequest({ action: "process-approved" }));
@@ -116,6 +127,21 @@ describe("POST /api/apo approve", () => {
     );
     expect(existsSync(path.join(proposalsPath, "approved", proposalFilename))).toBe(false);
     expect(existsSync(path.join(proposalsPath, "archived", proposalFilename))).toBe(true);
+
+    const listResponse = await GET();
+    const listBody = await listResponse.json();
+    expect(listBody.stats).toMatchObject({ pendingProposals: 0, approvedProposals: 0, archivedProposals: 1 });
+    expect(listBody.proposals[0]).toMatchObject({
+      id: proposalFilename,
+      status: "archived",
+      tracking: {
+        phase: "implemented",
+        label: "Implemented",
+        executorCli: "qwen",
+        applied: true,
+      },
+    });
+    expect(listBody.proposals[0].tracking.implementedAt).toEqual(expect.any(String));
   });
 
   it("rejects invalid proposal ids before touching the filesystem", async () => {

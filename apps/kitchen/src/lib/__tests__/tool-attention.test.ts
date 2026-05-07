@@ -189,4 +189,36 @@ describe("getToolAttention", () => {
     expect(data.sources.find((source) => source.id === "root-mcp-json")?.path).toBe(".mcp.json");
     expect(data.sources.find((source) => source.id === "external-source")?.path).toBe("private/catalog.json");
   });
+
+  it("surfaces optional Agent Lightning capability and GitNexus status", () => {
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tool-attention-"));
+    const catalogPath = path.join(tempRoot, "services", "knowledge-mcp", "tool-catalog.json");
+    const outcomesPath = path.join(tempRoot, "logs", "tool-attention-outcomes.jsonl");
+    const home = path.join(tempRoot, "home");
+
+    fs.mkdirSync(path.dirname(catalogPath), { recursive: true });
+    fs.mkdirSync(path.dirname(outcomesPath), { recursive: true });
+    fs.mkdirSync(path.join(tempRoot, "apps", "kitchen"), { recursive: true });
+    fs.mkdirSync(path.join(home, ".gitnexus"), { recursive: true });
+    fs.writeFileSync(path.join(tempRoot, ".mcp.json"), JSON.stringify({ mcpServers: { gitnexus: {} } }));
+    fs.writeFileSync(path.join(tempRoot, "apps", "kitchen", "package.json"), JSON.stringify({ scripts: { "apo:worker": "node worker.js" } }));
+    fs.writeFileSync(path.join(home, ".gitnexus", "registry.json"), "{}");
+    fs.writeFileSync(catalogPath, JSON.stringify({ capabilities: [], sources: [] }));
+    fs.writeFileSync(outcomesPath, "");
+
+    vi.stubEnv("AGENT_KITCHEN_ROOT", tempRoot);
+    vi.stubEnv("HOME", home);
+    vi.stubEnv("TOOL_ATTENTION_CATALOG", catalogPath);
+    vi.stubEnv("TOOL_ATTENTION_OUTCOMES", outcomesPath);
+    vi.stubEnv("SKILLS_PATH", path.join(tempRoot, "no-skills"));
+    vi.stubEnv("KITCHEN_OPTIONAL_CAPABILITIES", "gitnexus,agent-lightning");
+
+    const data = getToolAttention("agent lightning APO skill proposals", 10);
+    const agentLightning = data.capabilities.find((item) => item.id === "capability:agent-lightning");
+    expect(agentLightning).toBeDefined();
+    expect(agentLightning?.status).toBe("degraded");
+
+    const gitnexus = getToolAttention("gitnexus", 10).capabilities.find((item) => item.id === "mcp-server:gitnexus");
+    expect(gitnexus?.status).toBe("available");
+  });
 });

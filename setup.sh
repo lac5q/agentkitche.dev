@@ -75,6 +75,13 @@ except Exception as exc:
 PY
 }
 
+validate_optional_capabilities() {
+  if [[ -z "${KITCHEN_OPTIONAL_CAPABILITIES:-}" ]]; then
+    return
+  fi
+  node scripts/optional-capabilities.mjs
+}
+
 start_services() {
   if [[ "$START_SERVICES" == "0" ]]; then
     echo "START_SERVICES=0, skipping docker compose up."
@@ -97,6 +104,7 @@ main() {
   load_env
   PROFILE="${KITCHEN_A2A_PROFILE:-$PROFILE}"
   validate_profile
+  validate_optional_capabilities
   validate_qdrant
   start_services
 

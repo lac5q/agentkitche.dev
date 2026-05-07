@@ -20,6 +20,46 @@ function now() {
 
 const SUCCESS_OUTCOMES = new Set(["helped", "success", "successful", "useful", "pass", "passed", "worked"]);
 const FAILURE_OUTCOMES = new Set(["failed", "failure", "not_helpful", "not helpful", "miss", "error", "blocked"]);
+const SUPPORTED_OPTIONAL_CAPABILITIES = new Set(["gitnexus", "agent-lightning"]);
+
+function optionalCapabilities(): Set<string> {
+  return new Set(
+    (process.env.KITCHEN_OPTIONAL_CAPABILITIES ?? "")
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter((item) => SUPPORTED_OPTIONAL_CAPABILITIES.has(item))
+  );
+}
+
+function gitnexusStatus(): ToolAttentionCapability["status"] {
+  const registryPath = process.env.GITNEXUS_REGISTRY || `${process.env.HOME}/.gitnexus/registry.json`;
+  const hasRegistry = fs.existsSync(registryPath);
+  const mcpPath = resolveFromRepoRoot(".mcp.json");
+  let hasMcp = false;
+  try {
+    hasMcp = Boolean(JSON.parse(fs.readFileSync(mcpPath, "utf-8")).mcpServers?.gitnexus);
+  } catch {
+    hasMcp = false;
+  }
+  if (hasMcp && hasRegistry) return "available";
+  if (hasMcp || hasRegistry) return "degraded";
+  return "missing";
+}
+
+function agentLightningStatus(): ToolAttentionCapability["status"] {
+  const proposalsPath = process.env.APO_PROPOSALS_PATH || `${process.env.HOME}/.openclaw/skills/proposals`;
+  const cronLogPath = process.env.APO_CRON_LOG_PATH || `${process.env.HOME}/.openclaw/logs/agent-lightning-cron.log`;
+  let hasWorker = false;
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(resolveFromRepoRoot("apps/kitchen/package.json"), "utf-8"));
+    hasWorker = Boolean(packageJson.scripts?.["apo:worker"]);
+  } catch {
+    hasWorker = false;
+  }
+  if (hasWorker && fs.existsSync(proposalsPath) && fs.existsSync(cronLogPath)) return "available";
+  if (hasWorker || fs.existsSync(proposalsPath) || fs.existsSync(cronLogPath)) return "degraded";
+  return "missing";
+}
 
 function contextMatchSignal(outcome: ToolAttentionOutcome, context: ToolAttentionContextPack): number {
   let score = 0;
@@ -211,6 +251,7 @@ function mcpCapabilities(): { capabilities: ToolAttentionCapability[]; sources: 
   try {
     const parsed = JSON.parse(fs.readFileSync(mcpPath, "utf-8"));
     const servers = Object.keys(parsed.mcpServers ?? {}).sort();
+    const optional = optionalCapabilities();
     return {
       sources: [source],
       capabilities: servers.map((server) =>
@@ -220,7 +261,7 @@ function mcpCapabilities(): { capabilities: ToolAttentionCapability[]; sources: 
           type: "mcp-server",
           source: "root-mcp-json",
           description: `Configured MCP server ${server} from the monorepo root MCP config.`,
-          status: "available",
+          status: server === "gitnexus" && optional.has("gitnexus") ? gitnexusStatus() : "available",
           tags: ["mcp", "configured"],
           useWhen: [`Need tools exposed by the ${server} MCP server.`],
           topLevel: true,
@@ -231,6 +272,30 @@ function mcpCapabilities(): { capabilities: ToolAttentionCapability[]; sources: 
   } catch {
     return { capabilities: [], sources: [{ ...source, status: "invalid" }] };
   }
+}
+
+function optionalCapabilityEntries(): ToolAttentionCapability[] {
+  const optional = optionalCapabilities();
+  if (!optional.has("agent-lightning")) return [];
+  return [
+    capability({
+      id: "capability:agent-lightning",
+      name: "agent-lightning",
+      type: "capability",
+      category: "capability",
+      source: "optional-capabilities",
+      description: "Agent Lightning/APO proposal review and approved-skill-improvement workflow.",
+      status: agentLightningStatus(),
+      tags: ["agent-lightning", "apo", "skills", "proposals", "progressive"],
+      useWhen: [
+        "Need to review or process APO skill-improvement proposals",
+        "Need human-gated self-learning changes to skills or agent instructions",
+        "Need Agent Lightning approval worker guidance",
+      ],
+      topLevel: false,
+      loadCommand: "Use /apo or npm --prefix apps/kitchen run apo:worker",
+    }),
+  ];
 }
 
 function knowledgeCapabilities(): ToolAttentionCapability[] {
@@ -357,8 +422,8 @@ function recommendations(capabilities: ToolAttentionCapability[]): ToolAttention
 
 function matchesQuery(item: ToolAttentionCapability, query: string): boolean {
   if (!query.trim()) return true;
-  const normalized = query.toLowerCase();
-  return [
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const haystack = [
     item.id,
     item.name,
     item.type,
@@ -366,7 +431,8 @@ function matchesQuery(item: ToolAttentionCapability, query: string): boolean {
     item.description,
     item.tags.join(" "),
     item.useWhen.join(" "),
-  ].some((value) => value.toLowerCase().includes(normalized));
+  ].join(" ").toLowerCase();
+  return terms.every((term) => haystack.includes(term));
 }
 
 export function getToolAttention(query = "", limit = 25): ToolAttentionResponse {
@@ -374,13 +440,22 @@ export function getToolAttention(query = "", limit = 25): ToolAttentionResponse 
   const skills = skillCapabilities();
   const curated = readJsonFile(catalogPath());
   const outcomes = readOutcomes(outcomesPath());
+  const optionalEntries = optionalCapabilityEntries();
   const capabilities = [
     ...mcp.capabilities,
+    ...optionalEntries,
     ...knowledgeCapabilities(),
     ...skills.capabilities,
     ...curated.capabilities,
   ].map(publicCapability).filter((item) => matchesQuery(item, query)).slice(0, Math.max(1, Math.min(limit, 100)));
-  const sources = [...mcp.sources, {
+  const optionalSources: ToolAttentionSource[] = optionalEntries.length ? [{
+    id: "optional-capabilities",
+    label: "Optional Progressive Capabilities",
+    type: "local-config",
+    path: ".env",
+    status: "available",
+  }] : [];
+  const sources = [...mcp.sources, ...optionalSources, {
     id: "knowledge-system",
     label: "Knowledge MCP",
     type: "service",

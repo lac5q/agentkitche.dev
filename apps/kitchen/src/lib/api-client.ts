@@ -6,6 +6,8 @@ import type {
   HealthStatus,
   KnowledgeCollection,
   MemoryEntry,
+  ApoCycleStats,
+  ApoProposal,
   PaperclipFleetResponse,
   RegisterAgentInput,
   RegisterAgentResult,
@@ -243,23 +245,8 @@ export function useApo() {
     queryKey: ["apo"],
     queryFn: () =>
       fetchJSON<{
-        proposals: Array<{
-          id: string;
-          filename: string;
-          skill: string;
-          subsystem: string;
-          timestamp: string;
-          content: string;
-          status: "pending" | "approved" | "archived";
-        }>;
-        stats: {
-          lastRun: string | null;
-          totalProposals: number;
-          pendingProposals: number;
-          approvedProposals: number;
-          archivedProposals: number;
-          recentLogLines: string[];
-        };
+        proposals: ApoProposal[];
+        stats: ApoCycleStats;
         timestamp: string;
       }>("/api/apo"),
     refetchInterval: 30000, // 30s

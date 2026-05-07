@@ -45,9 +45,59 @@ describe("ProposalCard", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
+  it("shows queued tracking details for approved proposals", () => {
+    render(
+      <ProposalCard
+        proposal={{
+          ...pendingProposal,
+          status: "approved",
+          tracking: {
+            phase: "queued",
+            label: "Queued for worker",
+            description: "Approved and waiting for the worker.",
+            approvedAt: "2026-05-07T07:28:14.591Z",
+            targetPath: "/Users/lcalderon/.openclaw/skills/ceo/SKILL.md",
+            targetKind: "skill",
+            executorCli: "qwen",
+          },
+        }}
+        onClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Queued for worker")).toBeInTheDocument();
+    expect(screen.getByText("executor: qwen")).toBeInTheDocument();
+    expect(screen.getByText("target: skill")).toBeInTheDocument();
+  });
+
   it("does not show approve for archived proposals", () => {
     render(<ProposalCard proposal={{ ...pendingProposal, status: "archived" }} onClick={vi.fn()} />);
 
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+  });
+
+  it("shows implemented tracking details for archived proposals", () => {
+    render(
+      <ProposalCard
+        proposal={{
+          ...pendingProposal,
+          status: "archived",
+          tracking: {
+            phase: "implemented",
+            label: "Implemented",
+            description: "Applied by the worker and archived for audit.",
+            implementedAt: "2026-05-07T07:35:00.000Z",
+            targetPath: "/Users/lcalderon/.openclaw/skills/ceo/SKILL.md",
+            targetKind: "skill",
+            executorCli: "qwen",
+            applied: true,
+          },
+        }}
+        onClick={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Implemented")).toBeInTheDocument();
+    expect(screen.getByText("applied")).toBeInTheDocument();
   });
 });

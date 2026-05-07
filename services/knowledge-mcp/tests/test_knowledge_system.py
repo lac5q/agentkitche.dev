@@ -250,6 +250,27 @@ def test_tool_attention_top_level_mcp_tools(monkeypatch):
         assert str(root) not in json.dumps(recorded)
 
 
+def test_tool_attention_optional_agent_lightning(monkeypatch):
+    with TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "logs").mkdir()
+        (root / ".mcp.json").write_text(json.dumps({"mcpServers": {"gitnexus": {"command": "gitnexus"}}}))
+        monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(root))
+        monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(root / "missing-catalog.json"))
+        monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(root / "logs" / "outcomes.jsonl"))
+        monkeypatch.setenv("SKILLS_PATH", str(root / "missing-skills"))
+        monkeypatch.setenv("KITCHEN_OPTIONAL_CAPABILITIES", "gitnexus,agent-lightning")
+
+        discovered = mcp_server.tool_discover("agent lightning APO skill proposals", limit=5)
+        assert "capability:agent-lightning" in {item["id"] for item in discovered["capabilities"]}
+        agent_lightning = next(item for item in discovered["capabilities"] if item["id"] == "capability:agent-lightning")
+        assert agent_lightning["status"] in {"available", "degraded", "missing"}
+
+        catalog = mcp_server.tool_catalog()
+        gitnexus = next(item for item in catalog["capabilities"] if item["id"] == "mcp-server:gitnexus")
+        assert gitnexus["status"] in {"available", "degraded", "missing"}
+
+
 # ---------------------------------------------------------------------------
 # OPSGW-03: Dedicated coverage for each top-level Knowledge MCP gateway tool
 # ---------------------------------------------------------------------------

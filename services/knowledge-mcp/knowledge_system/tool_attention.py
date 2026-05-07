@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -15,6 +16,7 @@ except ImportError:  # pragma: no cover
 
 SUCCESS_OUTCOMES = {"helped", "success", "successful", "useful", "pass", "passed", "worked"}
 FAILURE_OUTCOMES = {"failed", "failure", "not_helpful", "not helpful", "miss", "error", "blocked"}
+SUPPORTED_OPTIONAL_CAPABILITIES = {"gitnexus", "agent-lightning"}
 
 
 def repo_root() -> Path:
@@ -50,6 +52,41 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(errors="replace"))
+
+
+def _optional_capability_names() -> set[str]:
+    raw = os.environ.get("KITCHEN_OPTIONAL_CAPABILITIES", "")
+    return {
+        item.strip().lower()
+        for item in raw.split(",")
+        if item.strip().lower() in SUPPORTED_OPTIONAL_CAPABILITIES
+    }
+
+
+def _gitnexus_status(root: Path) -> str:
+    has_cli = shutil.which("gitnexus") is not None
+    registry = Path(os.environ.get("GITNEXUS_REGISTRY", str(Path.home() / ".gitnexus" / "registry.json"))).expanduser()
+    has_registry = registry.exists()
+    mcp = _read_json(root / ".mcp.json")
+    has_mcp = bool(mcp.get("mcpServers", {}).get("gitnexus"))
+    if has_cli and has_mcp and has_registry:
+        return "available"
+    if has_cli or has_mcp or has_registry:
+        return "degraded"
+    return "missing"
+
+
+def _agent_lightning_status(root: Path) -> str:
+    home = Path.home()
+    proposals = Path(os.environ.get("APO_PROPOSALS_PATH", str(home / ".openclaw" / "skills" / "proposals"))).expanduser()
+    cron_log = Path(os.environ.get("APO_CRON_LOG_PATH", str(home / ".openclaw" / "logs" / "agent-lightning-cron.log"))).expanduser()
+    package = _read_json(root / "apps" / "kitchen" / "package.json")
+    has_worker = bool(package.get("scripts", {}).get("apo:worker"))
+    if has_worker and proposals.exists() and cron_log.exists():
+        return "available"
+    if has_worker or proposals.exists() or cron_log.exists():
+        return "degraded"
+    return "missing"
 
 
 def _read_jsonl(path: Path, limit: int = 20) -> list[dict[str, Any]]:
@@ -207,7 +244,11 @@ def _mcp_server_capabilities(root: Path) -> tuple[list[dict[str, Any]], list[dic
         return [], [source]
 
     capabilities = []
+    optional = _optional_capability_names()
     for server_id in sorted((data.get("mcpServers") or {}).keys()):
+        status = "available"
+        if server_id == "gitnexus" and "gitnexus" in optional:
+            status = _gitnexus_status(root)
         capabilities.append(
             _capability(
                 capability_id=f"mcp-server:{server_id}",
@@ -215,6 +256,7 @@ def _mcp_server_capabilities(root: Path) -> tuple[list[dict[str, Any]], list[dic
                 capability_type="mcp-server",
                 source="root-mcp-json",
                 description=f"Configured MCP server `{server_id}` from the monorepo root MCP config.",
+                status=status,
                 tags=["mcp", "configured"],
                 use_when=[f"Need tools exposed by the {server_id} MCP server."],
                 top_level=True,
@@ -223,6 +265,31 @@ def _mcp_server_capabilities(root: Path) -> tuple[list[dict[str, Any]], list[dic
             )
         )
     return capabilities, [source]
+
+
+def _optional_capabilities(root: Path) -> list[dict[str, Any]]:
+    capabilities: list[dict[str, Any]] = []
+    optional = _optional_capability_names()
+    if "agent-lightning" in optional:
+        capabilities.append(
+            _capability(
+                capability_id="capability:agent-lightning",
+                name="agent-lightning",
+                capability_type="capability",
+                source="optional-capabilities",
+                description="Agent Lightning/APO proposal review and approved-skill-improvement workflow.",
+                status=_agent_lightning_status(root),
+                tags=["agent-lightning", "apo", "skills", "proposals", "progressive"],
+                use_when=[
+                    "Need to review or process APO skill-improvement proposals",
+                    "Need human-gated self-learning changes to skills or agent instructions",
+                    "Need Agent Lightning approval worker guidance",
+                ],
+                load_command="Use /apo or npm --prefix apps/kitchen run apo:worker",
+                category="capability",
+            )
+        )
+    return capabilities
 
 
 def _knowledge_capabilities() -> list[dict[str, Any]]:
@@ -324,11 +391,23 @@ def build_catalog() -> dict[str, Any]:
     skill_caps, skill_sources = _skill_capabilities()
     external_caps, external_sources = _external_catalog_capabilities()
 
+    optional_caps = _optional_capabilities(root)
     capabilities.extend(mcp_caps)
+    capabilities.extend(optional_caps)
     capabilities.extend(_knowledge_capabilities())
     capabilities.extend(skill_caps)
     capabilities.extend(external_caps)
     sources.extend(mcp_sources)
+    if optional_caps:
+        sources.append(
+            {
+                "id": "optional-capabilities",
+                "label": "Optional Progressive Capabilities",
+                "type": "local-config",
+                "path": ".env",
+                "status": "available",
+            }
+        )
     sources.append(
         {
             "id": "knowledge-system",

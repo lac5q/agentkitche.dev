@@ -109,6 +109,7 @@ The aim is not to pretend this is a polished SaaS. It is a useful, inspectable, 
 - **Flow map:** Visual system topology for agents, memory, skills, dispatch, and infrastructure.
 - **Knowledge Library:** File counts, freshness alerts, collection maps, and growth trends for configured knowledge folders.
 - **Memory routing:** Vector memory through mem0/Qdrant, graph memory through Neo4j, and episodic/audit memory in Kitchen SQLite.
+- **Progressive capability discovery:** Tool-attention keeps optional systems such as GitNexus and Agent Lightning discoverable without loading every tool into every agent session.
 - **APO review:** Approve self-learning skill improvement proposals before they are applied.
 - **Operator security:** Operator-gated registry writes plus per-agent bearer keys for write/reporting endpoints.
 
@@ -353,6 +354,23 @@ flowchart LR
 ```
 
 The Library counts `.md`, `.mdx`, and `.txt` files from configured collections. Memory entries live in separate memory services and SQLite tables, so a collection file count is not the same thing as total memories.
+
+## Progressive Capabilities
+
+Agent Kitchen treats specialized systems as optional progressive capabilities. They can be checked during setup, shown in tool-attention, and recommended from outcome history without becoming required dependencies for every install.
+
+Enable the current optional bundle with:
+
+```env
+KITCHEN_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
+```
+
+Current bundled capabilities:
+
+- **GitNexus:** Kept as a separate MCP server, exposed through `.mcp.json` as `mcp-server:gitnexus`. Agent Kitchen does not proxy or replace GitNexus; it catalogs the capability, reports status, and helps agents decide when to load it for code intelligence, impact analysis, and index health.
+- **Agent Lightning/APO:** Exposed in tool-attention as `capability:agent-lightning`. Kitchen owns the operator UI/API approval queue, while the worker CLI applies approved proposals and archives them for audit history.
+
+This separation keeps each system's lifecycle clear: GitNexus owns code graphs and indexes, Agent Lightning owns self-learning proposal workflows, and Kitchen owns discovery, operator control, memory routing, and outcome signals.
 
 ## Agent Lightning Approvals
 
