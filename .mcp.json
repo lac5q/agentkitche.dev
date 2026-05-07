@@ -1,31 +1,10 @@
 {
   "mcpServers": {
-    "agentkitchen-gitnexus": {
-      "command": "gitnexus",
-      "args": ["mcp"]
-    },
-    "agentkitchen-mem0": {
-      "command": "/bin/bash",
-      "args": [
-        "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/services/memory/mcp-mem0-wrapper.sh\""
-      ]
-    },
-    "agentkitchen-knowledge": {
+    "agentkitchen": {
       "command": "/bin/bash",
       "args": [
         "-lc",
         "export AGENT_KITCHEN_ROOT=\"${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}\"; export KNOWLEDGE_ROOT=\"${KNOWLEDGE_ROOT:-$HOME/github/knowledge}\"; exec \"${KNOWLEDGE_PYTHON:-$HOME/github/knowledge/.venv/bin/python}\" \"$AGENT_KITCHEN_ROOT/services/knowledge-mcp/knowledge_system/mcp_server.py\""
-      ]
-    },
-    "agentkitchen-agentmemory": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "-p",
-        "@agentmemory/agentmemory@0.9.4",
-        "agentmemory",
-        "mcp"
       ]
     }
   }

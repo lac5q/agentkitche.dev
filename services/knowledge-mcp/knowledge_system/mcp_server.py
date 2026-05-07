@@ -39,6 +39,11 @@ except Exception:  # pragma: no cover - optional dependency
     httpx = None
 
 try:
+    import subprocess  # type: ignore
+except Exception:  # pragma: no cover
+    subprocess = None
+
+try:
     from .capabilities import get_capabilities, open_workspace
     from .compiler import compile_wiki
     from .store import KnowledgeStore
@@ -152,6 +157,63 @@ def memory_save(text: str, agent_id: str = "shared", metadata: Optional[dict] = 
         return {"status": "ok", "response": response.json()}
     except Exception as exc:
         return {"status": "unavailable", "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# GitNexus code intelligence (bundled into single agentkitchen MCP server)
+# ---------------------------------------------------------------------------
+
+
+def _run_gitnexus(args: list[str]) -> dict:
+    """Run a gitnexus CLI command and return parsed JSON output."""
+    if subprocess is None:
+        return {"status": "unavailable", "error": "subprocess not available"}
+    try:
+        result = subprocess.run(
+            ["gitnexus"] + args,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            return {"status": "error", "stderr": result.stderr.strip()}
+        import json
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return {"status": "ok", "output": result.stdout.strip()}
+    except Exception as exc:
+        return {"status": "unavailable", "error": str(exc)}
+
+
+@mcp.tool()
+def gitnexus_status() -> dict:
+    """Check gitnexus index health and symbol count."""
+    return _run_gitnexus(["status"])
+
+
+@mcp.tool()
+def gitnexus_query(query: str) -> dict:
+    """Search codebase by concept — returns execution flows ranked by relevance."""
+    return _run_gitnexus(["query", query])
+
+
+@mcp.tool()
+def gitnexus_context(name: str) -> dict:
+    """Get full context on a symbol — callers, callees, execution flows."""
+    return _run_gitnexus(["context", name])
+
+
+@mcp.tool()
+def gitnexus_impact(target: str, direction: str = "upstream") -> dict:
+    """Check blast radius — what breaks if you change this symbol."""
+    return _run_gitnexus(["impact", target, "--direction", direction])
+
+
+@mcp.tool()
+def gitnexus_detect_changes() -> dict:
+    """Verify uncommitted changes and affected symbols before committing."""
+    return _run_gitnexus(["detect-changes"])
 
 
 # ---------------------------------------------------------------------------
@@ -276,6 +338,26 @@ def knowledge_workspace_call(workspace: str, action: str, arguments: Optional[di
             "action": action,
             "capabilities": get_capabilities(workspace),
         }
+    if workspace == "gitnexus":
+        if action == "status":
+            return gitnexus_status()
+        if action == "query":
+            return gitnexus_query(str(args.get("query", "")))
+        if action == "context":
+            return gitnexus_context(str(args.get("name", args.get("symbol", ""))))
+        if action == "impact":
+            return gitnexus_impact(
+                target=str(args.get("target", "")),
+                direction=str(args.get("direction", "upstream")),
+            )
+        if action == "detect_changes":
+            return gitnexus_detect_changes()
+        return {
+            "status": "unsupported_action",
+            "workspace": workspace,
+            "action": action,
+            "capabilities": get_capabilities(workspace),
+        }
     if workspace in {"ingestion", "workflows", "skill-packs", "integrations", "primitives"}:
         if action in {"catalog", "read", "list"}:
             return {
@@ -330,10 +412,11 @@ def recipes_catalog_resource() -> str:
 def knowledge_system_orientation() -> str:
     """Prompt that tells an agent how to use the knowledge system safely."""
     return (
-        "Use the knowledge-system MCP server as one facade with progressive disclosure. "
-        "Start with core tools: health, manifest, search, read, memory_search, memory_save. "
+        "Use the agentkitchen MCP server as one progressive facade with progressive disclosure. "
+        "Start with core tools: health, manifest, search, read, memory_search, memory_save, gitnexus_status. "
         "If a task needs deeper capability, call knowledge_capabilities or knowledge_open_workspace. "
-        "Use knowledge_workspace_call for deep actions like wiki compile instead of expecting many top-level tools. "
+        "Use knowledge_workspace_call for deep actions like wiki compile or gitnexus impact analysis. "
+        "Available workspaces: wiki, vector, agent-memory, admin, graph, dashboard, ingestion, workflows, skill-packs, integrations, primitives, tool-attention, gitnexus. "
         "Treat source files as authoritative and generated wiki pages as compiled views with citations."
     )
 

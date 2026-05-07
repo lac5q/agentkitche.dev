@@ -17,6 +17,7 @@ CORE_TOOLS = [
     "knowledge_read",
     "memory_search",
     "memory_save",
+    "gitnexus_status",
 ]
 
 WORKSPACES = {
@@ -135,6 +136,17 @@ WORKSPACES = {
             "Need to decide which MCP server, workspace, or skill should be loaded for a task",
             "Need a compact catalog instead of dumping all tool definitions into context",
             "Need to record whether a selected tool helped or failed",
+        ],
+    },
+    "gitnexus": {
+        "description": "Code intelligence workspace: symbol lookup, impact analysis, execution flows, and refactoring safety.",
+        "tools": ["gitnexus_status", "gitnexus_query", "gitnexus_context", "gitnexus_impact", "gitnexus_detect_changes"],
+        "resources": [],
+        "use_when": [
+            "Need to understand how code works or trace execution flows",
+            "Need to check blast radius before editing code",
+            "Need to verify changes before committing",
+            "Need to rename or refactor symbols safely",
         ],
     },
 }
