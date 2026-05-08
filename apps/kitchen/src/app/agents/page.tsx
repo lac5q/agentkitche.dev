@@ -27,8 +27,8 @@ function inviteErrorMessage(error: unknown) {
 
 function formatAgentOnboardingPrompt(command: string) {
   return [
-    "Run this Agent Kitchen onboarding command exactly as written.",
-    "It will register you, save your per-agent credentials, and install the Agent Kitchen MCP server for your runtime.",
+    "Run this agentkitche.dev onboarding command exactly as written.",
+    "It will register you, save your per-agent credentials, and install the agentkitche.dev MCP server for your runtime.",
     "After it finishes, tell me whether it succeeded and include the onboarding report path it printed.",
     "",
     "Command to run:",

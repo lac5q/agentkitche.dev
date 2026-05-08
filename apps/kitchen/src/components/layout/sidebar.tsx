@@ -48,7 +48,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <div className="mb-7 flex items-center justify-between border-b border-slate-200 px-2 pb-5">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Workspace</p>
-          <h1 className="mt-1 truncate text-base font-semibold text-slate-950">Agent Kitchen</h1>
+          <h1 className="mt-1 truncate text-base font-semibold text-slate-950">agentkitche.dev</h1>
           <p className="text-xs text-slate-500">Agent fleet control</p>
         </div>
         {/* Close button — mobile only */}

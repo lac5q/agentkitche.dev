@@ -102,7 +102,7 @@ describe("well-known A2A agent card routes", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.name).toBe("Agent Kitchen");
+    expect(body.name).toBe("agentkitche.dev");
     expect(body.extensions.kitchen.cardPaths.canonical).toBe(A2A_CANONICAL_AGENT_CARD_PATH);
     expect(body.extensions.kitchen.compatibilityAlias).toBeUndefined();
   });
@@ -113,7 +113,7 @@ describe("well-known A2A agent card routes", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.name).toBe("Agent Kitchen");
+    expect(body.name).toBe("agentkitche.dev");
     expect(body.extensions.kitchen.cardPaths.compatibility).toBe(A2A_COMPAT_AGENT_CARD_PATH);
     expect(body.extensions.kitchen.compatibilityAlias).toBe(true);
   });

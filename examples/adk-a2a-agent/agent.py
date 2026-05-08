@@ -1,4 +1,4 @@
-"""Optional Google ADK-style A2A sample for Agent Kitchen.
+"""Optional Google ADK-style A2A sample for agentkitche.dev.
 
 This file is intentionally not imported by Kitchen startup. It is a tiny local
 fixture operators can adapt when proving that a Google ADK A2A agent can be

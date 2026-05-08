@@ -1,6 +1,6 @@
-# Agent Kitchen as an MCP Server
+# agentkitche.dev as an MCP Server
 
-Agent Kitchen exposes a small MCP facade named `agentkitchen` for knowledge, memory, and progressive tool discovery. It supports both:
+agentkitche.dev exposes a small MCP facade named `agentkitchen` for knowledge, memory, and progressive tool discovery. It supports both:
 
 - **stdio**: best when the MCP client runs on the same machine or has a local clone.
 - **Streamable HTTP**: best for Maria/Sophia or any agent on another machine over Tailscale/LAN.
@@ -15,7 +15,7 @@ It keeps stdout clean for MCP JSON-RPC, installs missing Python MCP dependencies
 
 ## Option A — local stdio client
 
-Use this when the agent client can run commands on the same filesystem as the Agent Kitchen clone.
+Use this when the agent client can run commands on the same filesystem as the agentkitche.dev clone.
 
 ```json
 {
@@ -24,7 +24,7 @@ Use this when the agent client can run commands on the same filesystem as the Ag
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/scripts/agentkitchen-mcp.sh\""
+        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agentkitche.dev}/scripts/agentkitchen-mcp.sh\""
       ]
     }
   }
@@ -39,17 +39,17 @@ mcp_servers:
     command: /bin/bash
     args:
       - -lc
-      - exec "${AGENT_KITCHEN_ROOT:-$HOME/github/agent-kitchen}/scripts/agentkitchen-mcp.sh"
+      - exec "${AGENT_KITCHEN_ROOT:-$HOME/github/agentkitche.dev}/scripts/agentkitchen-mcp.sh"
 ```
 
 ## Option B — remote Streamable HTTP client
 
 Use this when Maria/Sophia are on a different machine.
 
-On the Agent Kitchen host:
+On the agentkitche.dev host:
 
 ```bash
-cd ~/github/agent-kitchen
+cd ~/github/agentkitche.dev
 npm run mcp:http
 # or: ./scripts/agentkitchen-mcp.sh --http --host 0.0.0.0 --port 8765
 ```

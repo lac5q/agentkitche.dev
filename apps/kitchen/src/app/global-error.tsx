@@ -16,7 +16,7 @@ export default function GlobalError({
               Critical kitchen fault
             </div>
             <h1 className="text-4xl font-black tracking-tight text-slate-50">
-              Agent Kitchen could not finish loading.
+              agentkitche.dev could not finish loading.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
               The root app shell failed before the normal dashboard could render. If the server is stopped, restart Kitchen on port 3002; otherwise try reloading the route.

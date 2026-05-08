@@ -1,4 +1,4 @@
-# Agent Kitchen
+# agentkitche.dev
 
 <p align="center">
   <strong>The local-first control plane for operating real multi-agent fleets.</strong>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lac5q/agent-kitchen/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-10b981.svg"></a>
+  <a href="https://github.com/lac5q/agentkitche.dev/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-10b981.svg"></a>
   <img alt="Release: v0.1.0" src="https://img.shields.io/badge/release-v0.1.0-06b6d4.svg">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black.svg">
   <img alt="A2A ready" src="https://img.shields.io/badge/A2A-ready-0ea5e9.svg">
@@ -31,10 +31,10 @@
 
 ## Demo
 
-Agent Kitchen is a dashboard and API surface for the part of agent systems that usually lives in scattered terminal tabs, notebooks, cron logs, local databases, and half-remembered shell scripts.
+agentkitche.dev is a dashboard and API surface for the part of agent systems that usually lives in scattered terminal tabs, notebooks, cron logs, local databases, and half-remembered shell scripts.
 
 <p align="center">
-  <img src="docs/screenshots/readme-flow.png" alt="Agent Kitchen Flow map showing agents, memory, gateways, skills, dispatch paths, and system health" width="900">
+  <img src="docs/screenshots/readme-flow.png" alt="agentkitche.dev Flow map showing agents, memory, gateways, skills, dispatch paths, and system health" width="900">
 </p>
 
 <p align="center">
@@ -64,7 +64,7 @@ Agent Kitchen is a dashboard and API surface for the part of agent systems that 
 
 ## Why Star This Repo
 
-Star Agent Kitchen if you are building agent systems that are moving from clever demos into daily operations.
+Star agentkitche.dev if you are building agent systems that are moving from clever demos into daily operations.
 
 - **You run more than one agent.** Claude Code, Codex, OpenClaw, Hermes, Google ADK, LangGraph, CrewAI, AutoGen, custom HTTP workers: Kitchen gives them one roster.
 - **You care where agents live.** Local machine, VM, Tailscale host, Cloudflare tunnel, LAN box, cloud URL: the registry keeps location and reachability explicit.
@@ -87,7 +87,7 @@ After setup, you can:
 
 ## Release 0.1
 
-`v0.1.0` is the first public operator preview of Agent Kitchen.
+`v0.1.0` is the first public operator preview of agentkitche.dev.
 
 This release is intentionally focused on the control-plane foundation:
 
@@ -137,7 +137,7 @@ flowchart TB
     Custom["Custom HTTP agents"]
   end
 
-  subgraph Kitchen["Agent Kitchen"]
+  subgraph Kitchen["agentkitche.dev"]
     UI["Operator UI"]
     Registry[("SQLite Registry")]
     A2A["A2A Broker"]
@@ -224,12 +224,14 @@ sequenceDiagram
 - Optional: Tailscale for multi-machine private networking
 
 ```bash
-git clone https://github.com/lac5q/agent-kitchen.git
-cd agent-kitchen
+git clone https://github.com/lac5q/agentkitche.dev.git
+cd agentkitche.dev
 npm install
 ./setup.sh --wizard
 ./setup.sh
 ```
+
+Previously shared GitHub links to `https://github.com/lac5q/agent-kitchen` should continue to resolve through GitHub's repository rename redirect. Use the new `agentkitche.dev` URL for fresh links so this project is not confused with similarly named repositories.
 
 Open Kitchen:
 
@@ -256,7 +258,7 @@ flowchart LR
   Server["Kitchen server"] <--> Tailnet
   Agents["Agent machines"] <--> Tailnet
   Tailnet --> Auth["Operator key + per-agent bearer keys"]
-  Auth --> Kitchen["Agent Kitchen"]
+  Auth --> Kitchen["agentkitche.dev"]
 ```
 
 Operating profiles:
@@ -308,7 +310,7 @@ The response may include an API key unless `issueApiKey` is false. Store it secu
 
 ### One-command agent onboarding
 
-For agents that can run shell commands, create a short-lived invite and hand the returned command to the agent. The invite registers the agent, mints its per-agent API key, and returns an Agent Kitchen MCP config.
+For agents that can run shell commands, create a short-lived invite and hand the returned command to the agent. The invite registers the agent, mints its per-agent API key, and returns an agentkitche.dev MCP config.
 
 ```bash
 curl -X POST http://localhost:3000/api/onboarding/invite \
@@ -383,7 +385,7 @@ The Library counts `.md`, `.mdx`, and `.txt` files from configured collections. 
 
 ## Progressive Capabilities
 
-Agent Kitchen treats specialized systems as optional progressive capabilities. They can be checked during setup, shown in tool-attention, and recommended from outcome history without becoming required dependencies for every install.
+agentkitche.dev treats specialized systems as optional progressive capabilities. They can be checked during setup, shown in tool-attention, and recommended from outcome history without becoming required dependencies for every install.
 
 Enable the current optional bundle with:
 
@@ -393,7 +395,7 @@ KITCHEN_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
 
 Current bundled capabilities:
 
-- **GitNexus:** Kept as a separate MCP server, exposed through `.mcp.json` as `mcp-server:gitnexus`. Agent Kitchen does not proxy or replace GitNexus; it catalogs the capability, reports status, and helps agents decide when to load it for code intelligence, impact analysis, and index health.
+- **GitNexus:** Kept as a separate MCP server, exposed through `.mcp.json` as `mcp-server:gitnexus`. agentkitche.dev does not proxy or replace GitNexus; it catalogs the capability, reports status, and helps agents decide when to load it for code intelligence, impact analysis, and index health.
 - **Agent Lightning/APO:** Exposed in tool-attention as `capability:agent-lightning`. Kitchen owns the operator UI/API approval queue, while the worker CLI applies approved proposals and archives them for audit history.
 
 This separation keeps each system's lifecycle clear: GitNexus owns code graphs and indexes, Agent Lightning owns self-learning proposal workflows, and Kitchen owns discovery, operator control, memory routing, and outcome signals.
@@ -448,7 +450,7 @@ npm run first-run:check
 ## Project Structure
 
 ```text
-agent-kitchen/
+agentkitche.dev/
 ├── apps/kitchen/              # Next.js UI and API routes
 ├── services/orchestration/    # Python LangGraph orchestration service
 ├── services/memory/           # mem0 service wrapper
@@ -470,7 +472,7 @@ agent-kitchen/
 - [Claude Code integration](docs/integrations/claude-code.md)
 - [Google ADK integration](docs/integrations/google-adk.md)
 - [LangGraph integration](docs/integrations/langgraph.md)
-- [Agent Kitchen MCP server](docs/integrations/mcp.md)
+- [agentkitche.dev MCP server](docs/integrations/mcp.md)
 - [CrewAI and AutoGen integration](docs/integrations/crewai-autogen.md)
 
 ## Upcoming Features
@@ -504,7 +506,7 @@ Good first contribution areas:
 - Add A2A compatibility fixtures.
 - Improve security tests around registry writes and memory reads.
 
-If Agent Kitchen helps you run more than one agent without losing the plot, please star the repo. It helps the project find the people building the same weird, useful future.
+If agentkitche.dev helps you run more than one agent without losing the plot, please star the repo. It helps the project find the people building the same weird, useful future.
 
 ## License
 

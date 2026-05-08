@@ -3,7 +3,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **agent-kitchen** (4436 symbols, 7962 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **agentkitche.dev** (4561 symbols, 8128 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -26,10 +26,10 @@ This project is indexed by GitNexus as **agent-kitchen** (4436 symbols, 7962 rel
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/agent-kitchen/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/agent-kitchen/clusters` | All functional areas |
-| `gitnexus://repo/agent-kitchen/processes` | All execution flows |
-| `gitnexus://repo/agent-kitchen/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/agentkitche.dev/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/agentkitche.dev/clusters` | All functional areas |
+| `gitnexus://repo/agentkitche.dev/processes` | All execution flows |
+| `gitnexus://repo/agentkitche.dev/process/{name}` | Step-by-step execution trace |
 
 ## CLI
 

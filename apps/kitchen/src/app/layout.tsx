@@ -7,7 +7,7 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Agent Kitchen",
+  title: "agentkitche.dev",
   description: "Local-first control plane for multi-agent fleets",
 };
 

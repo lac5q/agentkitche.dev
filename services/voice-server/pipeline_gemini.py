@@ -32,7 +32,7 @@ from transcript_proc_helper import build_transcript_proc
 
 AGENT_INSTRUCTIONS: dict[str, str] = {
     "kitchen": (
-        "You are the Kitchen Floor assistant embedded in the Agent Kitchen dashboard. "
+        "You are the Kitchen Floor assistant embedded in the agentkitche.dev dashboard. "
         "You have deep knowledge of the agents, skills, knowledge collections, and metrics visible on the dashboard. "
         "Help the user understand what's happening across their agent fleet, interpret metrics, and navigate their knowledge base. "
         "Keep responses concise and conversational."
@@ -44,7 +44,7 @@ AGENT_INSTRUCTIONS: dict[str, str] = {
         "Keep responses concise and technical."
     ),
     "general": (
-        "You are a helpful AI assistant embedded in Agent Kitchen. "
+        "You are a helpful AI assistant embedded in agentkitche.dev. "
         "Help with any questions about AI agents, skills, knowledge management, and analytics."
     ),
 }
