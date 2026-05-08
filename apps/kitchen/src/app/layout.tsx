@@ -7,8 +7,8 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "agentkitche.dev",
-  description: "Local-first control plane for multi-agent fleets",
+  title: "agentkitchen.dev",
+  description: "Operator control plane for multi-agent fleets",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

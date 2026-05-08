@@ -4,7 +4,7 @@
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agentkitche.dev}/scripts/agentkitchen-mcp.sh\""
+        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agentkitchen.dev}/scripts/agentkitchen-mcp.sh\""
       ]
     }
   }

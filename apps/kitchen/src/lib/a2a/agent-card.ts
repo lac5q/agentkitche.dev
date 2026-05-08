@@ -31,7 +31,7 @@ const KITCHEN_A2A_SKILLS: A2aAgentSkill[] = [
 
 export function buildKitchenAgentCard(config: A2aConfig = getA2aConfig()): A2aAgentCard {
   return {
-    name: "agentkitche.dev",
+    name: "agentkitchen.dev",
     description: "A2A-native agent operations hub and durable task broker",
     version: A2A_VERSION,
     url: config.endpointBaseUrl,

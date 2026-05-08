@@ -54,7 +54,7 @@ if [[ -z "$PLATFORM" ]]; then
 fi
 
 if ! command -v python3 >/dev/null 2>&1; then
-  echo "python3 is required for agentkitche.dev onboarding" >&2
+  echo "python3 is required for agentkitchen.dev onboarding" >&2
   exit 1
 fi
 
@@ -104,7 +104,7 @@ agent_id = sys.argv[2]
 target = sys.argv[3]
 platform = sys.argv[4]
 if not body.get("ok"):
-    raise SystemExit(body.get("error", "agentkitche.dev onboarding failed"))
+    raise SystemExit(body.get("error", "agentkitchen.dev onboarding failed"))
 
 home = pathlib.Path.home()
 state_dir = home / ".agent-kitchen"
@@ -281,7 +281,7 @@ else:
 report_path = state_dir / f"{agent_id}.onboarding-report.json"
 report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 
-print(f"agentkitche.dev onboarded {agent_id}")
+print(f"agentkitchen.dev onboarded {agent_id}")
 print(f"Credentials written to {env_path}")
 print(f"Onboarding report written to {report_path}")
 PY

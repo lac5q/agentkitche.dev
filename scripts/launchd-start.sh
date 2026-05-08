@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# launchd entrypoint for agentkitche.dev.
+# launchd entrypoint for agentkitchen.dev.
 # Runs the real Next server as the launchd-tracked process. Avoid npm wrapper
 # chains here: if next-server exits but npm survives, launchd thinks Kitchen is
 # still healthy while nothing is listening on :3002.

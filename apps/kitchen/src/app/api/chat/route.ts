@@ -122,7 +122,7 @@ async function buildAgentContext(agentId: string): Promise<AgentContext> {
 
   if (!dir) {
     return {
-      systemPrompt: "You are a helpful AI assistant embedded in agentkitche.dev. Keep responses concise.",
+      systemPrompt: "You are a helpful AI assistant embedded in agentkitchen.dev. Keep responses concise.",
       source: "fallback",
       dir: null,
       agentInstructions: null,

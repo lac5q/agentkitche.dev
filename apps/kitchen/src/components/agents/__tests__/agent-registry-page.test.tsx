@@ -154,7 +154,7 @@ describe("AgentRegistryPage", () => {
       expect(screen.getByText("Onboarding prompt copied to clipboard.")).toBeInTheDocument();
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("Run this agentkitche.dev onboarding command exactly as written.")
+      expect.stringContaining("Run this agentkitchen.dev onboarding command exactly as written.")
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("Command to run:\n```bash\ncurl -fsSL 'https://kitchen.example.test/invite' | bash\n```")
