@@ -157,7 +157,13 @@ describe("AgentRegistryPage", () => {
       expect.stringContaining("Run this Agent Kitchen onboarding command exactly as written.")
     );
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("curl -fsSL 'https://kitchen.example.test/invite' | bash")
+      expect.stringContaining("Command to run:\n```bash\ncurl -fsSL 'https://kitchen.example.test/invite' | bash\n```")
+    );
+    expect(writeText).not.toHaveBeenCalledWith(
+      expect.stringContaining("<PASTE COPIED INVITE COMMAND HERE>")
+    );
+    expect(screen.getByText(/Command to run:/)).toHaveTextContent(
+      "curl -fsSL 'https://kitchen.example.test/invite' | bash"
     );
   });
 

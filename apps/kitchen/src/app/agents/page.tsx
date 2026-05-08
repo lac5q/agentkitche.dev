@@ -23,6 +23,7 @@ function formatAgentOnboardingPrompt(command: string) {
     "It will register you, save your per-agent credentials, and install the Agent Kitchen MCP server for your runtime.",
     "After it finishes, tell me whether it succeeded and include the onboarding report path it printed.",
     "",
+    "Command to run:",
     "```bash",
     command,
     "```",
