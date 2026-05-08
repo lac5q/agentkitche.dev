@@ -47,6 +47,8 @@ services:
       QDRANT_URL: ${QDRANT_URL:?QDRANT_URL is required for Qdrant Cloud}
       QDRANT_API_KEY: ${QDRANT_API_KEY:?QDRANT_API_KEY is required for Qdrant Cloud}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VAST_EMBEDDING_URL: ${VAST_EMBEDDING_URL:-http://localhost:8000/v1}
+      JINA_API_KEY: ${JINA_API_KEY:-EMPTY}
       NEO4J_HTTP_URL: http://neo4j:7474
       NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
       NEO4J_USERNAME: ${NEO4J_USERNAME:-neo4j}
