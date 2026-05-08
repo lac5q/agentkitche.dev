@@ -97,7 +97,7 @@ describe("agent onboarding routes", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-forwarded-host": "kitchen.epiloguecapital.com",
+          "x-forwarded-host": "kitchen.public.example",
           "x-forwarded-proto": "https",
           "x-kitchen-operator-key": "operator-secret",
         },
@@ -107,8 +107,8 @@ describe("agent onboarding routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.command).toContain("https://kitchen.epiloguecapital.com/api/onboarding/script?token=");
-    expect(body.mcpUrl).toBe("https://kitchen.epiloguecapital.com/mcp");
+    expect(body.command).toContain("https://kitchen.public.example/api/onboarding/script?token=");
+    expect(body.mcpUrl).toBe("https://kitchen.public.example/mcp");
   });
 
   it("registers an agent from an onboarding token and returns MCP config without storing the raw key in registry output", async () => {
