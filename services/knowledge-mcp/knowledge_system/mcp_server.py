@@ -8,8 +8,15 @@ do not start every session with a giant tool menu.
 from __future__ import annotations
 
 import os
+import secrets
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
+
+try:
+    from fastmcp.server.auth.providers.debug import DebugTokenVerifier  # type: ignore
+except Exception:  # pragma: no cover - optional when FastMCP auth extras are unavailable
+    DebugTokenVerifier = None  # type: ignore
 
 try:  # FastMCP is available as either fastmcp or mcp.server.fastmcp depending on install.
     from fastmcp import FastMCP  # type: ignore
@@ -99,15 +106,32 @@ def _server_options() -> dict:
     }
 
 
+def _auth_provider():
+    token = os.environ.get("KITCHEN_MCP_BEARER_TOKEN", "").strip()
+    if not token:
+        return None
+    if DebugTokenVerifier is None:
+        raise RuntimeError("KITCHEN_MCP_BEARER_TOKEN requires FastMCP auth support")
+    return DebugTokenVerifier(
+        validate=lambda candidate: secrets.compare_digest(candidate, token),
+        client_id="agentkitchen-mcp-client",
+    )
+
+
 def _build_mcp() -> FastMCP:
     options = _server_options()
     try:
-        return FastMCP("knowledge-system", **options)
+        return FastMCP("knowledge-system", auth=_auth_provider(), **options)
     except TypeError:  # pragma: no cover - older FastMCP compatibility
         return FastMCP("knowledge-system")
 
 
 mcp = _build_mcp()
+
+
+def _mcp_tool(fn):
+    mcp.tool()(fn)
+    return fn
 
 
 def _root() -> Path:
@@ -129,12 +153,40 @@ def _mem0_url() -> str:
     return os.environ.get("MEM0_URL", "http://localhost:3201").rstrip("/")
 
 
+def _public_base_url() -> str:
+    return os.environ.get("KITCHEN_MCP_PUBLIC_BASE_URL", "https://agentkitchen.local").rstrip("/")
+
+
+def _split_chatgpt_id(document_id: str) -> tuple[str, Optional[int]]:
+    path, _, line_fragment = document_id.partition("#L")
+    line = int(line_fragment) if line_fragment.isdigit() else None
+    return path, line
+
+
+def _chatgpt_document_id(path: str, line: Optional[int] = None) -> str:
+    return f"{path}#L{line}" if line else path
+
+
+def _chatgpt_url(path: str, line: Optional[int] = None) -> str:
+    encoded_path = "/".join(quote(part) for part in path.split("/"))
+    suffix = f"#L{line}" if line else ""
+    return f"{_public_base_url()}/knowledge/{encoded_path}{suffix}"
+
+
+def _chatgpt_title(path: str, text: str = "") -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            return stripped.lstrip("#").strip() or Path(path).stem
+    return Path(path).stem.replace("-", " ").replace("_", " ").title()
+
+
 # ---------------------------------------------------------------------------
 # Core lightweight surface
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_health() -> dict:
     """Return configured knowledge status without exposing secrets."""
     root = _root()
@@ -157,25 +209,65 @@ def knowledge_health() -> dict:
     }
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_manifest() -> dict:
     """List known markdown files and whether a generated wiki is present."""
     return KnowledgeStore(_root()).manifest()
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_search(query: str, limit: int = 20) -> list[dict]:
     """Search source and generated wiki markdown for a literal query."""
     return KnowledgeStore(_root()).search(query=query, limit=limit)
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_read(path: str, max_chars: int = 20000) -> dict:
     """Read a knowledge file by repo-relative path with traversal protection."""
     return KnowledgeStore(_root()).read_text(path, max_chars=max_chars)
 
 
-@mcp.tool()
+@_mcp_tool
+def search(query: str) -> dict:
+    """Use this for ChatGPT connector search. Returns matching Agent Kitchen knowledge documents."""
+    store = KnowledgeStore(_root())
+    results = []
+    for item in store.search(query=query, limit=10):
+        path = str(item["path"])
+        line = int(item.get("line") or 0) or None
+        try:
+            document = store.read_text(path, max_chars=4000)
+            title = _chatgpt_title(path, document.get("content", ""))
+        except Exception:
+            title = _chatgpt_title(path, str(item.get("preview", "")))
+        results.append({
+            "id": _chatgpt_document_id(path, line),
+            "title": title,
+            "url": _chatgpt_url(path, line),
+        })
+    return {"results": results}
+
+
+@_mcp_tool
+def fetch(id: str) -> dict:
+    """Use this for ChatGPT connector fetch. Returns a full Agent Kitchen knowledge document by search result id."""
+    path, line = _split_chatgpt_id(id)
+    document = KnowledgeStore(_root()).read_text(path, max_chars=50000)
+    text = str(document.get("content", ""))
+    return {
+        "id": _chatgpt_document_id(path, line),
+        "title": _chatgpt_title(path, text),
+        "text": text,
+        "url": _chatgpt_url(path, line),
+        "metadata": {
+            "path": path,
+            "source": "agentkitchen",
+            "truncated": bool(document.get("truncated", False)),
+        },
+    }
+
+
+@_mcp_tool
 def memory_search(query: str, agent_id: str = "", limit: int = 5) -> dict:
     """Search durable agent memory through the configured memory adapter."""
     if httpx is None:
@@ -191,7 +283,7 @@ def memory_search(query: str, agent_id: str = "", limit: int = 5) -> dict:
         return {"status": "unavailable", "error": str(exc), "results": []}
 
 
-@mcp.tool()
+@_mcp_tool
 def memory_save(text: str, agent_id: str = "shared", metadata: Optional[dict] = None) -> dict:
     """Save a durable memory through the configured memory adapter."""
     if httpx is None:
@@ -213,25 +305,25 @@ def memory_save(text: str, agent_id: str = "shared", metadata: Optional[dict] = 
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@_mcp_tool
 def tool_catalog() -> dict:
     """Return the progressive tool/capability catalog."""
     return tool_attention.build_catalog()
 
 
-@mcp.tool()
+@_mcp_tool
 def tool_discover(query: str = "", limit: int = 25) -> dict:
     """Find relevant MCP servers, workspaces, skills, and references for a task."""
     return tool_attention.discover(query=query, limit=limit)
 
 
-@mcp.tool()
+@_mcp_tool
 def tool_load(capability_id: str) -> dict:
     """Load instructions for one discovered capability by id."""
     return tool_attention.load_capability(capability_id)
 
 
-@mcp.tool()
+@_mcp_tool
 def tool_record_outcome(
     tool_id: str,
     task: str,
@@ -247,7 +339,7 @@ def tool_record_outcome(
     )
 
 
-@mcp.tool()
+@_mcp_tool
 def tool_stats() -> dict:
     """Return compact progressive tool gateway health and usage stats."""
     return tool_attention.stats()
@@ -258,19 +350,19 @@ def tool_stats() -> dict:
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_capabilities(workspace: Optional[str] = None) -> dict:
     """Show core capabilities or a deeper workspace manifest."""
     return get_capabilities(workspace)
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_open_workspace(workspace: str) -> dict:
     """Open a deeper capability workspace for the current task."""
     return open_workspace(workspace)
 
 
-@mcp.tool()
+@_mcp_tool
 def knowledge_workspace_call(workspace: str, action: str, arguments: Optional[dict] = None) -> dict:
     """Execute a deep workspace action without exposing every action as a top-level tool."""
     args = arguments or {}

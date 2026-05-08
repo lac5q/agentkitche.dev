@@ -109,6 +109,49 @@ def test_knowledge_store_manifest_is_json_safe():
         assert "wiki/index.md" in manifest["known_files"]
 
 
+def test_chatgpt_search_returns_connector_result_shape(monkeypatch):
+    with TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "sources").mkdir()
+        (root / "sources" / "note.md").write_text("# Agent Memory\n\nImportant agent memory architecture note")
+        monkeypatch.setenv("KNOWLEDGE_ROOT", str(root))
+        monkeypatch.setenv("KITCHEN_MCP_PUBLIC_BASE_URL", "https://kitchen.example.test")
+
+        payload = mcp_server.search("architecture")
+
+        assert list(payload) == ["results"]
+        assert payload["results"] == [
+            {
+                "id": "sources/note.md#L3",
+                "title": "Agent Memory",
+                "url": "https://kitchen.example.test/knowledge/sources/note.md#L3",
+            }
+        ]
+
+
+def test_chatgpt_fetch_returns_connector_document_shape(monkeypatch):
+    with TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "sources").mkdir()
+        (root / "sources" / "note.md").write_text("# Agent Memory\n\nImportant agent memory architecture note")
+        monkeypatch.setenv("KNOWLEDGE_ROOT", str(root))
+        monkeypatch.setenv("KITCHEN_MCP_PUBLIC_BASE_URL", "https://kitchen.example.test")
+
+        payload = mcp_server.fetch("sources/note.md#L3")
+
+        assert payload == {
+            "id": "sources/note.md#L3",
+            "title": "Agent Memory",
+            "text": "# Agent Memory\n\nImportant agent memory architecture note",
+            "url": "https://kitchen.example.test/knowledge/sources/note.md#L3",
+            "metadata": {
+                "path": "sources/note.md",
+                "source": "agentkitchen",
+                "truncated": False,
+            },
+        }
+
+
 def test_core_tools_stay_small_for_progressive_disclosure():
     assert CORE_TOOLS == [
         "knowledge_health",
@@ -148,6 +191,20 @@ def test_mcp_server_options_are_env_configurable(monkeypatch):
         "message_path": "/messages/",
         "stateless_http": True,
     }
+
+
+def test_mcp_auth_provider_is_disabled_without_token(monkeypatch):
+    monkeypatch.delenv("KITCHEN_MCP_BEARER_TOKEN", raising=False)
+    assert mcp_server._auth_provider() is None
+
+
+def test_mcp_auth_provider_accepts_only_configured_bearer_token(monkeypatch):
+    monkeypatch.setenv("KITCHEN_MCP_BEARER_TOKEN", "secret-token")
+    provider = mcp_server._auth_provider()
+
+    assert provider is not None
+    assert provider.validate("secret-token")
+    assert not provider.validate("wrong-token")
 
 
 def test_capability_registry_hides_deep_tools_until_requested():

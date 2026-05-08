@@ -333,6 +333,59 @@ curl -fsSL 'https://kitchen.example/api/onboarding/script?token=...' | bash -s -
 
 The default `--mcp-target auto` selects the right installer from the platform: `hermes`, `openclaw`, `claude`, `gemini`, `qwen`, `codex`, or `stdout` for `chatgpt`. The bootstrap prefers each runtime's own MCP command when available and falls back to narrow config writes, so newer runtime installers can keep working without changing the invite command. Use `--mcp-target file:/path/to/mcp.json`, `--mcp-target stdout`, or `AGENT_KITCHEN_MCP_TARGET=...` to override. ChatGPT cannot run the shell command directly; for ChatGPT, use the returned `mcpUrl` as the custom connector URL in ChatGPT Apps & Connectors.
 
+### Add Agent Kitchen to ChatGPT
+
+ChatGPT uses remote MCP over HTTP. Start the Agent Kitchen MCP facade and expose it through a trusted HTTPS URL such as Tailscale Funnel, Cloudflare Tunnel, or your own private gateway:
+
+```bash
+cd /path/to/agentkitchen.dev
+KITCHEN_MCP_PUBLIC_BASE_URL=https://kitchen.example npm run install:mcp:chatgpt
+```
+
+The connector URL is:
+
+```text
+https://kitchen.example/mcp
+```
+
+In ChatGPT, open **Settings -> Connectors -> Advanced -> Developer mode**, add a remote MCP server, name it `Agent Kitchen`, and use the `/mcp` URL above. The MCP facade exposes ChatGPT-compatible `search` and `fetch` tools, plus the richer Agent Kitchen tools for knowledge, memory, and progressive tool discovery when Developer mode allows arbitrary MCP tools.
+
+The installer enables bearer-token auth by default and stores the token in `~/.agent-kitchen/com.agentkitchen.chatgpt-mcp.env`. That is useful for Tailscale clients, API clients, and private testing. ChatGPT web custom connectors generally need OAuth or no-auth remote MCP, so do not put this on a public hostname unless an OAuth-capable proxy such as Cloudflare Access is enforcing access in front of it, or the exposed MCP profile is reduced to read-only public-safe `search`/`fetch`.
+
+For a manual foreground server instead of the macOS LaunchAgent installer:
+
+```bash
+KITCHEN_MCP_PUBLIC_BASE_URL=https://kitchen.example \
+KITCHEN_MCP_BEARER_TOKEN=<strong-random-token> \
+./scripts/agentkitchen-mcp.sh --http --host 0.0.0.0 --port 8765
+```
+
+### Add Agent Kitchen to Claude Desktop
+
+Claude Desktop can run Agent Kitchen locally over stdio. Edit:
+
+```text
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+Add or merge this server entry:
+
+```json
+{
+  "mcpServers": {
+    "agentkitchen": {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/agentkitchen.dev}/scripts/agentkitchen-mcp.sh\""
+      ]
+    }
+  }
+}
+```
+
+Fully quit and reopen Claude Desktop after saving the file. If your local clone is somewhere else, either set `AGENT_KITCHEN_ROOT` or replace `$HOME/github/agentkitchen.dev` with the absolute path to this repo.
+
 If `/agents` shows fewer agents than expected, check:
 
 - The agent has been registered into the canonical registry.

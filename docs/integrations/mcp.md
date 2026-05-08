@@ -76,6 +76,41 @@ mcp_servers:
 
 Replace `<kitchen-tailscale-host-or-ip>` with the Kitchen machine's Tailscale DNS name or 100.x Tailscale IP.
 
+## ChatGPT connector server
+
+ChatGPT custom connectors and Deep Research-compatible MCP servers need read-only `search` and `fetch` tools. The Agent Kitchen MCP facade includes those tools alongside the richer knowledge, memory, and tool-attention tools.
+
+For the easy macOS setup, install the HTTP MCP facade as a LaunchAgent:
+
+```bash
+cd ~/github/agentkitchen.dev
+KITCHEN_MCP_PUBLIC_BASE_URL=https://kitchen.example npm run install:mcp:chatgpt
+```
+
+The installer writes `~/Library/LaunchAgents/com.agentkitchen.chatgpt-mcp.plist`, keeps the server alive on port `8765`, and prints the connector URL:
+
+```text
+https://kitchen.example/mcp
+```
+
+The installer also creates `~/.agent-kitchen/com.agentkitchen.chatgpt-mcp.env` with a generated `KITCHEN_MCP_BEARER_TOKEN` and `0600` permissions. HTTP clients must send:
+
+```text
+Authorization: Bearer <token>
+```
+
+ChatGPT web custom connectors support OAuth or no-auth remote MCP, not arbitrary static bearer-token setup. For public ChatGPT use, put this server behind an OAuth-capable access layer such as Cloudflare Access Managed OAuth, or expose a separate read-only public-safe MCP profile that contains only `search` and `fetch`.
+
+Useful follow-up commands:
+
+```bash
+npm run install:mcp:chatgpt -- status
+npm run install:mcp:chatgpt -- uninstall
+tail -f /tmp/agentkitchen-chatgpt-mcp.log
+```
+
+There is also an editable plist template at `examples/mcp/com.agentkitchen.chatgpt-mcp.plist` for non-default LaunchAgent setups.
+
 ## Smoke tests
 
 Local stdio config parse:
