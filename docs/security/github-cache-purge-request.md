@@ -1,6 +1,7 @@
 # GitHub Support Request: Purge Cached Views for Rewritten Personal Email Commits
 
-Repository: https://github.com/lac5q/agent-kitchen
+Repository: https://github.com/lac5q/agentkitchen.dev
+Former repository URL: https://github.com/lac5q/agent-kitchen
 Owner: lac5q
 Date prepared: 2026-05-05
 

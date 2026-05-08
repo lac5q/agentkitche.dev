@@ -1,6 +1,6 @@
 # Install Profiles
 
-Agent Kitchen supports multiple operating profiles so teams can start locally and grow into multi-machine or cloud deployments without rewriting code.
+agentkitchen.dev supports multiple operating profiles so teams can start locally and grow into multi-machine or cloud deployments without rewriting code.
 
 Profiles live in `config/operating-profiles.json` and are selected with `KITCHEN_A2A_PROFILE`.
 
@@ -107,7 +107,7 @@ Keep GitNexus as its own MCP server:
 }
 ```
 
-Agent Kitchen reads that registration and advertises `mcp-server:gitnexus` through tool-attention. This keeps code graph indexing, stale-index checks, and repo intelligence in GitNexus while Kitchen stays the progressive discovery and operator-control layer.
+agentkitchen.dev reads that registration and advertises `mcp-server:gitnexus` through tool-attention. This keeps code graph indexing, stale-index checks, and repo intelligence in GitNexus while Kitchen stays the progressive discovery and operator-control layer.
 
 ### Agent Lightning Boundary
 
