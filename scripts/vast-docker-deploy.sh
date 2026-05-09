@@ -31,13 +31,6 @@ build_image() {
     log_success "Image built: $FULL_IMAGE"
 }
 
-# Push to Docker Hub
-push_image() {
-    log "Pushing image to Docker Hub..."
-    docker push "$FULL_IMAGE"
-    log_success "Image pushed: $FULL_IMAGE"
-}
-
 # Create Vast.ai instance
 create_instance() {
     log "Creating Vast.ai instance..."
@@ -126,13 +119,7 @@ main() {
     build_image
     
     # Deploy to Vast.ai
-    log "Deploying to Vast.ai..."
-    vastai create instance "$OFFER_ID" \
-        --image "$FULL_IMAGE" \
-        --disk 20 \
-        --ssh \
-        --direct \
-        2>/dev/null
+    create_instance
     
     # Wait and test
     sleep 60

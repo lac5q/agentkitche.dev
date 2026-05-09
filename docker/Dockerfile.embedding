@@ -1,23 +1,12 @@
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
-# Install Python and dependencies
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PyTorch with CUDA support
-RUN pip3 install --no-cache-dir torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu118
-
-# Install sentence-transformers and dependencies
+# Install dependencies
 RUN pip3 install --no-cache-dir \
-    sentence-transformers==3.2.0 \
-    fastapi==0.115.6 \
-    uvicorn[standard]==0.46.0 \
-    pydantic==2.13.4
-
-# Download and cache the model
-RUN python3 -c "from sentence_transformers import SentenceTransformer; print('Loading model...'); model = SentenceTransformer('clip-ViT-L-14'); print('Model cached')"
+    sentence-transformers==2.2.2 \
+    fastapi==0.109.0 \
+    uvicorn==0.27.0 \
+    pydantic==2.6.0 \
+    huggingface-hub==0.19.4
 
 # Copy application code
 WORKDIR /app
@@ -27,8 +16,8 @@ COPY server.py .
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start server
+# Start server (model will be downloaded on first run)
 CMD ["python3", "server.py"]
