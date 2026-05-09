@@ -79,6 +79,10 @@ async function main() {
   if (process.env.KITCHEN_OPERATOR_API_KEY) {
     headers.authorization = `Bearer ${process.env.KITCHEN_OPERATOR_API_KEY}`;
   }
+  // Force Host header to localhost for registry write authorization check
+  if (args.url.includes("localhost")) {
+    headers.host = "localhost:3002";
+  }
 
   const response = await fetch(endpoint, {
     method: "POST",
