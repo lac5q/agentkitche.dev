@@ -27,8 +27,8 @@ LUCIA_PC_HOST="${LUCIA_PC_HOST:-}"
 DISK_CRITICAL_PERCENT=95
 DISK_WARNING_PERCENT=90
 
-TG_TOKEN="8115005529:AAHWFB7J6dbvraheKnO-YhDKpoq2Yme23D8"
-TG_CHAT_ID="6334964912"
+TG_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+TG_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
 DISCORD_WEBHOOK_URL="${DISCORD_KNOWLEDGE_WEBHOOK:-}"
 
 mkdir -p "$ALERT_STATE_DIR"
@@ -185,7 +185,7 @@ fi
 # ── Check 2: Qdrant cloud (direct) ───────────────────────────────────────────
 log "Checking Qdrant cloud (direct)..."
 QDRANT_CLOUD="https://f969d77f-3cf6-4557-92cb-67f7cac0f44a.us-west-1-0.aws.cloud.qdrant.io:6333"
-QDRANT_APIKEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6OTIxY2YwZmQtODBmMS00NmYxLTlmYTAtNzFlY2Q3MmMxOTI2In0.U5YQAYDcIs6ilqp-45_DF6GJ8pbmXCzvJ5epqUbuGbM"
+QDRANT_APIKEY="${QDRANT_API_KEY:-}"
 QDRANT_RESP=$(curl -s --max-time 10 -H "api-key: $QDRANT_APIKEY" "$QDRANT_CLOUD/collections" 2>/dev/null)
 QDRANT_OK=$(json_field "$QDRANT_RESP" "status")
 if [ "$QDRANT_OK" = "ok" ]; then
