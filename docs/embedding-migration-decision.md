@@ -89,23 +89,26 @@ c6d246f migrate embeddings from Gemini to jina-clip-v2 on Vast.ai
 - **Spot instances**: If reliability acceptable, 50% cost reduction
 
 ### Notes
+- **NOT using serverless** - Vast.ai Serverless had auth issues during testing
+- **Current approach**: Regular instances with batch script (auto-destroy enabled)
 - SSH tunneling proved reliable for batch jobs (unlike direct port access)
-- Vast.ai Serverless API had auth issues during testing
 - Docker approach provides best balance of cost, control, and reliability
 - Model download is the bottleneck in Docker build (~10 min)
-- **Final working solution**: SSH tunnel to Vast.ai instance (localhost:8001 -> Vast.ai:8000)
-- **mem0 config**: Updated to use http://localhost:8001/v1
+- **Instance destroyed 2026-05-09** - Running idle, costing money unnecessarily
+- **Batch script auto-destroys** instance 60s after embedding completes
+- **mem0 config**: Updated to use Vast.ai endpoint (when instance is running)
 - **All tests passing**: Embedding creation, search, and retrieval working ✓
 
 ### Working Configuration (2026-05-09)
-- **Instance**: Vast.ai RTX 4090 (36385878)
-- **Direct Endpoint**: http://85.51.34.67:42362/v1
+- **Instance**: Vast.ai RTX 4090 (36385878) - **DESTROYED**
+- **Endpoint**: http://85.51.34.67:42362/v1 (when running)
 - **Model**: clip-ViT-L-14 (768-dim, multimodal)
-- **mem0**: Connected and tested ✓
+- **mem0**: Connected and tested ✓ (when instance running)
 - **Cost**: ~$0.29/hr when running (batch mode)
 - **Auto-destroy**: Enabled (60s after embedding completes)
 
 ### Instance Cleanup (2026-05-09)
 - **Destroyed 7 extra instances**: 36385886, 36385901, 36385906, 36385921, 36385928, 36386006, 36387801
 - **Savings**: ~$200+/month (from ~$2.30/hr to $0.29/hr)
-- **Remaining**: 1 instance (36385878) for batch processing
+- **Remaining**: 1 instance (36385878) - **DESTROYED** (was running idle)
+- **Current cost**: $0 (no instances running)

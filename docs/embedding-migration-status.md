@@ -11,19 +11,22 @@
 ### Active Services
 | Service | Status | Cost | Notes |
 |---|---|---|---|
-| Vast.ai Instance | Running | $0.29/hr | RTX 4090, batch mode |
-| mem0 | Healthy | Local | Connected to Vast.ai |
+| Vast.ai Instance | **Destroyed** | $0 | Instance destroyed 2026-05-09 |
+| mem0 | Healthy | Local | Connected to Vast.ai (when running) |
 | QMD Index | 3,879 files | Local | 1,532 docs removed |
-| SSH Tunnel | Active | Free | localhost:8001 → Vast.ai:8000 |
+| SSH Tunnel | **Inactive** | Free | Destroyed with instance |
 
 ### Vast.ai Instance
 - **ID**: 36385878
+- **Status**: **DESTROYED** (2026-05-09)
 - **GPU**: RTX 4090
-- **IP**: 85.51.34.67
-- **Direct Port**: 42362
-- **Endpoint**: http://85.51.34.67:42362/v1
 - **Model**: clip-ViT-L-14 (768-dim, multimodal)
-- **Auto-destroy**: Enabled (60s after embedding)
+- **Auto-destroy**: Enabled in batch script (60s after embedding)
+
+### Serverless Status
+- **Vast.ai Serverless**: ❌ **NOT USED** (auth issues during testing)
+- **Current approach**: Regular instances with batch script
+- **Serverless script exists**: `services/memory/vast-serverless-embed.py` (not functional)
 
 ### Cleanup Completed
 - ✅ Destroyed 7 extra instances (saved ~$200+/month)
