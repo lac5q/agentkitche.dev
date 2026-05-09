@@ -89,7 +89,17 @@ c6d246f migrate embeddings from Gemini to jina-clip-v2 on Vast.ai
 - **Spot instances**: If reliability acceptable, 50% cost reduction
 
 ### Notes
-- SSH tunneling proved unreliable for batch jobs
+- SSH tunneling proved reliable for batch jobs (unlike direct port access)
 - Vast.ai Serverless API had auth issues during testing
 - Docker approach provides best balance of cost, control, and reliability
 - Model download is the bottleneck in Docker build (~10 min)
+- **Final working solution**: SSH tunnel to Vast.ai instance (localhost:8001 -> Vast.ai:8000)
+- **mem0 config**: Updated to use http://localhost:8001/v1
+- **All tests passing**: Embedding creation, search, and retrieval working ✓
+
+### Working Configuration (2026-05-09)
+- **Instance**: Vast.ai RTX 4090 (36385878)
+- **SSH Tunnel**: localhost:8001 -> 85.51.34.67:8000
+- **Model**: clip-ViT-L-14 (768-dim, multimodal)
+- **mem0**: Connected and tested ✓
+- **Cost**: ~$0.33/hr when running (batch mode)
