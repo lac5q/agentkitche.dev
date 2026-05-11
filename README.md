@@ -538,6 +538,11 @@ Near-term focus after `v0.1.0`:
 - More adapters for popular agent runtimes.
 - Hardened production profile examples for Tailscale, Docker, and HTTPS reverse proxies.
 
+**Agent Shield / Iris security layer:**
+
+- **Agent Shield integration:** Add a dedicated security scanning layer on top of the existing `content-scanner.ts` (which covers ~18 regex patterns). Agent Shield ([affaan-m/agentshield](https://github.com/affaan-m/agentshield), 128 commits) provides deeper coverage: `.claude/` config vulnerability scanning, MCP server/tool permission auditing, prompt injection detection, and tool misuse analysis. Goal: promote content scanning from regex-based utility to structured security plane with scan results visible in the Kitchen UI.
+- **Iris secure dispatch gate:** Wrap task dispatch and A2A delegation through an Iris security gate — pre-flight prompt injection checks, tool-call validation, and post-execution output scanning. Named "Iris" as the watchdog layer that watches every agent interaction.
+
 ClaudeClaw-inspired operator surfaces:
 
 - **Chat tab:** A dedicated command/chat workspace for speaking with CLIs, Paperclip project agents, runtime subagents, and the Kitchen system without burying chat inside the Flow page.

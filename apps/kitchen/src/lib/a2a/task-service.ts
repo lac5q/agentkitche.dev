@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { getDb } from "@/lib/db";
-import { scanContent } from "@/lib/content-scanner";
+import { scanIrisPreflight } from "@/lib/iris-scanner";
 import { writeAuditLog } from "@/lib/audit";
 import type { RegisteredAgent } from "@/types";
 import { A2aError } from "./errors";
@@ -75,7 +75,7 @@ export async function sendA2aMessage(
     throw new A2aError("INVALID_REQUEST", "message is required");
   }
 
-  const scan = scanContent(messageText(input.message));
+  const scan = scanIrisPreflight(messageText(input.message));
   if (scan.blocked) {
     auditBlockedContent(agent.id, scan.matches);
     throw new A2aError("UNAUTHORIZED", "Content blocked by security scanner");

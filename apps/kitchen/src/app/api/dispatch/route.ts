@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { getDb } from "@/lib/db";
 import { scanContent } from "@/lib/content-scanner";
+import { scanIrisPreflight } from "@/lib/iris-scanner";
 import { writeAuditLog } from "@/lib/audit";
 import { getRemoteAgents } from "@/lib/agent-registry";
 import { selectAdapter } from "@/lib/dispatch/adapter-factory";
@@ -41,8 +42,24 @@ export async function POST(req: NextRequest | Request) {
   }
 
   const db = getDb();
-  const scan = scanContent(body.task_summary);
   const from_agent: string = body.from_agent ?? "kitchen";
+  const irisScan = scanIrisPreflight(body.task_summary);
+
+  if (irisScan.blocked) {
+    writeAuditLog(db, {
+      actor: from_agent,
+      action: "content_blocked",
+      target: "dispatch",
+      detail: JSON.stringify(irisScan.findings.map((finding) => finding.ruleId)),
+      severity: "high",
+    });
+    return Response.json(
+      { ok: false, error: "Content blocked by security scanner", code: "CONTENT_BLOCKED" },
+      { status: 403 }
+    );
+  }
+
+  const scan = scanContent(body.task_summary);
 
   if (scan.blocked) {
     writeAuditLog(db, {
