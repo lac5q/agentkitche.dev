@@ -91,7 +91,7 @@ describe("HiveFeed", () => {
     expect(screen.getByText("1m ago")).toBeInTheDocument();
   });
 
-  it("Test 2 (DASH-02): empty actions array renders 'No hive activity yet' message", () => {
+  it("Test 2 (DASH-02): empty actions array renders 'No activity yet' message", () => {
     mockUseHiveFeed.mockReturnValue({
       data: { actions: [], timestamp: new Date().toISOString() },
       isLoading: false,
@@ -99,7 +99,7 @@ describe("HiveFeed", () => {
 
     render(<HiveFeed />);
 
-    expect(screen.getByText("No hive activity yet.")).toBeInTheDocument();
+    expect(screen.getByText("No activity yet.")).toBeInTheDocument();
   });
 
   it("Test 3 (DASH-02): loading state renders a spinner element", () => {
