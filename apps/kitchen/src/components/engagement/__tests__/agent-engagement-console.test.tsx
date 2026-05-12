@@ -74,6 +74,13 @@ vi.mock("@/lib/api-client", () => ({
 
 import { AgentEngagementConsole } from "../agent-engagement-console";
 
+function chatStream(text: string): Response {
+  return new Response(`data: ${JSON.stringify({ text })}\n\ndata: [DONE]\n\n`, {
+    status: 200,
+    headers: { "Content-Type": "text/event-stream" },
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("fetch", vi.fn());
@@ -114,22 +121,19 @@ describe("AgentEngagementConsole", () => {
     });
   });
 
-  it("queues a standup through dispatch", async () => {
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ok: true, mode: "queued" }),
-    } as Response);
+  it("runs a standup as a live room turn", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(chatStream("Runtime is healthy. No blockers."));
 
     render(<AgentEngagementConsole />);
     fireEvent.click(screen.getByRole("button", { name: "Standup" }));
     fireEvent.change(screen.getByPlaceholderText("What changed since the last checkpoint?"), {
       target: { value: "runtime status" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /queue standup/i }));
+    fireEvent.click(screen.getByRole("button", { name: /start standup round/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith("/api/dispatch", expect.objectContaining({ method: "POST" }));
-      expect(mockRefetchDelegations).toHaveBeenCalled();
+      expect(fetch).toHaveBeenCalledWith("/api/chat", expect.objectContaining({ method: "POST" }));
+      expect(screen.getByText("Runtime is healthy. No blockers.")).toBeInTheDocument();
     });
   });
 });

@@ -5,11 +5,12 @@ import {
   CheckCircle2,
   Circle,
   Mic,
+  MessageSquare,
   PhoneCall,
   RefreshCw,
   Send,
   TestTube2,
-  Users,
+  Video,
   Volume2,
 } from "lucide-react";
 import { useAgents, useDelegations } from "@/lib/api-client";
@@ -54,11 +55,11 @@ const MODE_COPY: Record<Mode, { label: string; description: string }> = {
   },
   standup: {
     label: "Standup",
-    description: "Queue one structured check-in prompt to every selected participant.",
+    description: "Run a structured check-in where each selected agent answers in turn.",
   },
   conference: {
     label: "Conference",
-    description: "Capture one spoken or typed prompt and queue it to the selected room participants.",
+    description: "Capture one spoken or typed prompt and let the room participants respond in sequence.",
   },
 };
 
@@ -146,7 +147,7 @@ function Pill({ value }: { value: string }) {
 
 export function AgentEngagementConsole() {
   const { data: agentsData, isLoading: agentsLoading } = useAgents();
-  const { data: delegationsData, refetch: refetchDelegations } = useDelegations(8);
+  const { data: delegationsData } = useDelegations(8);
   const agents = useMemo(() => (agentsData?.agents ?? []) as RegisteredAgent[], [agentsData?.agents]);
   const activeAgents = useMemo(() => agents.filter((agent) => agent.status === "active"), [agents]);
   const roster = useMemo(() => activeAgents.length > 0 ? activeAgents : agents, [activeAgents, agents]);
@@ -161,6 +162,7 @@ export function AgentEngagementConsole() {
   const [standupAsk, setStandupAsk] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
+  const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [checks, setChecks] = useState<Record<string, AgentCheck>>({});
@@ -183,6 +185,24 @@ export function AgentEngagementConsole() {
         ? current.filter((id) => id !== agentId)
         : [...current, agentId]
     );
+  }
+
+  function agentName(agentId?: string): string {
+    if (!agentId) return "Agent";
+    return agents.find((agent) => agent.id === agentId)?.name ?? agentId;
+  }
+
+  function formatMeetingTranscript(entries: ChatMessage[]): string {
+    return entries
+      .map((entry) => {
+        const speaker = entry.role === "user"
+          ? "Luis"
+          : entry.role === "assistant"
+            ? agentName(entry.agentId)
+            : "System";
+        return `${speaker}: ${entry.content}`;
+      })
+      .join("\n\n");
   }
 
   async function speak(text: string) {
@@ -256,29 +276,71 @@ export function AgentEngagementConsole() {
     }
   }
 
-  async function dispatchToParticipants(summary: string, input?: Record<string, unknown>) {
-    if (!summary.trim() || activeParticipantIds.length === 0 || busy) return;
+  async function runMeetingRound(text: string) {
+    const prompt = text.trim();
+    if (!prompt || activeParticipantIds.length === 0 || busy) return;
+
     setBusy(true);
-    const results: string[] = [];
-    for (const agentId of activeParticipantIds) {
-      try {
-        const res = await fetch("/api/dispatch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to_agent: agentId, task_summary: summary, priority: 5, input }),
-        });
-        const body = await res.json().catch(() => ({}));
-        results.push(`${agentId}: ${res.ok ? body.mode ?? "queued" : body.error ?? "failed"}`);
-      } catch (error) {
-        results.push(`${agentId}: ${error instanceof Error ? error.message : "failed"}`);
+    setMessage("");
+    const userMsg: ChatMessage = { role: "user", content: prompt };
+    let meetingHistory: ChatMessage[] = [...history.slice(-12), userMsg];
+    setHistory((current) => [...current, userMsg]);
+
+    try {
+      for (const agentId of activeParticipantIds) {
+        setActiveSpeakerId(agentId);
+        const participantNames = activeParticipantIds.map((id) => agentName(id)).join(", ");
+        const turnPrompt = [
+          `You are in a live agent standup meeting with Luis and these participants: ${participantNames}.`,
+          `Meeting transcript so far:\n${formatMeetingTranscript(meetingHistory)}`,
+          `It is your turn as ${agentName(agentId)}. Respond conversationally and concisely. Add your status, blocker, or next step when relevant, then stop so the next agent can take a turn.`,
+        ].join("\n\n");
+
+        setHistory((current) => [...current, { role: "assistant", content: "", agentId }]);
+
+        try {
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: turnPrompt,
+              agentId,
+              history: [],
+            }),
+          });
+          const finalText = await readChatStream(res, (nextText) => {
+            setHistory((current) => {
+              const updated = [...current];
+              const targetIndex = updated.findLastIndex(
+                (entry) => entry.role === "assistant" && entry.agentId === agentId
+              );
+              if (targetIndex >= 0) {
+                updated[targetIndex] = { role: "assistant", content: nextText, agentId };
+              }
+              return updated;
+            });
+          });
+          meetingHistory = [...meetingHistory, { role: "assistant", content: finalText, agentId }];
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : "Chat failed";
+          const failure = `Chat unavailable: ${detail}`;
+          setHistory((current) => {
+            const updated = [...current];
+            const targetIndex = updated.findLastIndex(
+              (entry) => entry.role === "assistant" && entry.agentId === agentId
+            );
+            if (targetIndex >= 0) {
+              updated[targetIndex] = { role: "assistant", content: failure, agentId };
+            }
+            return updated;
+          });
+          meetingHistory = [...meetingHistory, { role: "assistant", content: failure, agentId }];
+        }
       }
+    } finally {
+      setActiveSpeakerId(null);
+      setBusy(false);
     }
-    setHistory((current) => [
-      ...current,
-      { role: "system", content: `Engagement queued. ${results.join("; ")}` },
-    ]);
-    setBusy(false);
-    await refetchDelegations();
   }
 
   async function runStandup() {
@@ -288,21 +350,12 @@ export function AgentEngagementConsole() {
       standupBlockers ? `Blockers: ${standupBlockers}` : null,
       standupAsk ? `Ask: ${standupAsk}` : null,
     ].filter(Boolean).join("\n");
-    await dispatchToParticipants(summary, {
-      engagementMode: "standup",
-      focus: standupFocus,
-      blockers: standupBlockers,
-      ask: standupAsk,
-    });
+    await runMeetingRound(summary);
   }
 
   async function runConferencePrompt(text = message) {
     if (!text.trim()) return;
-    setMessage("");
-    await dispatchToParticipants(`Conference room prompt: ${text}`, {
-      engagementMode: "conference",
-      transcript: text,
-    });
+    await runMeetingRound(text);
   }
 
   async function runAgentTests(ids = roster.map((agent) => agent.id)) {
@@ -354,8 +407,8 @@ export function AgentEngagementConsole() {
         .trim();
       setListening(false);
       if (!transcript) return;
-      if (mode === "conference") {
-        void runConferencePrompt(transcript);
+      if (mode === "conference" || mode === "standup") {
+        void runMeetingRound(transcript);
       } else {
         void sendChatMessage(transcript, true);
       }
@@ -475,7 +528,7 @@ export function AgentEngagementConsole() {
             </div>
           </div>
 
-          <div className="grid gap-0 lg:grid-cols-[1fr_280px]">
+          <div className="grid gap-0 2xl:grid-cols-[1fr_280px]">
             <div className="space-y-4 p-4">
               <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                 <p className="flex items-center text-sm font-semibold text-slate-950">
@@ -485,10 +538,64 @@ export function AgentEngagementConsole() {
                 <p className="mt-1 text-xs leading-5 text-slate-500">{MODE_COPY[mode].description}</p>
               </div>
 
-              <div className="min-h-48 max-h-72 space-y-2 overflow-y-auto rounded-md border border-slate-200 bg-white p-3">
+              {(mode === "standup" || mode === "conference") && (
+                <div className="rounded-md border border-slate-200 bg-slate-950 p-3 text-white">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4 text-cyan-300" />
+                      <p className="text-sm font-semibold">Live room</p>
+                    </div>
+                    <span className="text-xs text-slate-300">
+                      {busy && activeSpeakerId ? `${agentName(activeSpeakerId)} speaking` : `${activeParticipantIds.length} seats`}
+                    </span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {activeParticipantIds.map((agentId) => {
+                      const agent = agents.find((item) => item.id === agentId);
+                      const speakingNow = activeSpeakerId === agentId;
+                      const initials = (agent?.name ?? agentId)
+                        .split(/\s+/)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join("")
+                        .toUpperCase();
+                      return (
+                        <div
+                          key={agentId}
+                          className={`min-h-28 rounded-md border p-3 transition ${
+                            speakingNow
+                              ? "border-cyan-300 bg-cyan-500/15 shadow-[0_0_0_1px_rgba(103,232,249,0.45)]"
+                              : "border-slate-700 bg-slate-900"
+                          }`}
+                        >
+                          <div className="flex h-full flex-col justify-between">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-800 text-sm font-semibold text-cyan-100">
+                                {initials}
+                              </div>
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                                speakingNow ? "bg-cyan-300 text-slate-950" : "bg-slate-800 text-slate-300"
+                              }`}>
+                                <Mic className="h-3 w-3" />
+                                {speakingNow ? "Live" : "Ready"}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="truncate text-sm font-semibold">{agent?.name ?? agentId}</p>
+                              <p className="truncate text-xs text-slate-400">{PLATFORM_LABELS[agent?.platform ?? ""] ?? agent?.platform ?? agentId}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="min-h-56 max-h-80 space-y-2 overflow-y-auto rounded-md border border-slate-200 bg-white p-3">
                 {history.length === 0 ? (
                   <p className="py-14 text-center text-sm text-slate-400">
-                    Start with chat, capture a voice prompt, or queue a standup.
+                    Start a room prompt and each selected agent will take a turn.
                   </p>
                 ) : (
                   history.slice(-10).map((entry, index) => (
@@ -503,7 +610,7 @@ export function AgentEngagementConsole() {
                       }`}
                     >
                       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                        {entry.role === "user" ? "You" : entry.role === "assistant" ? selectedAgent?.name ?? "Agent" : "System"}
+                        {entry.role === "user" ? "You" : entry.role === "assistant" ? agentName(entry.agentId) : "System"}
                       </p>
                       <p className="whitespace-pre-wrap leading-6">{entry.content || "..."}</p>
                     </div>
@@ -523,7 +630,7 @@ export function AgentEngagementConsole() {
                       }
                     }}
                     rows={2}
-                    placeholder={mode === "conference" ? "Prompt the conference room..." : `Message ${selectedAgent?.name ?? "agent"}...`}
+                    placeholder={mode === "conference" ? "Say something to the room..." : `Message ${selectedAgent?.name ?? "agent"}...`}
                     className="min-h-16 flex-1 resize-none rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
                   />
                   <div className="flex flex-col gap-2">
@@ -532,7 +639,7 @@ export function AgentEngagementConsole() {
                       onClick={() => (mode === "conference" ? runConferencePrompt() : sendChatMessage(message, mode === "voice"))}
                       disabled={busy || !message.trim() || !selectedId}
                       className="inline-flex h-9 items-center justify-center rounded-md bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
-                      aria-label={mode === "conference" ? "Queue conference prompt" : "Send message"}
+                      aria-label={mode === "conference" ? "Start room round" : "Send message"}
                     >
                       <Send className="h-4 w-4" />
                     </button>
@@ -590,14 +697,27 @@ export function AgentEngagementConsole() {
                     disabled={busy || activeParticipantIds.length === 0 || (!standupFocus && !standupAsk)}
                     className="inline-flex items-center justify-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
                   >
-                    <Users className="h-4 w-4" />
-                    Queue standup
+                    <MessageSquare className="h-4 w-4" />
+                    Start standup round
+                  </button>
+                  <button
+                    type="button"
+                    onClick={startVoiceCapture}
+                    disabled={busy}
+                    className={`inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition ${
+                      listening
+                        ? "border-rose-200 bg-rose-50 text-rose-700"
+                        : "border-cyan-200 bg-cyan-50 text-cyan-800 hover:bg-cyan-100"
+                    }`}
+                  >
+                    <Mic className="h-4 w-4" />
+                    {listening ? "Listening" : "Speak to room"}
                   </button>
                 </div>
               )}
             </div>
 
-            <aside className="border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
+            <aside className="border-t border-slate-200 p-4 2xl:border-l 2xl:border-t-0">
               <div className="space-y-4">
                 <div>
                   <h3 className="flex items-center text-sm font-semibold text-slate-950">
@@ -667,7 +787,7 @@ export function AgentEngagementConsole() {
                   <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <PhoneCall className="h-4 w-4 text-slate-500" />
                     <p className="mt-2 text-xs font-semibold text-slate-900">Conference</p>
-                    <p className="text-[11px] leading-4 text-slate-500">Queues prompts to the room.</p>
+                    <p className="text-[11px] leading-4 text-slate-500">Live room turns.</p>
                   </div>
                   <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <Volume2 className="h-4 w-4 text-slate-500" />

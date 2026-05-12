@@ -8,14 +8,30 @@ let root: string;
 let agentConfigsPath: string;
 let pmoAgentsPath: string;
 let pmoModelRoutingPath: string;
+let testDbPath: string;
 
 async function loadRoute() {
   vi.resetModules();
   vi.stubEnv("AGENT_CONFIGS_PATH", agentConfigsPath);
   vi.stubEnv("PMO_AGENT_CONFIGS_PATH", pmoAgentsPath);
   vi.stubEnv("PMO_MODEL_ROUTING_PATH", pmoModelRoutingPath);
+  vi.stubEnv("SQLITE_DB_PATH", testDbPath);
   vi.stubEnv("CONSOLIDATION_MODEL", "MiniMax-M2.7");
   return import("../route");
+}
+
+async function registerTestAgent(input: {
+  id: string;
+  name: string;
+  role: string;
+  platform: "claude" | "codex" | "qwen" | "gemini" | "opencode" | "hermes" | "openclaw" | "chatgpt";
+}) {
+  vi.stubEnv("SQLITE_DB_PATH", testDbPath);
+  const { registerAgent } = await import("@/lib/agent-registry");
+  registerAgent({
+    ...input,
+    protocol: "rest",
+  });
 }
 
 describe("chat route model resolution", () => {
@@ -24,6 +40,7 @@ describe("chat route model resolution", () => {
     agentConfigsPath = path.join(root, "knowledge-agents");
     pmoAgentsPath = path.join(root, "pmo-agents");
     pmoModelRoutingPath = path.join(root, "model-routing.yaml");
+    testDbPath = path.join(root, "kitchen.db");
     mkdirSync(path.join(pmoAgentsPath, "ceo"), { recursive: true });
     mkdirSync(agentConfigsPath, { recursive: true });
     writeFileSync(
@@ -43,7 +60,9 @@ describe("chat route model resolution", () => {
     );
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    const { closeDb } = await import("@/lib/db");
+    closeDb();
     vi.unstubAllEnvs();
     rmSync(root, { recursive: true, force: true });
   });
@@ -69,6 +88,75 @@ describe("chat route model resolution", () => {
 
     expect(context.source).toBe("pmo");
     expect(runtime).toEqual({ runner: "opencode", model: "bailian/qwen3.5-plus" });
+  });
+
+  it("does not apply the PMO catch-all Qwen model to a registered Hermes agent", async () => {
+    mkdirSync(path.join(pmoAgentsPath, "alba"), { recursive: true });
+    writeFileSync(path.join(pmoAgentsPath, "alba", "AGENTS.md"), "# Alba\n\nAlways-on async operations agent.\n");
+    const { __chatTest } = await loadRoute();
+    await registerTestAgent({
+      id: "alba",
+      name: "Alba",
+      role: "Head Chef",
+      platform: "hermes",
+    });
+
+    const context = await __chatTest.buildAgentContext("alba");
+    const runtime = await __chatTest.resolveChatRuntime("alba", context);
+
+    expect(context.source).toBe("pmo");
+    expect(runtime).toEqual({ runner: "anthropic", model: "claude-haiku-4-5-20251001" });
+  });
+
+  it("still routes registered OpenCode-class agents through OpenCode", async () => {
+    mkdirSync(path.join(pmoAgentsPath, "qwen-engineer"), { recursive: true });
+    writeFileSync(path.join(pmoAgentsPath, "qwen-engineer", "AGENTS.md"), "# Qwen Engineer\n");
+    const { __chatTest } = await loadRoute();
+    await registerTestAgent({
+      id: "qwen-engineer",
+      name: "Qwen Engineer",
+      role: "Engineering agent",
+      platform: "qwen",
+    });
+
+    const context = await __chatTest.buildAgentContext("qwen-engineer");
+    const runtime = await __chatTest.resolveChatRuntime("qwen-engineer", context);
+
+    expect(runtime).toEqual({ runner: "opencode", model: "bailian/qwen3.5-plus" });
+  });
+
+  it("uses named Claude model hints from registered agents", async () => {
+    mkdirSync(path.join(pmoAgentsPath, "claude-sonnet-engineer"), { recursive: true });
+    writeFileSync(path.join(pmoAgentsPath, "claude-sonnet-engineer", "AGENTS.md"), "# Claude Sonnet Engineer\n");
+    const { __chatTest } = await loadRoute();
+    await registerTestAgent({
+      id: "claude-sonnet-engineer",
+      name: "Claude Sonnet Engineer",
+      role: "CLI engineer",
+      platform: "claude",
+    });
+
+    const context = await __chatTest.buildAgentContext("claude-sonnet-engineer");
+    const runtime = await __chatTest.resolveChatRuntime("claude-sonnet-engineer", context);
+
+    expect(runtime).toEqual({ runner: "anthropic", model: "claude-sonnet-4-6" });
+  });
+
+  it("uses Gemini routing for registered Gemini agents", async () => {
+    mkdirSync(path.join(pmoAgentsPath, "gemini-senior-engineer"), { recursive: true });
+    writeFileSync(path.join(pmoAgentsPath, "gemini-senior-engineer", "AGENTS.md"), "# Gemini Senior Engineer\n");
+    const { __chatTest } = await loadRoute();
+    await registerTestAgent({
+      id: "gemini-senior-engineer",
+      name: "Gemini Senior Engineer",
+      role: "Engineering agent",
+      platform: "gemini",
+    });
+
+    const context = await __chatTest.buildAgentContext("gemini-senior-engineer");
+    const runtime = await __chatTest.resolveChatRuntime("gemini-senior-engineer", context);
+
+    expect(runtime).toEqual({ runner: "opencode", model: "google/gemini-2.0-pro-exp" });
   });
 
   it("keeps memory consolidation model out of chat model selection", () => {
