@@ -102,10 +102,12 @@ export interface SecurityReportResponse {
   summary: {
     status: "clear" | "watch" | "attention";
     securityEvents: number;
+    auditEvents?: number;
     highSeverity: number;
     mediumSeverity: number;
     blockedAttempts: number;
     lastEventAt: string | null;
+    lastAuditAt?: string | null;
     topActors: Array<{ actor: string; count: number }>;
   };
   controls: Array<{ id: string; label: string; status: string }>;
@@ -118,6 +120,17 @@ export interface SecurityReportResponse {
     severity: string;
     timestamp: string;
     blocked: boolean;
+  }>;
+  auditActivity?: Array<{
+    id: number;
+    actor: string;
+    action: string;
+    target: string;
+    detail: string | null;
+    severity: string;
+    timestamp: string;
+    blocked: boolean;
+    securityEvent: boolean;
   }>;
   timestamp: string;
 }

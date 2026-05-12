@@ -34,6 +34,35 @@ describe("GET /api/security/report", () => {
     expect(data.controls.length).toBeGreaterThan(0);
   });
 
+  it("includes recent audit activity when no security events match", async () => {
+    testDb
+      .prepare(
+        `INSERT INTO audit_log(actor, action, target, detail, severity, timestamp)
+         VALUES (@actor, @action, @target, @detail, @severity, @timestamp)`
+      )
+      .run({
+        actor: "agent-a",
+        action: "hive_action_write",
+        target: "hive_actions",
+        detail: "routine checkpoint",
+        severity: "info",
+        timestamp: "2026-01-01T00:00:00.000Z",
+      });
+
+    const res = await GET(makeGetRequest() as any);
+    const data = await res.json();
+
+    expect(data.summary.status).toBe("clear");
+    expect(data.summary.securityEvents).toBe(0);
+    expect(data.timeline).toHaveLength(0);
+    expect(data.auditActivity).toHaveLength(1);
+    expect(data.auditActivity[0]).toMatchObject({
+      actor: "agent-a",
+      action: "hive_action_write",
+      target: "hive_actions",
+    });
+  });
+
   it("summarizes blocked policy events and redacts sensitive detail", async () => {
     testDb
       .prepare(
