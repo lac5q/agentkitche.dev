@@ -64,6 +64,34 @@ const proofs = [
   "Governance hooks for identity, permissions, and audit",
 ];
 
+const completedRoadmap = [
+  {
+    phase: "Phase 41",
+    label: "OSS Polish",
+    detail: "MIT license, public README, contribution guide, security policy, issue templates, and GitHub Actions checks.",
+  },
+  {
+    phase: "Phases 42-45",
+    label: "v2.1 Security + Trust Layer",
+    detail: "Iris dispatch preflight, prompt-injection checks, tool governance, security reporting, and capability controls.",
+  },
+  {
+    phase: "Phases 46-49",
+    label: "v2.2 LLM Optimization + Evaluation",
+    detail: "Model-routing telemetry, recommendations, eval fixtures, optimization dashboards, and quality reports.",
+  },
+  {
+    phase: "Phases 50-52",
+    label: "v2.3 Agent Runtime Enhancements",
+    detail: "Runtime middleware, memory client v2 paths, engagement state, and observability surfaces for live agents.",
+  },
+  {
+    phase: "Phases 53-54",
+    label: "v2.4 Performance + Caching",
+    detail: "Response caching, query-path tuning, and faster memory and knowledge retrieval for operator workflows.",
+  },
+];
+
 const testimonials = [
   {
     quote:
@@ -131,8 +159,14 @@ function LandingPage() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <Link
-                href="#proof"
+                href="#demo"
                 className="inline-flex items-center border border-[#0f0f0e] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0f0f0e] transition hover:bg-[#0f0f0e] hover:text-white"
+              >
+                Watch demo
+              </Link>
+              <Link
+                href="#proof"
+                className="inline-flex items-center border border-[#c9c9c2] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0f0f0e] transition hover:border-[#0f0f0e]"
               >
                 View proof
               </Link>
@@ -212,6 +246,46 @@ function LandingPage() {
         </div>
       </section>
 
+      <section id="demo" className="border-y border-[#c9c9c2] bg-white">
+        <div className="mx-auto grid max-w-[1180px] gap-8 px-5 py-16 sm:px-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-center lg:py-20">
+          <div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7a2a1e]">Video demo</p>
+            <h2 className="mt-3 text-[42px] font-semibold leading-tight tracking-normal text-[#0f0f0e]">
+              See the operator loop in motion.
+            </h2>
+            <p className="mt-4 text-[17px] leading-8 text-[#4a4a45]">
+              The demo shows memory search, knowledge access, agent engagement, and skill surfaces working as one MemroOS operator workflow.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/demo/memroos-demo.mp4"
+                className="inline-flex items-center gap-2 bg-[#0f0f0e] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-[#a8392c]"
+              >
+                Open video
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="https://github.com/lac5q/memroos"
+                className="inline-flex items-center border border-[#0f0f0e] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0f0f0e] transition hover:bg-[#0f0f0e] hover:text-white"
+              >
+                GitHub repo
+              </Link>
+            </div>
+          </div>
+          <div className="border border-[#1f1f1c] bg-[#0f0f0e] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+            <video
+              className="aspect-video w-full bg-black"
+              controls
+              muted
+              playsInline
+              preload="metadata"
+            >
+              <source src="/demo/memroos-demo.mp4" type="video/mp4" />
+            </video>
+          </div>
+        </div>
+      </section>
+
       <section id="memory-loop" className="border-y border-[#c9c9c2] bg-white">
         <div className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8 lg:py-20">
           <div className="max-w-[760px]">
@@ -268,6 +342,29 @@ function LandingPage() {
                     <p className="mt-2 text-[15px] leading-7 text-[#4a4a45]">{workflow.consumed}</p>
                   </div>
                 </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" className="border-y border-[#c9c9c2] bg-[#f2f2ee]">
+        <div className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8 lg:py-20">
+          <div className="max-w-[760px]">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7a2a1e]">Completed roadmap</p>
+            <h2 className="mt-3 text-[42px] font-semibold leading-tight tracking-normal text-[#0f0f0e]">
+              Public polish, trust, evals, runtime, and speed are already in the loop.
+            </h2>
+            <p className="mt-4 text-[17px] leading-8 text-[#4a4a45]">
+              The public preview includes the production-readiness phases that make memory useful for real agent workflows, not just demos.
+            </p>
+          </div>
+          <div className="mt-9 divide-y divide-[#c9c9c2] border-y border-[#c9c9c2]">
+            {completedRoadmap.map((item) => (
+              <article key={item.phase} className="grid gap-4 py-6 md:grid-cols-[180px_260px_1fr]">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7a2a1e]">{item.phase}</p>
+                <h3 className="text-[20px] font-semibold text-[#0f0f0e]">{item.label}</h3>
+                <p className="text-[15px] leading-7 text-[#4a4a45]">{item.detail}</p>
               </article>
             ))}
           </div>
