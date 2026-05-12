@@ -52,7 +52,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest
+        run: |
+          python -m pip install --upgrade pip pytest
+          python -m pip install -r services/orchestration/requirements.txt
 
       - name: Run Knowledge MCP tests
         env:
