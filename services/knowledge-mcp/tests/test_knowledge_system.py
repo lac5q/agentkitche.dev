@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from knowledge_system.capabilities import CORE_TOOLS, get_capabilities, open_workspace
@@ -200,6 +202,11 @@ def test_mcp_auth_provider_is_disabled_without_token(monkeypatch):
 
 def test_mcp_auth_provider_accepts_only_configured_bearer_token(monkeypatch):
     monkeypatch.setenv("KITCHEN_MCP_BEARER_TOKEN", "secret-token")
+    if mcp_server.DebugTokenVerifier is None:
+        with pytest.raises(RuntimeError, match="requires FastMCP auth support"):
+            mcp_server._auth_provider()
+        return
+
     provider = mcp_server._auth_provider()
 
     assert provider is not None
