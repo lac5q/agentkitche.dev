@@ -12,9 +12,12 @@ export async function GET(request: Request) {
     const result = await listOrchestrationHil();
     return Response.json({ ok: true, decisions: result.decisions, timestamp: new Date().toISOString() });
   } catch (error) {
-    return Response.json(
-      { ok: false, error: error instanceof Error ? error.message : "Orchestration HIL service unavailable" },
-      { status: 502 }
-    );
+    return Response.json({
+      ok: false,
+      decisions: [],
+      error: error instanceof Error ? error.message : "Orchestration HIL service unavailable",
+      status: "unavailable",
+      timestamp: new Date().toISOString(),
+    });
   }
 }

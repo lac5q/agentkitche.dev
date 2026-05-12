@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest an improvement or new workflow.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What agent workflow, memory workflow, or operator problem should this solve?
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Target surface
+      options:
+        - A2A
+        - REST shim
+        - Memory
+        - Orchestration
+        - Docker/setup
+        - UI
+        - Security/policy
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Agent framework or runtime
+      placeholder: "Claude Code, Codex, Google ADK, LangGraph, CrewAI, AutoGen, custom"
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This request does not include secrets, private prompts, or private user data.
+          required: true

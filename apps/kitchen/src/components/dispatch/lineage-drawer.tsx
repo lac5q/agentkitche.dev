@@ -29,13 +29,15 @@ export function LineageDrawer({ taskId, taskSummary }: LineageDrawerProps) {
 
   return (
     <Sheet>
-      <SheetTrigger>
-        <button
+      <SheetTrigger
+        render={
+          <button
           className="text-xs text-slate-400 hover:text-amber-400 transition-colors disabled:opacity-40"
           disabled={!taskId}
-        >
-          Timeline →
-        </button>
+          />
+        }
+      >
+        Timeline →
       </SheetTrigger>
       <SheetContent side="right" className="w-[480px] bg-slate-950 border-slate-800 overflow-y-auto">
         <SheetHeader className="mb-6">

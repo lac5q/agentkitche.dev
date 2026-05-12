@@ -9,6 +9,8 @@ import type {
   ApoCycleStats,
   ApoProposal,
   PaperclipFleetResponse,
+  AgentProtocol,
+  AgentStatus,
   RegisterAgentInput,
   RegisterAgentResult,
   RegisteredAgent,
@@ -69,6 +71,156 @@ export interface MemoryTierHealth {
   detail?: string;
   count?: number | null;
   lastWrite?: string | null;
+}
+
+export interface MultiMemorySearchResult {
+  id: string;
+  tier: "vector" | "graph" | "episodic";
+  title: string;
+  content: string;
+  source?: string;
+  score?: number;
+  metadata?: unknown;
+}
+
+export interface MultiMemorySearchTier {
+  tier: "vector" | "graph" | "episodic";
+  ok: boolean;
+  count: number;
+  error?: string;
+}
+
+export interface MultiMemorySearchResponse {
+  ok: boolean;
+  query: string;
+  tiers: MultiMemorySearchTier[];
+  results: MultiMemorySearchResult[];
+  timestamp: string;
+}
+
+export interface SecurityReportResponse {
+  summary: {
+    status: "clear" | "watch" | "attention";
+    securityEvents: number;
+    highSeverity: number;
+    mediumSeverity: number;
+    blockedAttempts: number;
+    lastEventAt: string | null;
+    topActors: Array<{ actor: string; count: number }>;
+  };
+  controls: Array<{ id: string; label: string; status: string }>;
+  timeline: Array<{
+    id: number;
+    actor: string;
+    action: string;
+    target: string;
+    detail: string | null;
+    severity: string;
+    timestamp: string;
+    blocked: boolean;
+  }>;
+  timestamp: string;
+}
+
+export interface SecurityCapabilitiesResponse {
+  summary: {
+    totalAgents: number;
+    strictAgents: number;
+    standardAgents: number;
+    permissiveAgents: number;
+    agentsWithSecurityCapabilities: number;
+  };
+  policies: {
+    defaultMode: string;
+    dispatchPolicy: string;
+    a2aPolicy: string;
+    memoryWritePolicy: string;
+  };
+  agents: Array<{
+    id: string;
+    name: string;
+    role: string;
+    protocol: AgentProtocol;
+    status: AgentStatus;
+    securityMode: "strict" | "standard" | "permissive";
+    securityCapabilities: string[];
+    readinessScore: number;
+    lastHeartbeat: string | null;
+  }>;
+  timestamp: string;
+}
+
+export interface ModelRoutingRecommendation {
+  provider: string;
+  model: string;
+  label: string;
+  strengths: string[];
+  taskTypes: string[];
+  taskType: string;
+  strategy: "balanced" | "cost" | "quality" | "latency";
+  score: number;
+  observations: number;
+  successRate: number | null;
+  averageQuality: number | null;
+  averageLatencyMs: number | null;
+}
+
+export interface ModelRoutingDashboardResponse {
+  events: Array<{
+    id: number;
+    taskType: string;
+    agentId: string | null;
+    provider: string;
+    model: string;
+    strategy: string;
+    latencyMs: number | null;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number | null;
+    success: boolean;
+    qualityScore: number | null;
+    contextTags: string[];
+    promptHash: string | null;
+    error: string | null;
+    createdAt: string;
+  }>;
+  summary: {
+    totalRuns: number;
+    successfulRuns: number;
+    successRate: number | null;
+    averageQuality: number | null;
+    averageLatencyMs: number | null;
+  };
+  timestamp: string;
+}
+
+export interface ModelRoutingEvalsResponse {
+  dimensions: Array<{ id: string; label: string; rubric: string }>;
+  referenceTasks: Array<{ id: string; taskType: string; strategy: string }>;
+  summary: ModelRoutingDashboardResponse["summary"];
+  timestamp: string;
+}
+
+export interface CacheStatsResponse {
+  stats: {
+    entries: number;
+    hits: number;
+    misses: number;
+    evictions: number;
+    invalidations: number;
+    memoryBytes: number;
+    maxEntries: number;
+  };
+  performance: {
+    ok: boolean;
+    routes: Array<{
+      route: string;
+      p95Ms: number;
+      budgetMs: number;
+      status: "pass" | "fail";
+    }>;
+  };
+  timestamp: string;
 }
 
 async function fetchJSON<T>(url: string): Promise<T> {
@@ -207,6 +359,18 @@ export function useMemory(source?: string, query?: string) {
         timestamp: string;
       }>(`/api/memory?${params}`),
     refetchInterval: POLL_INTERVALS.memory,
+  });
+}
+
+export function useMultiMemorySearch(query: string, limit = 8) {
+  const params = new URLSearchParams();
+  params.set("q", query);
+  params.set("limit", String(limit));
+  return useQuery({
+    queryKey: ["memory", "multi-search", query, limit],
+    queryFn: () => fetchJSON<MultiMemorySearchResponse>(`/api/memory/multi-search?${params}`),
+    enabled: query.trim().length > 0,
+    staleTime: 15_000,
   });
 }
 
@@ -535,6 +699,80 @@ export function useAuditLog(limit = 20) {
         timestamp: string;
       }>(`/api/audit-log?limit=${limit}`),
     refetchInterval: POLL_INTERVALS.hive,
+  });
+}
+
+export function useSecurityReport(limit = 20) {
+  return useQuery({
+    queryKey: ["security-report", limit],
+    queryFn: () => fetchJSON<SecurityReportResponse>(`/api/security/report?limit=${limit}`),
+    refetchInterval: POLL_INTERVALS.hive,
+  });
+}
+
+export function useSecurityCapabilities() {
+  return useQuery({
+    queryKey: ["security-capabilities"],
+    queryFn: () => fetchJSON<SecurityCapabilitiesResponse>("/api/security/capabilities"),
+    refetchInterval: POLL_INTERVALS.agents,
+  });
+}
+
+export function useCacheStats() {
+  return useQuery({
+    queryKey: ["cache-stats"],
+    queryFn: () => fetchJSON<CacheStatsResponse>("/api/cache/stats"),
+    refetchInterval: 30000,
+  });
+}
+
+export function usePurgeCacheMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (tag?: string) =>
+      mutateJSON<{ ok: boolean; purged: number; tag: string | null; timestamp: string }>(
+        "/api/cache/purge",
+        { method: "POST", body: JSON.stringify(tag ? { tag } : {}) }
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cache-stats"] });
+    },
+  });
+}
+
+export function useModelRoutingDashboard(limit = 30) {
+  return useQuery({
+    queryKey: ["model-routing-dashboard", limit],
+    queryFn: () =>
+      fetchJSON<ModelRoutingDashboardResponse>(
+        `/api/model-routing/telemetry?limit=${limit}`
+      ),
+    refetchInterval: POLL_INTERVALS.tokens,
+  });
+}
+
+export function useModelRoutingRecommendations(taskType = "engineering", strategy = "balanced") {
+  const params = new URLSearchParams();
+  params.set("taskType", taskType);
+  params.set("strategy", strategy);
+  return useQuery({
+    queryKey: ["model-routing-recommendations", taskType, strategy],
+    queryFn: () =>
+      fetchJSON<{
+        taskType: string;
+        strategy: string;
+        recommendations: ModelRoutingRecommendation[];
+        timestamp: string;
+      }>(`/api/model-routing/recommendations?${params}`),
+    refetchInterval: POLL_INTERVALS.tokens,
+  });
+}
+
+export function useModelRoutingEvals() {
+  return useQuery({
+    queryKey: ["model-routing-evals"],
+    queryFn: () => fetchJSON<ModelRoutingEvalsResponse>("/api/model-routing/evals"),
+    refetchInterval: POLL_INTERVALS.tokens,
   });
 }
 

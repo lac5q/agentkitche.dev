@@ -27,7 +27,7 @@ interface VoiceAgentOption {
   agent: VoiceAgent;
   label: string;
   detail: string;
-  group: "CLIs" | "Runtime subagents" | "Paperclip project agents" | "Kitchen / system";
+  group: "CLIs" | "Runtime subagents" | "Paperclip project agents" | "MemroOS system";
 }
 
 const CLI_AGENT_IDS = new Set([
@@ -42,7 +42,7 @@ const GROUP_ORDER: Record<VoiceAgentOption["group"], number> = {
   "CLIs": 0,
   "Runtime subagents": 1,
   "Paperclip project agents": 2,
-  "Kitchen / system": 3,
+  "MemroOS system": 3,
 };
 
 function titleFromId(id: string): string {
@@ -118,10 +118,36 @@ function buildVoiceAgentOption(agent: VoiceAgent): VoiceAgentOption {
 
   return {
     agent,
-    label: `Kitchen system - ${agent.name}`,
+    label: `MemroOS system - ${agent.name}`,
     detail: agent.role ?? `${platformLabel} ${agent.protocol ?? "agent"}`,
-    group: "Kitchen / system",
+    group: "MemroOS system",
   };
+}
+
+function friendlyChatError(message: string): string {
+  const raw = message.trim();
+  let parsedMessage = raw;
+
+  const jsonStart = raw.indexOf("{");
+  if (jsonStart >= 0) {
+    try {
+      const parsed = JSON.parse(raw.slice(jsonStart)) as {
+        error?: { type?: string; message?: string };
+        message?: string;
+      };
+      parsedMessage = parsed.error?.message ?? parsed.message ?? raw;
+    } catch {
+      parsedMessage = raw;
+    }
+  }
+
+  if (/rate_limit_error|usage limit exceeded/i.test(raw)) {
+    return `Provider limit hit: ${parsedMessage}. Try another model/agent or update the provider quota.`;
+  }
+  if (/OpenCode chat runner is disabled/i.test(raw)) {
+    return "OpenCode chat runner is disabled. Set KITCHEN_ENABLE_OPENCODE=true to chat with OpenCode/Qwen/Gemini-routed agents.";
+  }
+  return parsedMessage;
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -168,7 +194,10 @@ async function streamChat(
     }),
   });
 
-  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok || !res.body) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(friendlyChatError(detail ? `${res.status} ${detail}` : `HTTP ${res.status}`));
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -185,7 +214,7 @@ async function streamChat(
       if (payload === "[DONE]") break;
       try {
         const parsed = JSON.parse(payload) as { text?: string; error?: string };
-        if (parsed.error) { streamError = parsed.error; break; }
+        if (parsed.error) { streamError = friendlyChatError(parsed.error); break; }
         if (parsed.text) { full += parsed.text; onChunk(full); }
       } catch { /* skip malformed lines */ }
     }
@@ -377,7 +406,7 @@ export function VoicePanel() {
             onChange={(e) => { setSelectedAgent(e.target.value); setHistory([]); }}
             className="ml-1 rounded-md border border-slate-700/60 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500/50"
           >
-            {(["CLIs", "Runtime subagents", "Paperclip project agents", "Kitchen / system"] as VoiceAgentOption["group"][]).map((group) => {
+            {(["CLIs", "Runtime subagents", "Paperclip project agents", "MemroOS system"] as VoiceAgentOption["group"][]).map((group) => {
               const groupOptions = agentOptions.filter((option) => option.group === group);
               if (groupOptions.length === 0) return null;
               return (

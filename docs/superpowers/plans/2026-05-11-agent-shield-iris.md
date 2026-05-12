@@ -132,6 +132,33 @@ Verification:
 - Validate tool calls against agent registry permissions
 - Reject out-of-scope tool usage
 
+## Phase 3 Results: Tool permission guard (implemented locally 2026-05-11)
+
+Added a first registry-backed policy guard:
+
+- Added `apps/kitchen/src/lib/security-policy.ts`
+- Dispatch policy:
+  - Allows legacy targets with no declared capabilities for backward compatibility
+  - Denies targets that declare capabilities but do not include a dispatch-compatible capability
+  - Enforces operating-profile private-network blocking through existing A2A config
+- A2A task policy:
+  - Denies callers that declare capabilities but do not include an A2A send-compatible capability
+  - Blocks before A2A task persistence
+- Memory write policy:
+  - Denies tier writes outside declared memory capabilities, e.g. `memory:write:episodic` cannot write `graph`
+  - Blocks before mem0 calls and before `agent_memory_writes` persistence
+- Audit semantics:
+  - Denials write `policy_denied` audit rows
+  - External responses use `403 POLICY_DENIED` or A2A `UNAUTHORIZED` without exposing secrets
+
+Verification:
+
+- Targeted policy tests: 28/28 passed
+- Affected A2A/dispatch/memory suites: 68/68 passed
+- Full Kitchen tests: 485/485 passed
+- `npm run lint`: exits 0 with 11 pre-existing warnings
+- `npm run build`: passes with the existing `/api/apo` Turbopack NFT warning
+
 ### Phase 4: Audit UI
 - Show scan results, blocked attempts, and security events in Kitchen UI
 - New `/security` or `/iris` page with scan history

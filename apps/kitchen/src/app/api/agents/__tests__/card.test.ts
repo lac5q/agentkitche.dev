@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
 const MOCK_AGENTS = [
   {
@@ -53,13 +53,6 @@ describe("GET /api/agents/cards", () => {
 });
 
 describe("GET /api/agents/[id]/card", () => {
-  beforeEach(() => {
-    vi.resetModules();
-    vi.mock("@/lib/agent-registry", () => ({
-      getRemoteAgents: () => MOCK_AGENTS,
-    }));
-  });
-
   it("returns card for known agent id", async () => {
     const { GET } = await import("../[id]/card/route");
     const req = new Request("http://localhost/api/agents/sophia/card") as any;

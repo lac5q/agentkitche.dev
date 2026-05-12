@@ -36,13 +36,14 @@ function hasOperatorKey(request: Request, expectedKey: string): boolean {
 }
 
 export function authorizeRegistryWrite(request: Request): boolean {
+  const hostname = getRequestHostname(request);
+  if (hostname && isLoopbackHost(hostname)) return true;
+
   const operatorKey = process.env.KITCHEN_OPERATOR_API_KEY;
   if (operatorKey) {
     return hasOperatorKey(request, operatorKey);
   }
-
-  const hostname = getRequestHostname(request);
-  return Boolean(hostname && isLoopbackHost(hostname));
+  return false;
 }
 
 export function registryWriteUnauthorizedResponse(): Response {

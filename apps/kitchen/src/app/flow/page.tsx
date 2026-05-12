@@ -61,8 +61,8 @@ export default function FlowPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">The Flow</h1>
-        <p className="text-sm text-slate-400">Live system — drag nodes, zoom, click to drill down</p>
+        <h1 className="text-2xl font-bold text-amber-500">Workflow Map</h1>
+        <p className="text-sm text-slate-400">Live topology for agents, memory, knowledge, tools, and dispatch paths</p>
       </div>
 
       <div className="relative">

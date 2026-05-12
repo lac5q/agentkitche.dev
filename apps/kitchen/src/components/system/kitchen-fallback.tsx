@@ -17,9 +17,9 @@ export function KitchenFallback({
   message,
   code,
   primaryHref = "/flow",
-  primaryLabel = "Return to Flow",
+  primaryLabel = "Open Workflow Map",
   secondaryHref = "/",
-  secondaryLabel = "Kitchen Floor",
+  secondaryLabel = "Overview",
 }: KitchenFallbackProps) {
   return (
     <section className="relative isolate min-h-[calc(100vh-7rem)] overflow-hidden rounded-3xl border border-slate-800 bg-[#050914] px-6 py-10 shadow-2xl shadow-black/30 sm:px-10">
@@ -66,11 +66,11 @@ export function KitchenFallback({
           <div className="space-y-3 text-sm">
             <div className="flex items-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-200">
               <span className="h-3 w-3 rounded-full bg-amber-400" />
-              Request entered the kitchen
+              Request entered the workspace
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-3 text-sky-200">
               <span className="h-3 w-3 rounded-full bg-sky-400" />
-              Registry checked for a matching station
+              Registry checked for a matching route
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3 text-rose-200">
               <span className="h-3 w-3 rounded-full bg-rose-400" />
@@ -78,7 +78,7 @@ export function KitchenFallback({
             </div>
           </div>
           <p className="mt-5 text-xs leading-5 text-slate-500">
-            If the server itself is stopped, the browser cannot receive this screen. Start Kitchen again on port 3002, then refresh.
+            If the server itself is stopped, the browser cannot receive this screen. Start the workspace again on port 3002, then refresh.
           </p>
         </div>
       </div>

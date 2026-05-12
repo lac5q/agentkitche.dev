@@ -3,14 +3,14 @@ import { KitchenFallback } from "@/components/system/kitchen-fallback";
 export default function NotFound() {
   return (
     <KitchenFallback
-      eyebrow="Station not found"
-      title="This order never reached a station."
-      message="That route does not exist in agentkitchen.dev. The fleet is still here, but this URL is not part of the current control surface."
+      eyebrow="Route not found"
+      title="This workspace route does not exist."
+      message="That URL is not part of the current MemroOS control surface. The registry, workflow map, and knowledge views are still available."
       code="404"
       primaryHref="/flow"
-      primaryLabel="Open the Flow"
+      primaryLabel="Open Workflow Map"
       secondaryHref="/agents"
-      secondaryLabel="Agent Registry"
+      secondaryLabel="Agents"
     />
   );
 }

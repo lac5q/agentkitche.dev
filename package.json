@@ -1,5 +1,5 @@
 {
-  "name": "agentkitchen.dev-monorepo",
+  "name": "memroos-monorepo",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "npm --prefix apps/kitchen run dev --",
     "build": "npm --prefix apps/kitchen run build",
+    "typecheck": "npm --prefix apps/kitchen run typecheck",
     "start": "npm --prefix apps/kitchen run start -- --port 3002",
     "start:all": "bash start.sh",
     "mcp": "bash scripts/agentkitchen-mcp.sh",

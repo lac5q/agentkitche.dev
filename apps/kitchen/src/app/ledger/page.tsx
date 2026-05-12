@@ -7,6 +7,7 @@ import { SavingsChart } from "@/components/ledger/savings-chart";
 import { ModelMixChart } from "@/components/ledger/model-mix-chart";
 import { CostCalculator } from "@/components/ledger/cost-calculator";
 import { LedgerAnalyticsPanel } from "@/components/ledger/analytics-panel";
+import { ModelRoutingPanel } from "@/components/ledger/model-routing-panel";
 import { InfoTip } from "@/components/ui/info-tip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -59,8 +60,8 @@ export default function LedgerPage() {
     <TooltipProvider>
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">The Ledger</h1>
-        <p className="text-sm text-slate-400 mt-1">RTK token savings and cost analytics</p>
+        <h1 className="text-2xl font-bold text-amber-500">Usage</h1>
+        <p className="text-sm text-slate-400 mt-1">Token savings, model mix, and cost analytics</p>
       </div>
 
       {/* KPI Cards */}
@@ -144,6 +145,8 @@ export default function LedgerPage() {
         totalOutput={totalOutput}
         tokensSaved={tokensSaved}
       />
+
+      <ModelRoutingPanel />
 
       {/* Usage Trends */}
       <LedgerAnalyticsPanel />

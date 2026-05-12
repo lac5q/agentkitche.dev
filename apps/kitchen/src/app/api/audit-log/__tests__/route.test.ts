@@ -46,9 +46,6 @@ describe('GET /api/audit-log', () => {
   it('returns { entries: [], timestamp } when table is empty (fresh DB)', async () => {
     const freshDb = new Database(':memory:');
     initSchema(freshDb);
-    // Temporarily override getDb for this test
-    const { getDb } = await import('@/lib/db');
-    const original = (getDb as any)._impl;
     // Since we mocked it as a closure, we need to test with testDb which has rows
     // Instead test the shape of the response
     const req = makeGetRequest({ limit: '0' }); // limit=0 clamps to 1

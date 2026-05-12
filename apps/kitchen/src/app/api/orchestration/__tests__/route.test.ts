@@ -99,4 +99,16 @@ describe("orchestration API routes", () => {
 
     expect(response.status).toBe(403);
   });
+
+  it("returns an empty unavailable queue when the HIL service is offline", async () => {
+    vi.stubEnv("ORCHESTRATION_SERVICE_URL", "http://localhost:3210");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+    const hilRoute = await import("../hil/route");
+
+    const response = await hilRoute.GET(new Request("http://localhost/api/orchestration/hil"));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: false, decisions: [], status: "unavailable" });
+  });
 });

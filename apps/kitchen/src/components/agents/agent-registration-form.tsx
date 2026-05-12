@@ -99,14 +99,14 @@ export function AgentRegistrationForm({
           A2A card URL
         </Button>
         <span className="text-xs text-slate-500">
-          Kitchen never displays stored bearer tokens or API keys after creation.
+          Stored bearer tokens and API keys are never displayed after creation.
         </span>
       </div>
 
       {mode === "a2a" ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-slate-400">
-            Paste the agent-card URL exposed by the remote agent. Kitchen will validate the card,
+            Paste the agent-card URL exposed by the remote agent. The registry will validate the card,
             security scheme, endpoint, and declared skills before adding it to the registry.
           </p>
           <p className="text-xs text-slate-500">

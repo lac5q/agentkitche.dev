@@ -11,6 +11,7 @@ import {
 import { AgentRegistryDrawer } from "@/components/agents/agent-registry-drawer";
 import { AgentRegistrationForm } from "@/components/agents/agent-registration-form";
 import { AgentRegistryTable } from "@/components/agents/agent-registry-table";
+import { AgentSecurityModesPanel } from "@/components/agents/agent-security-modes-panel";
 import { Button } from "@/components/ui/button";
 import type { AgentProtocol, AgentStatus, RegisteredAgent } from "@/types";
 
@@ -27,8 +28,8 @@ function inviteErrorMessage(error: unknown) {
 
 function formatAgentOnboardingPrompt(command: string) {
   return [
-    "Run this agentkitchen.dev onboarding command exactly as written.",
-    "It will register you, save your per-agent credentials, and install the agentkitchen.dev MCP server for your runtime.",
+    "Run this MemroOS onboarding command exactly as written.",
+    "It will register you, save your per-agent credentials, and install the MemroOS MCP server for your runtime.",
     "After it finishes, tell me whether it succeeded and include the onboarding report path it printed.",
     "",
     "Command to run:",
@@ -97,9 +98,9 @@ export default function AgentRegistryPage() {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">Hire Crew</h1>
+        <h1 className="text-2xl font-bold text-amber-500">Agents</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Agent registry, REST keys, capabilities, and liveness
+          Runtime registry, credentials, capabilities, and liveness
         </p>
       </div>
 
@@ -117,6 +118,8 @@ export default function AgentRegistryPage() {
           <p className="text-2xl font-bold text-sky-500">{protocolCount}</p>
         </div>
       </div>
+
+      <AgentSecurityModesPanel />
 
       <AgentRegistrationForm
         isSubmitting={registerMutation.isPending || registerA2aMutation.isPending}

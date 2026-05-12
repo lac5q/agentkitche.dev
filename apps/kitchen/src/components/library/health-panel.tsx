@@ -2,26 +2,24 @@
 
 import { Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { KnowledgeCollection } from "@/types";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 function InfoTip({ text }: { text: string }) {
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <button className="ml-1.5 inline-flex items-center text-slate-600 hover:text-slate-400 transition-colors">
-          <Info size={12} />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top">{text}</TooltipContent>
-    </Tooltip>
+    <span className="group relative ml-1.5 inline-flex">
+      <span
+        aria-label="More information"
+        className="inline-flex items-center text-slate-600 transition-colors hover:text-slate-400"
+        role="img"
+      >
+        <Info size={12} />
+      </span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-64 -translate-x-1/2 rounded-md bg-slate-100 px-3 py-1.5 text-xs leading-snug text-slate-950 shadow-lg group-hover:block group-focus-within:block">
+        {text}
+      </span>
+    </span>
   );
 }
 
@@ -45,8 +43,7 @@ export function HealthPanel({ collections, totalFiles }: HealthPanelProps) {
   const meetingsCollection = collections.find((c) => c.name === "meet-recordings");
 
   return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
         {/* Meetings tracking indicator */}
         <Card className="border-slate-800 bg-slate-900/60">
           <CardContent className="pt-4 pb-3">
@@ -172,7 +169,6 @@ export function HealthPanel({ collections, totalFiles }: HealthPanelProps) {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </TooltipProvider>
+    </div>
   );
 }

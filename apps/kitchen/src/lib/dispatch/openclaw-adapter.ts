@@ -24,7 +24,7 @@ interface OpenClawEnvelope {
 }
 
 export const openclawAdapter: AgentAdapter = {
-  platform: "opencode",
+  platform: ["opencode", "openclaw"],
   name: "openclaw",
   async dispatch(task: DispatchTask): Promise<DispatchResult> {
     const queueDir = getQueueDir();

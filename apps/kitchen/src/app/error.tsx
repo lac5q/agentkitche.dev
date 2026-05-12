@@ -11,14 +11,14 @@ export default function AppError({
   return (
     <div className="space-y-4">
       <KitchenFallback
-        eyebrow="Kitchen misfire"
-        title="A station threw sparks."
-        message="Something inside this route failed while Kitchen was still running. Try the route again, or return to the Flow map to inspect system health."
+        eyebrow="Route failure"
+        title="This workflow could not finish."
+        message="Something inside this route failed while the workspace was still running. Try the route again, or open the workflow map to inspect system health."
         code="500"
         primaryHref="/flow"
-        primaryLabel="Open the Flow"
+        primaryLabel="Open Workflow Map"
         secondaryHref="/"
-        secondaryLabel="Kitchen Floor"
+        secondaryLabel="Overview"
       />
       <button
         onClick={reset}

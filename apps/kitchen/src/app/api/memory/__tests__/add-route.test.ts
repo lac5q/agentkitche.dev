@@ -116,4 +116,37 @@ describe("POST /api/memory/add", () => {
     const rows = getDb().prepare("SELECT agent_id FROM agent_memory_writes").all();
     expect(rows).toEqual([]);
   });
+
+  it("denies memory writes to tiers outside the agent capability policy", async () => {
+    const { POST, getDb, registerAgent } = await loadRoute();
+    const { apiKey } = registerAgent({
+      id: "episodic-agent",
+      name: "Episodic Agent",
+      role: "Writes episodic memory",
+      platform: "codex",
+      protocol: "rest",
+      capabilities: [{ id: "memory:write:episodic", name: "Episodic Memory", description: "", tags: [] }],
+      issueApiKey: true,
+    });
+
+    const res = await POST(
+      new Request("http://localhost/api/memory/add", {
+        method: "POST",
+        headers: { authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({ content: "Luis works with Agent Kitchen", type: "graph" }),
+      })
+    );
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toMatchObject({
+      ok: false,
+      code: "POLICY_DENIED",
+      error: "Agent is not allowed to write graph memory",
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    const writes = getDb().prepare("SELECT agent_id FROM agent_memory_writes").all();
+    expect(writes).toEqual([]);
+    const audit = getDb().prepare("SELECT * FROM audit_log WHERE action = 'policy_denied'").get() as any;
+    expect(audit).toMatchObject({ actor: "episodic-agent", target: "memory_write", severity: "high" });
+  });
 });

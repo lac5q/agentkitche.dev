@@ -7,7 +7,9 @@ export async function register() {
     }
     const { startConsolidationScheduler } = await import('./lib/memory-consolidation');
     const { startDecayScheduler } = await import('./lib/memory-decay');
+    const { prewarmResponseCaches } = await import('./lib/response-cache');
     startConsolidationScheduler();
     startDecayScheduler();
+    void prewarmResponseCaches();
   }
 }

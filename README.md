@@ -556,6 +556,8 @@ ClaudeClaw-inspired operator surfaces:
 
 This project is early, but useful contributions are very welcome.
 
+Start with [CONTRIBUTING.md](CONTRIBUTING.md) for setup, branch, pull request, and verification expectations. Please also read [SECURITY.md](SECURITY.md) before reporting security issues or sharing logs from agent runs.
+
 Good first contribution areas:
 
 - Add an adapter for an agent framework you use.

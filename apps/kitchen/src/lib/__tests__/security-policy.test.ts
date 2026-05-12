@@ -1,0 +1,95 @@
+// @vitest-environment node
+import { describe, expect, it } from "vitest";
+import {
+  checkA2aSendPolicy,
+  checkDispatchPolicy,
+  checkMemoryWritePolicy,
+} from "../security-policy";
+import type { RegisteredAgent, RemoteAgentConfig } from "@/types";
+
+function registeredAgent(capabilities: RegisteredAgent["capabilities"] = []): RegisteredAgent {
+  return {
+    id: "agent-1",
+    name: "Agent",
+    role: "Agent",
+    platform: "codex",
+    protocol: "a2a",
+    status: "active",
+    lastHeartbeat: null,
+    currentTask: null,
+    lessonsCount: 0,
+    todayMemoryCount: 0,
+    location: "local",
+    isRemote: false,
+    latencyMs: null,
+    capabilities,
+    metadata: {},
+    host: null,
+    port: null,
+    healthEndpoint: null,
+    tunnelUrl: null,
+    createdAt: "2026-05-11T00:00:00.000Z",
+    updatedAt: "2026-05-11T00:00:00.000Z",
+    deregisteredAt: null,
+  };
+}
+
+function remoteAgent(skills: RemoteAgentConfig["skills"] = []): RemoteAgentConfig {
+  return {
+    id: "remote-1",
+    name: "Remote",
+    role: "Remote",
+    platform: "claude",
+    protocol: "rest",
+    location: "tailscale",
+    host: "100.90.1.2",
+    port: 18889,
+    healthEndpoint: "/health",
+    skills,
+    metadata: {},
+  };
+}
+
+describe("security policy guards", () => {
+  it("allows legacy agents with no declared capabilities", () => {
+    expect(checkDispatchPolicy("kitchen", remoteAgent())).toEqual({ allowed: true });
+    expect(checkA2aSendPolicy(registeredAgent())).toEqual({ allowed: true });
+    expect(checkMemoryWritePolicy(registeredAgent(), "graph")).toEqual({ allowed: true });
+  });
+
+  it("denies dispatch when a target declares capabilities but none permit dispatch", () => {
+    expect(checkDispatchPolicy("kitchen", remoteAgent([
+      { id: "memory:write", name: "Memory", description: "", tags: [] },
+    ]))).toMatchObject({
+      allowed: false,
+      code: "MISSING_CAPABILITY",
+    });
+  });
+
+  it("allows dispatch when target declares a dispatch-compatible capability", () => {
+    expect(checkDispatchPolicy("kitchen", remoteAgent([
+      { id: "task:accept", name: "Accept Tasks", description: "", tags: [] },
+    ]))).toEqual({ allowed: true });
+  });
+
+  it("denies A2A send when caller capabilities omit A2A send permission", () => {
+    expect(checkA2aSendPolicy(registeredAgent([
+      { id: "memory:write", name: "Memory", description: "", tags: [] },
+    ]))).toMatchObject({
+      allowed: false,
+      code: "MISSING_CAPABILITY",
+    });
+  });
+
+  it("allows tier-specific memory writes only for matching tiers", () => {
+    const agent = registeredAgent([
+      { id: "memory:write:episodic", name: "Episodic", description: "", tags: [] },
+    ]);
+
+    expect(checkMemoryWritePolicy(agent, "episodic")).toEqual({ allowed: true });
+    expect(checkMemoryWritePolicy(agent, "graph")).toMatchObject({
+      allowed: false,
+      code: "MISSING_CAPABILITY",
+    });
+  });
+});

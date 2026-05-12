@@ -16,7 +16,7 @@ async function loadRoutes() {
   const agentRoute = await import("../[id]/route");
   const heartbeatRoute = await import("../../heartbeat/route");
   const dbModule = await import("@/lib/db");
-  return { agentsRoute, registerRoute, agentRoute, heartbeatRoute, closeDb: dbModule.closeDb };
+  return { agentsRoute, registerRoute, agentRoute, heartbeatRoute, getDb: dbModule.getDb, closeDb: dbModule.closeDb };
 }
 
 describe("agent registry routes", () => {
@@ -107,6 +107,40 @@ describe("agent registry routes", () => {
       protocol: "rest",
       status: "active",
       currentTask: "curl check-in",
+    });
+  });
+
+  it("derives active status from recent hive activity", async () => {
+    const { agentsRoute, registerRoute, getDb } = await loadRoutes();
+
+    await registerRoute.POST(
+      new Request("http://localhost/api/agents/register", {
+        method: "POST",
+        body: JSON.stringify({
+          id: "alba",
+          name: "Alba",
+          role: "Coordinator",
+          platform: "hermes",
+          protocol: "rest",
+          issueApiKey: false,
+        }),
+      })
+    );
+
+    getDb()
+      .prepare(
+        `INSERT INTO hive_actions(agent_id, action_type, summary, timestamp)
+         VALUES ('alba', 'checkpoint', 'Recent checkpoint', ?)`
+      )
+      .run(new Date().toISOString());
+
+    const listResponse = await agentsRoute.GET();
+    const agents = (await listResponse.json()).agents;
+    expect(agents[0]).toMatchObject({
+      id: "alba",
+      status: "active",
+      currentTask: "Recent checkpoint",
+      metadata: expect.objectContaining({ derivedActivity: "recent_hive_action" }),
     });
   });
 

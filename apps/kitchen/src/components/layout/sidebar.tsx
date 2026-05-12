@@ -3,18 +3,32 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  Bot,
+  Brain,
+  Database,
+  GitBranch,
+  LayoutDashboard,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Wrench,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KangarooMark } from "./brand-mark";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Kitchen Floor", description: "Agent status", icon: "\u{1F468}\u200D\u{1F373}" },
-  { href: "/agents", label: "Hire Crew", description: "Agent registry", icon: "◎" },
-  { href: "/ledger", label: "The Ledger", description: "RTK token tracking", icon: "\u{1F9FE}" },
-  { href: "/notebooks", label: "Notebook Wall", description: "Memory graph", icon: "\u{1F9E0}" },
-  { href: "/library", label: "The Library", description: "Knowledge files", icon: "\u{1F4DA}" },
-  { href: "/cookbooks", label: "The Cookbooks", description: "Skill analytics", icon: "📚" },
-  { href: "/flow", label: "The Flow", description: "System topology", icon: "\u{1F504}" },
-  { href: "/dispatch", label: "The Dispatch", description: "A2A delegation", icon: "📡" },
-  { href: "/apo", label: "The Sous Vide", description: "APO proposals", icon: "\u{1F372}" },
+  { href: "/", label: "Home", description: "MemroOS landing", icon: LayoutDashboard },
+  { href: "/notebooks", label: "Memory", description: "Retained context", icon: Brain },
+  { href: "/library", label: "Knowledge", description: "Source corpus", icon: Database },
+  { href: "/cookbooks", label: "Skills", description: "Procedural playbooks", icon: Wrench },
+  { href: "/agents", label: "Agents", description: "Runtime registry", icon: Bot },
+  { href: "/flow", label: "Workflow Map", description: "System topology", icon: GitBranch },
+  { href: "/dispatch", label: "Engage", description: "Chat, voice, standups", icon: Send },
+  { href: "/apo", label: "Improvements", description: "Optimization queue", icon: Sparkles },
+  { href: "/ledger", label: "Usage", description: "Cost and model mix", icon: BarChart3 },
+  { href: "/library#governance", label: "Governance", description: "Health and audit", icon: ShieldCheck },
 ];
 
 interface SidebarProps {
@@ -45,17 +59,20 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
   const navContent = (showClose: boolean) => (
     <>
-      <div className="mb-7 flex items-center justify-between border-b border-slate-200 px-2 pb-5">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400">Workspace</p>
-          <h1 className="mt-1 truncate text-base font-semibold text-slate-950">agentkitchen.dev</h1>
-          <p className="text-xs text-slate-500">Agent fleet control</p>
+      <div className="mb-7 flex items-center justify-between border-b border-[#c9c9c2] px-2 pb-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <KangarooMark className="h-10 w-10 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7a2a1e]">MemroOS</p>
+            <h1 className="mt-1 truncate text-base font-semibold text-[#0f0f0e]">MemroOS</h1>
+            <p className="text-xs text-[#4a4a45]">Memory OS for agent workflows</p>
+          </div>
         </div>
         {/* Close button — mobile only */}
         {showClose && onClose && (
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#c9c9c2] text-[#4a4a45] transition-colors hover:bg-[#f2e2dc] hover:text-[#7a2a1e] lg:hidden"
             aria-label="Close menu"
           >
             <span className="text-xl leading-none">&times;</span>
@@ -72,24 +89,24 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               className={cn(
                 "group flex items-center gap-3 rounded-sm border border-transparent px-3 py-2.5 text-sm transition-all",
                 isActive
-                  ? "border-cyan-200 bg-cyan-50 text-slate-950 shadow-[0_18px_50px_rgba(8,145,178,0.10)]"
-                  : "text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
+                  ? "border-[#a8392c] bg-[#f2e2dc] text-[#0f0f0e] shadow-[0_12px_32px_rgba(168,57,44,0.10)]"
+                  : "text-[#4a4a45] hover:border-[#c9c9c2] hover:bg-white/70 hover:text-[#0f0f0e]"
               )}
             >
               <span
                 className={cn(
                   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-base",
-                  isActive ? "bg-white text-cyan-600" : "bg-slate-100 text-slate-500 group-hover:bg-white"
+                  isActive ? "bg-white text-[#a8392c]" : "bg-[#e4e4dd] text-[#4a4a45] group-hover:bg-white"
                 )}
               >
-                {item.icon}
+                <item.icon className="h-3.5 w-3.5" aria-hidden="true" />
               </span>
               <span className="min-w-0">
                 <span className="block truncate font-semibold leading-4">{item.label}</span>
                 <span
                   className={cn(
                     "mt-0.5 block truncate text-[11px] font-medium leading-3",
-                    isActive ? "text-slate-500" : "text-slate-400"
+                    isActive ? "text-[#4a4a45]" : "text-[#73736b]"
                   )}
                 >
                   {item.description}
@@ -99,9 +116,9 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           );
         })}
       </nav>
-      <div className="border-t border-slate-200 px-2 pt-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Operator console</p>
-        <p className="mt-1 text-xs text-slate-500">A2A hub / fleet control</p>
+      <div className="border-t border-[#c9c9c2] px-2 pt-4">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a2a1e]">Operating model</p>
+        <p className="mt-1 text-xs text-[#4a4a45]">Retain, retrieve, dispatch, improve</p>
       </div>
     </>
   );
@@ -109,7 +126,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   return (
     <>
       {/* Desktop sidebar — always visible on lg+ */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 flex-col border-r border-slate-200 bg-[#f7f7f4] px-4 py-5 text-slate-950 lg:flex">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 flex-col border-r border-[#c9c9c2] bg-[#f2f2ee] px-4 py-5 text-[#1f1f1c] lg:flex">
         {navContent(false)}
       </aside>
 
@@ -118,7 +135,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         <div className="lg:hidden">
         {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-[#0f0f0e]/40 backdrop-blur-sm"
             onClick={onClose}
             aria-hidden="true"
           />
@@ -126,7 +143,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         {/* Slide-in drawer */}
         <aside
           className={cn(
-            "fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-slate-200 bg-[#f7f7f4] px-4 py-5 text-slate-950 shadow-2xl transition-transform duration-300 ease-in-out",
+            "fixed left-0 top-0 z-50 flex h-screen w-72 flex-col border-r border-[#c9c9c2] bg-[#f2f2ee] px-4 py-5 text-[#1f1f1c] shadow-2xl transition-transform duration-300 ease-in-out",
             isOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >

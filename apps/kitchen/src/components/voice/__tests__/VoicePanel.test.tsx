@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 // JSDOM doesn't implement scrollIntoView
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
@@ -45,6 +45,7 @@ const FIXTURE_AGENTS = [
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
   mockUseAgents.mockReturnValue({
     data: { agents: FIXTURE_AGENTS },
   } as ReturnType<typeof useAgents>);
@@ -108,5 +109,37 @@ describe("VoicePanel", () => {
     mockUseAgents.mockReturnValue({ data: { agents: [] } } as ReturnType<typeof useAgents>);
     render(<VoicePanel />);
     expect(screen.getByText("Voice & Chat")).toBeInTheDocument();
+  });
+
+  it("shows provider rate limits as a readable chat error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              new TextEncoder().encode(
+                'data: {"error":"{\\"type\\":\\"error\\",\\"error\\":{\\"type\\":\\"rate_limit_error\\",\\"message\\":\\"usage limit exceeded\\"}}"}\n\n'
+              )
+            );
+            controller.close();
+          },
+        }),
+      })
+    );
+
+    render(<VoicePanel />);
+    fireEvent.change(screen.getByPlaceholderText(/Message .* \(Enter to send\)/), {
+      target: { value: "test" },
+    });
+    fireEvent.keyDown(screen.getByPlaceholderText(/Message .* \(Enter to send\)/), {
+      key: "Enter",
+      code: "Enter",
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Provider limit hit: usage limit exceeded/)).toBeInTheDocument();
+    });
   });
 });

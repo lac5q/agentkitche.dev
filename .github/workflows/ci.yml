@@ -24,11 +24,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
       - name: Run Kitchen tests
-        run: npm --prefix apps/kitchen run test -- --run
+        run: npm test -- --run
 
       - name: Build Kitchen
         run: npm run build
+
+      - name: Docker compose smoke
+        run: ./scripts/docker-compose-smoke.sh --config-only
 
   services:
     name: Python service smoke tests
@@ -49,6 +58,14 @@ jobs:
         env:
           PYTHONPATH: services/knowledge-mcp
         run: python -m pytest services/knowledge-mcp/tests
+
+      - name: Run orchestration tests
+        env:
+          PYTHONPATH: services/orchestration
+        run: python -m pytest services/orchestration/tests
+
+      - name: Run voice server tests
+        run: python -m pytest services/voice-server/tests
 
       - name: Compile Python service modules
         run: python -m py_compile services/memory/*.py services/knowledge-mcp/knowledge_system/*.py

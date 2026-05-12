@@ -143,7 +143,7 @@ function buildSummary(
 // GET /api/paperclip
 // ---------------------------------------------------------------------------
 
-export async function GET(_req: NextRequest | Request) {
+export async function GET() {
   const db = getDb();
   const timestamp = new Date().toISOString();
   let agents: PaperclipFleetAgent[] = [];
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest | Request) {
   const taskId = crypto.randomUUID();
   const priority = typeof body.priority === 'number' ? body.priority : 5;
 
-  const dispatchPath = process.env.PAPERCLIP_DISPATCH_PATH || '/api/dispatch';
+  const dispatchPath = process.env.PAPERCLIP_DISPATCH_PATH || PAPERCLIP_DISPATCH_PATH;
 
   // Forward dispatch upstream with 10-second timeout (T-21-04)
   const controller = new AbortController();

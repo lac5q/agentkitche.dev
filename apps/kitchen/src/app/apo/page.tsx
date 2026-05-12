@@ -63,11 +63,11 @@ export default function ApoPage() {
       {/* Header */}
       <div>
         <h1 className="flex items-center text-2xl font-bold text-amber-500">
-          The Sous Vide
+          Improvements
           <InfoTip text="APO = Agent Performance Optimizer. A self-learning loop that analyzes agent failures and usage patterns, then proposes improvements to skill files. Runs on a cron schedule and surfaces proposals here for review." />
         </h1>
         <p className="text-sm text-slate-400">
-          Agent Lightning APO — Self-learning optimization
+          Agent performance proposals and self-learning optimization
         </p>
       </div>
 

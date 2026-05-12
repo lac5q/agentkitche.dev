@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem in agentkitchen.dev.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - A2A
+        - REST shim
+        - Memory
+        - Orchestration
+        - Docker/setup
+        - UI
+        - Security/policy
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: install_mode
+    attributes:
+      label: Install mode and profile
+      placeholder: "native local-dev, docker private-network, cloud-https, custom"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. ...\n2. ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Redact API keys, bearer tokens, cookies, tunnel URLs, private hostnames, and personal data.
+      render: shell
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Redaction checklist
+      options:
+        - label: I removed secrets, tokens, private prompts, and private user data.
+          required: true

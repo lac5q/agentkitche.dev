@@ -9,6 +9,26 @@ const mutateInvite = vi.fn();
 
 vi.mock("@/lib/api-client", () => ({
   useRegisteredAgents: vi.fn(),
+  useSecurityCapabilities: vi.fn(() => ({
+    data: {
+      summary: {
+        totalAgents: 2,
+        strictAgents: 0,
+        standardAgents: 2,
+        permissiveAgents: 0,
+        agentsWithSecurityCapabilities: 0,
+      },
+      policies: {
+        defaultMode: "standard",
+        dispatchPolicy: "enforced",
+        a2aPolicy: "enforced",
+        memoryWritePolicy: "enforced",
+      },
+      agents: [],
+      timestamp: "",
+    },
+    isLoading: false,
+  })),
   useRegisterAgentMutation: vi.fn(() => ({ mutate: mutateRegister, isPending: false })),
   useRegisterA2aAgentCardMutation: vi.fn(() => ({ mutate: mutateRegisterA2a, isPending: false })),
   useCreateAgentOnboardingInviteMutation: vi.fn(() => ({ mutate: mutateInvite, isPending: false })),
@@ -96,7 +116,7 @@ describe("AgentRegistryPage", () => {
   it("lists registered agents with capabilities, status, heartbeat, and protocol", () => {
     render(<AgentRegistryPage />);
 
-    expect(screen.getByText("Hire Crew")).toBeInTheDocument();
+    expect(screen.getByText("Agents")).toBeInTheDocument();
     expect(screen.getByText("REST Agent")).toBeInTheDocument();
     expect(screen.getAllByText("rest").length).toBeGreaterThan(0);
     expect(screen.getAllByText("active").length).toBeGreaterThan(0);
@@ -154,7 +174,7 @@ describe("AgentRegistryPage", () => {
       expect(screen.getByText("Onboarding prompt copied to clipboard.")).toBeInTheDocument();
     });
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("Run this agentkitchen.dev onboarding command exactly as written.")
+      expect.stringContaining("Run this MemroOS onboarding command exactly as written.")
     );
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("Command to run:\n```bash\ncurl -fsSL 'https://kitchen.example.test/invite' | bash\n```")

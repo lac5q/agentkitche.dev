@@ -60,7 +60,7 @@ describe("getA2aConfig", () => {
 });
 
 describe("buildKitchenAgentCard", () => {
-  it("builds a spec-shaped Kitchen card with canonical card paths", () => {
+  it("builds a spec-shaped MemroOS card with canonical card paths", () => {
     const card = buildKitchenAgentCard({
       ...getA2aConfig(),
       endpointBaseUrl: "https://kitchen.example.test/a2a",
@@ -84,7 +84,7 @@ describe("buildKitchenAgentCard", () => {
     expect(json).not.toContain("KNOWLEDGE_BASE_PATH");
   });
 
-  it("advertises streaming, task history, and Kitchen A2A skills", () => {
+  it("advertises streaming, task history, and MemroOS A2A skills", () => {
     const card = buildKitchenAgentCard();
 
     expect(card.capabilities.streaming).toBe(true);
@@ -96,13 +96,13 @@ describe("buildKitchenAgentCard", () => {
 });
 
 describe("well-known A2A agent card routes", () => {
-  it("returns the canonical Kitchen card", async () => {
+  it("returns the canonical MemroOS card", async () => {
     const { GET } = await import("../../../app/.well-known/agent-card.json/route");
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.name).toBe("agentkitchen.dev");
+    expect(body.name).toBe("MemroOS");
     expect(body.extensions.kitchen.cardPaths.canonical).toBe(A2A_CANONICAL_AGENT_CARD_PATH);
     expect(body.extensions.kitchen.compatibilityAlias).toBeUndefined();
   });
@@ -113,7 +113,7 @@ describe("well-known A2A agent card routes", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.name).toBe("agentkitchen.dev");
+    expect(body.name).toBe("MemroOS");
     expect(body.extensions.kitchen.cardPaths.compatibility).toBe(A2A_COMPAT_AGENT_CARD_PATH);
     expect(body.extensions.kitchen.compatibilityAlias).toBe(true);
   });

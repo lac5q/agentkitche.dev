@@ -2,12 +2,40 @@ import type { NextRequest } from "next/server";
 import { getDb } from "@/lib/db";
 import { scanContent } from "@/lib/content-scanner";
 import { scanIrisPreflight } from "@/lib/iris-scanner";
+import { checkDispatchPolicy } from "@/lib/security-policy";
 import { writeAuditLog } from "@/lib/audit";
-import { getRemoteAgents } from "@/lib/agent-registry";
+import { getRemoteAgents, listRegisteredAgents } from "@/lib/agent-registry";
 import { selectAdapter } from "@/lib/dispatch/adapter-factory";
 import type { DispatchTask } from "@/lib/dispatch/types";
+import type { RegisteredAgent, RemoteAgentConfig } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+function agentToDispatchConfig(agent: RegisteredAgent, remote?: RemoteAgentConfig): RemoteAgentConfig {
+  if (remote) return remote;
+
+  return {
+    id: agent.id,
+    name: agent.name,
+    role: agent.role,
+    platform: agent.platform,
+    protocol: agent.protocol,
+    location: agent.location ?? "local",
+    host: agent.host ?? "localhost",
+    port: agent.port ?? 0,
+    healthEndpoint: agent.healthEndpoint ?? "/health",
+    tunnelUrl: agent.tunnelUrl ?? undefined,
+    metadata: agent.metadata,
+    skills: agent.capabilities.map((capability) => ({
+      id: capability.id,
+      name: capability.name,
+      description: capability.description,
+      tags: capability.tags,
+      inputModes: ["text"],
+      outputModes: ["text"],
+    })),
+  };
+}
 
 export async function POST(req: NextRequest | Request) {
   const body = await req.json();
@@ -32,14 +60,15 @@ export async function POST(req: NextRequest | Request) {
     );
   }
 
-  const agents = getRemoteAgents();
-  const agent = agents.find((a) => a.id === body.to_agent);
-  if (!agent) {
+  const registeredAgent = listRegisteredAgents().find((a) => a.id === body.to_agent);
+  if (!registeredAgent) {
     return Response.json(
       { ok: false, error: `Unknown agent: ${body.to_agent}`, code: "UNKNOWN_AGENT" },
       { status: 404 }
     );
   }
+  const remoteAgent = getRemoteAgents().find((a) => a.id === body.to_agent);
+  const agent = agentToDispatchConfig(registeredAgent, remoteAgent);
 
   const db = getDb();
   const from_agent: string = body.from_agent ?? "kitchen";
@@ -84,6 +113,26 @@ export async function POST(req: NextRequest | Request) {
     });
   }
 
+  const policy = checkDispatchPolicy(from_agent, agent);
+  if (!policy.allowed) {
+    writeAuditLog(db, {
+      actor: from_agent,
+      action: "policy_denied",
+      target: "dispatch",
+      detail: JSON.stringify({ code: policy.code, ...(policy.detail ?? {}) }),
+      severity: "high",
+    });
+    return Response.json(
+      {
+        ok: false,
+        error: policy.message ?? "Action denied by security policy",
+        code: "POLICY_DENIED",
+        detail: { code: policy.code },
+      },
+      { status: 403 }
+    );
+  }
+
   const task_id: string = body.task_id ?? crypto.randomUUID();
   const context_id: string = body.context_id ?? crypto.randomUUID();
   const dispatched_at = new Date().toISOString();
@@ -115,7 +164,7 @@ export async function POST(req: NextRequest | Request) {
     priority,
     dispatched_at,
   };
-  const result = await adapter.dispatch(task);
+  const result = await adapter.dispatch(task, agent);
 
   if (!result.accepted) {
     db.prepare(

@@ -9,8 +9,11 @@
 - ✅ **v1.5 Agent Coordination + Voice** — Phases 19-25 (shipped 2026-04-20)
 - ✅ **v1.6 Monorepo + Progressive MCP Tool Attention** — Phases 26-28 (shipped 2026-04-30)
 - ✅ **v1.7 Progressive Tool Gateway Runtime** — Phases 29-33 (shipped 2026-05-04)
-- 🚧 **v2.0 A2A Hub — Open Source** — Phases 34-41 (started 2026-05-04)
-- ⏳ **v2.1 Performance + Caching** — Phases 42-43 (backlog)
+- ✅ **v2.0 A2A Hub — Open Source** — Phases 34-41 (shipped 2026-05-11)
+- ✅ **v2.1 Security + Trust Layer** — Phases 42-45 (shipped 2026-05-11)
+- ✅ **v2.2 LLM Optimization + Evaluation** — Phases 46-49 (shipped 2026-05-11)
+- ✅ **v2.3 Agent Runtime Enhancements** — Phases 50-52 (shipped 2026-05-11)
+- ✅ **v2.4 Performance + Caching** — Phases 53-54 (shipped 2026-05-11)
 
 ## Phases
 
@@ -23,7 +26,7 @@
 - [x] **Phase 38: Operating Profiles + Docker Full-Stack** — Zero hardcoding, `.env.example` complete, default/custom install profiles, `docker-compose up` brings all six services healthy (Qdrant stays cloud)
 - [x] **Phase 39: Developer Setup Experience** — `setup.sh` prereq detection + profile-aware scaffolding, first-run wizard for keys + first agent
 - [x] **Phase 40: Documentation + Architecture Diagrams** — README rewrite, architecture diagram, install profile guide, per-framework integration guides, REST + memory references
-- [ ] **Phase 41: OSS Polish** — MIT license, CONTRIBUTING, SECURITY, issue templates, public CI with Docker compose smoke
+- [x] **Phase 41: OSS Polish** — MIT license, CONTRIBUTING, SECURITY, issue templates, public CI with Docker compose smoke
 
 <details>
 <summary>✅ v1.1 Knowledge Architecture + Dashboard Polish (Phases 1-5) — SHIPPED 2026-04-11</summary>
@@ -216,34 +219,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
   3. `SECURITY.md` documents the security policy and responsible disclosure process
   4. GitHub bug-report and feature-request issue templates exist
   5. GitHub Actions CI runs typecheck, lint, unit/integration tests, and a Docker compose smoke test on every PR — all green on main
-**Plans**: TBD
-
-### Phase 42: Response Caching Layer
-**Goal**: Add a multi-tier caching layer to eliminate redundant work across the Kitchen stack — API route response caching, MCP query result caching, memory lookup caching, and Neo4j graph query caching — with configurable TTLs, cache invalidation hooks, and a cache health dashboard.
-**Depends on**: Phase 41 (OSS polish baseline; caching built on stable APIs)
-**Requirements**: CACHE-01, CACHE-02, CACHE-03, CACHE-04, CACHE-05, CACHE-06, CACHE-07
-**Success Criteria** (what must be TRUE):
-  1. Next.js API routes (`/api/heartbeat`, `/api/skills/report`, `/api/tool-attention/*`, `/api/memory/search`) use in-memory LRU cache with configurable TTL (default 30s for heartbeat, 5m for skills/tools, 15m for memory search)
-  2. Knowledge MCP search and discover results cached by query hash; cache invalidates when the knowledge index updates (file watch or qmd signal)
-  3. mem0 memory recall responses cached by (query, agent_id, collection) tuple; cache clears on memory write via `POST /api/memory/add`
-  4. Neo4j graph queries cached with tag-based invalidation — any mutation to the graph layer invalidates related cache entries
-  5. A2A task status responses cached per task ID; invalidated on status transition (pending -> running -> complete/failed)
-  6. Cache health endpoint (`GET /api/cache/stats`) returns hit/miss ratios, entry counts, and memory usage per cache tier
-  7. Cache UI panel on Kitchen Floor shows real-time hit rates, stale entries, and manual purge controls per tier
-**Plans**: TBD
-**UI hint**: yes
-
-### Phase 43: Query Performance + Cold Start Elimination
-**Goal**: Measure and eliminate slow cold starts across the stack — pre-warm caches on server start, optimize SQLite FTS5 queries, add query plan analysis, and establish performance budgets with automated regression detection.
-**Depends on**: Phase 42 (caching layer in place before measuring remaining bottlenecks)
-**Requirements**: PERF-01, PERF-02, PERF-03, PERF-04, PERF-05
-**Success Criteria** (what must be TRUE):
-  1. Server startup pre-warms all caches (registry, skills catalog, tool attention catalog, memory health) within 5s of process start
-  2. All API routes respond under 200ms p95 when cache-hit, under 500ms p95 on cache-miss (measured via middleware instrumentation)
-  3. SQLite FTS5 recall queries use explicit index hints; EXPLAIN QUERY PLAN verified for top 10 recall patterns
-  4. LangGraph orchestration state checkpoints use indexed correlation_id lookups (no full table scan)
-  5. Performance regression CI step runs on every PR — compares p95 latencies against baseline, fails if any route degrades >20%
-**Plans**: TBD
+**Plans**: 2/2 complete
 
 ## Progress
 
@@ -282,25 +258,40 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 | 31 | v1.7 | 1/1 | Complete | 2026-05-04 |
 | 32 | v1.7 | 4/4 | Complete | 2026-05-04 |
 | 33 | v1.7 | 1/1 | Complete | 2026-05-04 |
-| 34 | v2.0 | 3/3 | Complete    | 2026-05-05 |
-| 35 | v2.0 | 3/4 | In Progress|  |
-| 36 | v2.0 | 0/? | Not started | — |
-| 37 | v2.0 | 0/? | Not started | — |
-| 38 | v2.0 | 0/? | Not started | — |
-| 39 | v2.0 | 0/? | Not started | — |
-| 40 | v2.0 | 0/? | Not started | — |
-| 41 | v2.0 | 0/? | Not started | — |
-| 42 | v2.1 | 0/? | Not started | — |
-| 43 | v2.1 | 0/? | Not started | — |
+| 34 | v2.0 | 3/3 | Complete | 2026-05-05 |
+| 35 | v2.0 | 4/4 | Complete | 2026-05-05 |
+| 36 | v2.0 | 2/2 | Complete | 2026-05-05 |
+| 37 | v2.0 | 1/1 | Complete | 2026-05-05 |
+| 38 | v2.0 | 1/1 | Complete | 2026-05-05 |
+| 39 | v2.0 | 1/1 | Complete | 2026-05-05 |
+| 40 | v2.0 | 1/1 | Complete | 2026-05-05 |
+| 41 | v2.0 | 2/2 | Complete | 2026-05-11 |
+| 42 | v2.1 | external/1 | Complete | 2026-05-11 |
+| 43 | v2.1 | local/1 | Complete | 2026-05-11 |
+| 44 | v2.1 | 1/1 | Complete | 2026-05-11 |
+| 45 | v2.1 | 1/1 | Complete | 2026-05-11 |
+| 46 | v2.2 | 1/1 | Complete | 2026-05-11 |
+| 47 | v2.2 | 1/1 | Complete | 2026-05-11 |
+| 48 | v2.2 | 1/1 | Complete | 2026-05-11 |
+| 49 | v2.2 | 1/1 | Complete | 2026-05-11 |
+| 50 | v2.3 | 1/1 | Complete | 2026-05-11 |
+| 51 | v2.3 | 1/1 | Complete | 2026-05-11 |
+| 52 | v2.3 | 1/1 | Complete | 2026-05-11 |
+| 53 | v2.4 | 1/1 | Complete | 2026-05-11 |
+| 54 | v2.4 | 1/1 | Complete | 2026-05-11 |
+| 55 | v2.4 repair | 1/1 | Complete | 2026-05-11 |
+| 56 | review/qa | 1/1 | Complete | 2026-05-11 |
 
 ---
 
 ## Backlog
 
-### v2.1+ Ideas (deferred from v2.0)
+### Future Milestone Priority
 
-- [ ] **Phase 42: Response Caching Layer** — LRU cache for API routes, MCP queries, memory lookups, Neo4j graph queries, A2A task status; TTLs; tag-based invalidation; health endpoint + UI
-- [ ] **Phase 43: Query Performance + Cold Start Elimination** — Pre-warm on startup, FTS5 optimization, performance budgets, CI regression detection
+1. Define the next product milestone after the completed v2.0-v2.4 roadmap and Phase 55 engagement repair.
+
+### Later Ideas
+
 - [ ] HIL edit-and-continue semantics (modify task state before resuming graph)
 - HIL timeout and escalation policies
 - Multi-hop retry compensation and rollback
@@ -311,17 +302,4 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 - LLM-powered recall scoring upgrade (embedding over BM25)
 - Cross-project recall (similar-task recommendations across repos)
 
-### Phase 999.1: Model Choosing Optimization with Agent Kitchen (BACKLOG)
-
-**Goal:** Build a model-routing knowledge workspace in Agent Kitchen that tracks task type, model used, cost, quality score, latency, and success rate across all agents. Agents query it before picking a model (`knowledge_workspace_call(workspace="model-routing", action="recommend", ...)`) and append results after each task. The wiki compiles a browsable `topics/model-selection-guide.md`. Over time this gives agents data-driven model selection instead of hardcoded defaults.
-
-**Scope:**
-- Source file: `sources/model-routing-log.md` in knowledge repo — agents append task outcomes
-- New workspace: `model-routing` with `recommend` action (cost/quality/latency tradeoffs)
-- Wiki compilation: `topics/model-selection-guide.md` synthesized routing guide
-- MCP tool integration: `knowledge_workspace_call` pattern for pre-task model recommendation
-- Dashboard: model usage heat map, cost-per-task trends, quality scores by model
-
-**Depends on:** v2.0 A2A Hub (Phase 41) — needs unified agent registry to attribute routing logs
-
-Run `/gsd-new-milestone` to formally scope v2.1.
+Run `/gsd-new-milestone` to formally define the next milestone after v2.4.

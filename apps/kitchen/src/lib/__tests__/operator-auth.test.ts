@@ -12,6 +12,13 @@ describe("authorizeRegistryWrite", () => {
     expect(authorizeRegistryWrite(new Request("http://127.0.0.1/api/agents/register"))).toBe(true);
   });
 
+  it("allows loopback dashboard calls even when an operator key is configured", () => {
+    process.env.KITCHEN_OPERATOR_API_KEY = "operator-secret";
+
+    expect(authorizeRegistryWrite(new Request("http://localhost/api/memory/health"))).toBe(true);
+    expect(authorizeRegistryWrite(new Request("http://127.0.0.1/api/orchestration/hil"))).toBe(true);
+  });
+
   it("does not treat a public forwarded host as local loopback", () => {
     expect(
       authorizeRegistryWrite(

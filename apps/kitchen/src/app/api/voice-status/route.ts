@@ -1,5 +1,3 @@
-import type { NextRequest } from 'next/server';
-
 export const dynamic = 'force-dynamic';
 
 /**
@@ -14,7 +12,7 @@ export const dynamic = 'force-dynamic';
  *
  * No authentication needed — single-user local tool per PROJECT.md.
  */
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const res = await fetch('http://localhost:7861/health', { cache: 'no-store' });
     const data = await res.json();

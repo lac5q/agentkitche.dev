@@ -123,4 +123,25 @@ describe("A2A task service", () => {
     expect(audit).toMatchObject({ actor: "iris-agent", target: "a2a_task", severity: "high" });
     expect(audit.detail).toContain("instruction_override");
   });
+
+  it("denies A2A message creation when caller lacks A2A send capability", async () => {
+    const { getDb, listA2aTasks, registerAgent, sendA2aMessage } = await loadService();
+    const { agent } = registerAgent({
+      id: "limited-agent",
+      name: "Limited Agent",
+      role: "Limited",
+      platform: "codex",
+      protocol: "a2a",
+      capabilities: [{ id: "memory:write", name: "Memory Write", description: "", tags: [] }],
+    });
+
+    await expect(
+      sendA2aMessage(agent, { message: message("delegate this") })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED", message: "Caller agent does not declare A2A send capability" });
+
+    expect(await listA2aTasks(agent)).toEqual([]);
+    const audit = getDb().prepare("SELECT * FROM audit_log WHERE action = 'policy_denied'").get() as any;
+    expect(audit).toMatchObject({ actor: "limited-agent", target: "a2a_task", severity: "high" });
+    expect(audit.detail).toContain("MISSING_CAPABILITY");
+  });
 });

@@ -1,6 +1,14 @@
 # Project: Agent Kitchen
 
-*Last updated: 2026-05-05 — v2.0 operating profiles captured*
+*Last updated: 2026-05-11 — roadmap reprioritized for security and LLM optimization*
+
+---
+
+## Current Product Goal
+
+`agentkitchen.dev` is the control plane where AI-native teams retain what agents learn, retrieve the right context at runtime, dispatch work to the right agent, and turn repeated work into reusable skills.
+
+See `.planning/GOAL.md` for the full development goal and workflow loop.
 
 ---
 
@@ -113,7 +121,18 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - [ ] Documentation: README rewrite, architecture diagram, per-framework integration guides
 - [ ] OSS polish: MIT license, CONTRIBUTING.md, security policy, issue templates, public CI
 
-### Deferred (v2.1+ candidates)
+### Recent Milestones
+
+- [x] **v2.1 Security + Trust Layer (Phases 42-45)** — Agent Shield + Iris pre-flight foundation, tool permission guard, security operations UI, and progressive capability exposure
+- [x] **v2.2 LLM Optimization + Evaluation (Phases 46-49)** — Model-routing telemetry, recommendation API, eval rigs, quality scoring, optimization dashboard and reports
+- [x] **v2.3 Agent Runtime Enhancements (Phases 50-52)** — Agent-side middleware, memory client v2, local observability dashboard
+- [x] **v2.4 Performance + Caching (Phases 53-54)** — Response caching, query performance, cold-start elimination, regression budgets
+
+### Next Milestones
+
+- [ ] Define the next product milestone after the completed v2.0-v2.4 roadmap.
+
+### Deferred (v2.5+ candidates)
 
 - [ ] Flow trigger button — kick off `qmd update` pipeline from Kitchen UI
 - [ ] Library freshness — show QMD index recency timestamp vs file mtime
@@ -180,6 +199,10 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 | Qdrant stays cloud — not in Docker compose | ✓ Env-configured via QDRANT_URL/KEY | v2.0 |
 | Blessed default install plus operator-customizable profiles | — Pending | v2.0 |
 | Docker compose for OSS users only — Luis keeps native workflow | — Pending | v2.0 |
+| Security before speed: harden A2A/REST dispatch before caching/performance work | ✓ Reprioritized | v2.1 |
+| LLM model choice should be telemetry/eval-driven, not hardcoded | — Pending | v2.2 |
+| In-memory LRU cache for API responses (no Redis dependency) | ✓ Shipped | v2.4 |
+| Centralized Agent Engagement page owns chat, voice, standups, conference prompts, diagnostics, and dispatch repair | ✓ Shipped | v2.4 repair |
 
 ---
 

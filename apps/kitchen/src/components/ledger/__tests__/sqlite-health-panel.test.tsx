@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { UseQueryResult } from "@tanstack/react-query";
 
 // Mock api-client to control useRecallStats return value
 vi.mock("@/lib/api-client", () => ({

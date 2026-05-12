@@ -16,12 +16,13 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function DispatchPanel() {
   const { data: agentsData } = useAgents();
-  const { data: delegationsData, isLoading } = useDelegations();
+  const { data: delegationsData, isLoading, refetch: refetchDelegations } = useDelegations();
   const [toAgent, setToAgent] = useState("");
   const [taskSummary, setTaskSummary] = useState("");
   const [priority, setPriority] = useState("5");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const agents = agentsData?.agents ?? [];
   const delegations = delegationsData?.delegations ?? [];
@@ -30,17 +31,24 @@ export function DispatchPanel() {
     if (!toAgent || !taskSummary.trim()) return;
     setSubmitting(true);
     setError(null);
+    setNotice(null);
     try {
       const res = await fetch("/api/dispatch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to_agent: toAgent, task_summary: taskSummary, priority: Number(priority) }),
       });
+      const body = await res.json();
       if (!res.ok) {
-        const body = await res.json();
         setError(body.error ?? "Dispatch failed");
       } else {
         setTaskSummary("");
+        setNotice(
+          body.mode === "queued"
+            ? "Queued in Hive. This agent must poll for pending delegations; no direct push happened."
+            : "Dispatched successfully."
+        );
+        await refetchDelegations();
       }
     } catch (e) {
       setError(String(e));
@@ -83,12 +91,16 @@ export function DispatchPanel() {
           </div>
           <textarea
             value={taskSummary}
-            onChange={(e) => setTaskSummary(e.target.value)}
+            onChange={(e) => {
+              setTaskSummary(e.target.value);
+              if (notice) setNotice(null);
+            }}
             placeholder="Task summary…"
             rows={3}
             className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
           />
           {error && <p className="text-xs text-rose-400">{error}</p>}
+          {notice && <p className="text-xs text-amber-300">{notice}</p>}
           <button
             onClick={handleDispatch}
             disabled={!toAgent || !taskSummary.trim() || submitting}

@@ -1,6 +1,10 @@
 import { authenticateAgentHeaders, recordMemoryWrite } from "@/lib/agent-registry";
 import { MEM0_URL } from "@/lib/constants";
+import { getDb } from "@/lib/db";
 import { buildTieredMemoryPayload, resolveMemoryTier } from "@/lib/memory/tiers";
+import { checkMemoryWritePolicy } from "@/lib/security-policy";
+import { writeAuditLog } from "@/lib/audit";
+import { responseCache } from "@/lib/response-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +27,25 @@ export async function POST(request: Request) {
   let result: Record<string, unknown>;
   const tieredBody = buildTieredMemoryPayload(body);
   const tier = resolveMemoryTier(tieredBody);
+  const policy = checkMemoryWritePolicy(agent, tier);
+  if (!policy.allowed) {
+    writeAuditLog(getDb(), {
+      actor: agent.id,
+      action: "policy_denied",
+      target: "memory_write",
+      detail: JSON.stringify({ code: policy.code, ...(policy.detail ?? {}) }),
+      severity: "high",
+    });
+    return Response.json(
+      {
+        ok: false,
+        error: policy.message ?? "Action denied by security policy",
+        code: "POLICY_DENIED",
+        detail: { code: policy.code },
+      },
+      { status: 403 }
+    );
+  }
 
   try {
     mem0Response = await fetch(`${MEM0_URL}/memory/add`, {
@@ -50,5 +73,6 @@ export async function POST(request: Request) {
     result
   );
 
+  responseCache.invalidateTag("memory");
   return Response.json({ ok: true, tier, result, timestamp: new Date().toISOString() });
 }

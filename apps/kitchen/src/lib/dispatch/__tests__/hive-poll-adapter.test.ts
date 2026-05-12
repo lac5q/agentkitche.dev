@@ -18,6 +18,10 @@ describe("hivePollAdapter", () => {
     expect(result.accepted).toBe(true);
     expect(result.mode).toBe("queued");
     expect(result.detail).toContain(task.task_id);
+    expect(result.detail).toContain("must poll");
+    expect(result.evidence).toMatchObject({
+      delivery: "poll_required",
+    });
   });
 
   it("covers all hive-poll platforms", () => {

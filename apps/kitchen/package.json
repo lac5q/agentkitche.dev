@@ -1,11 +1,12 @@
 {
-  "name": "agentkitchen.dev",
+  "name": "memroos",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "typecheck": "tsc --noEmit --project tsconfig.typecheck.json",
     "start": "next start",
     "start:all": "bash ../../start.sh",
     "apo:worker": "node ../../scripts/apply-agent-lightning-approvals.mjs",

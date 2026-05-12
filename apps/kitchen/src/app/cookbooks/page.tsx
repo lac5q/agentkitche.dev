@@ -37,9 +37,9 @@ export default function CookbooksPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">The Cookbooks</h1>
+        <h1 className="text-2xl font-bold text-amber-500">Skills</h1>
         <p className="text-slate-400 mt-1 text-sm">
-          Skill health, coverage gaps, and contribution history
+          Procedural playbooks, tool attention, coverage gaps, and contribution history
         </p>
       </div>
 

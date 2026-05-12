@@ -1,6 +1,7 @@
 "use client";
 
 import { HealthDot } from "./health-dot";
+import { KangarooMark } from "./brand-mark";
 import type { HealthStatus } from "@/types";
 
 interface TopBarProps {
@@ -10,13 +11,13 @@ interface TopBarProps {
 
 export function TopBar({ services, onMenuClick }: TopBarProps) {
   return (
-    <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-[#fbfbf8]/90 px-4 text-slate-950 backdrop-blur-md lg:left-72 lg:px-6">
-      <div className="flex items-center gap-3">
+    <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-[#c9c9c2] bg-[#fafaf7]/92 px-4 text-[#0f0f0e] backdrop-blur-md lg:left-72 lg:px-6">
+      <div className="flex shrink-0 items-center gap-3">
         {/* Hamburger — mobile only */}
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="lg:hidden flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded text-[#4a4a45] transition-colors hover:bg-[#f2e2dc] hover:text-[#7a2a1e] lg:hidden"
             aria-label="Open menu"
           >
             <svg
@@ -32,9 +33,10 @@ export function TopBar({ services, onMenuClick }: TopBarProps) {
             </svg>
           </button>
         )}
-        <h2 className="text-sm font-semibold text-slate-950">System Health</h2>
+        <KangarooMark className="h-8 w-8 lg:hidden" />
+        <h2 className="text-sm font-semibold text-[#0f0f0e]">Runtime Health</h2>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="hidden min-w-0 items-center gap-3 overflow-x-auto pl-1 sm:flex sm:gap-4">
         {services.map((svc) => (
           <HealthDot
             key={svc.service}

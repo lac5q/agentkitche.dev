@@ -15,12 +15,12 @@ export function HealthDot({ service, status, latencyMs }: HealthDotProps) {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="flex items-center gap-1.5">
+        <TooltipTrigger className="flex shrink-0 items-center gap-1.5">
           <div
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: color, boxShadow: status === "up" ? `0 0 6px ${color}` : undefined }}
           />
-          <span className="text-xs text-slate-500">{service}</span>
+          <span className="hidden text-xs text-slate-500 sm:inline">{service}</span>
         </TooltipTrigger>
         <TooltipContent>
           <p>{service}: {status}{latencyMs !== null ? ` (${latencyMs}ms)` : ""}</p>

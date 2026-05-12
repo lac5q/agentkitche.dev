@@ -35,6 +35,10 @@ describe("selectAdapter", () => {
     expect(selectAdapter(makeAgent("alba", "opencode"))).toBe(openclawAdapter);
   });
 
+  it("openclaw platform -> openclaw queue adapter", () => {
+    expect(selectAdapter(makeAgent("gwen", "openclaw"))).toBe(openclawAdapter);
+  });
+
   it("gwen (claude) -> hive-poll (platform=claude, not opencode)", () => {
     expect(selectAdapter(makeAgent("gwen", "claude"))).toBe(hivePollAdapter);
   });

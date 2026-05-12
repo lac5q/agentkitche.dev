@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { getDb } from "@/lib/db";
 import { scanIrisPreflight } from "@/lib/iris-scanner";
+import { checkA2aSendPolicy } from "@/lib/security-policy";
 import { writeAuditLog } from "@/lib/audit";
 import type { RegisteredAgent } from "@/types";
 import { A2aError } from "./errors";
@@ -58,6 +59,16 @@ function auditBlockedContent(agentId: string, matches: unknown[]): void {
   });
 }
 
+function auditPolicyDenied(agentId: string, detail: Record<string, unknown>): void {
+  writeAuditLog(getDb(), {
+    actor: agentId,
+    action: "policy_denied",
+    target: "a2a_task",
+    detail: JSON.stringify(detail),
+    severity: "high",
+  });
+}
+
 function assertTaskVisible(agent: RegisteredAgent, taskId: string) {
   const record = getA2aTask(taskId);
   if (!record || (record.callerAgentId !== agent.id && record.targetAgentId !== agent.id)) {
@@ -79,6 +90,12 @@ export async function sendA2aMessage(
   if (scan.blocked) {
     auditBlockedContent(agent.id, scan.matches);
     throw new A2aError("UNAUTHORIZED", "Content blocked by security scanner");
+  }
+
+  const policy = checkA2aSendPolicy(agent);
+  if (!policy.allowed) {
+    auditPolicyDenied(agent.id, { code: policy.code, ...(policy.detail ?? {}) });
+    throw new A2aError("UNAUTHORIZED", policy.message ?? "Action denied by security policy");
   }
 
   const task = createA2aTask({

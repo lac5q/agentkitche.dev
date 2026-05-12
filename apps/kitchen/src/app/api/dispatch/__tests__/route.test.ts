@@ -2,25 +2,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({ getDb: vi.fn() }));
-vi.mock("@/lib/agent-registry", () => ({ getRemoteAgents: vi.fn() }));
+vi.mock("@/lib/agent-registry", () => ({ getRemoteAgents: vi.fn(), listRegisteredAgents: vi.fn() }));
 vi.mock("@/lib/audit", () => ({ writeAuditLog: vi.fn() }));
 vi.mock("@/lib/content-scanner", () => ({ scanContent: vi.fn() }));
 vi.mock("@/lib/iris-scanner", () => ({ scanIrisPreflight: vi.fn() }));
+vi.mock("@/lib/security-policy", () => ({
+  checkDispatchPolicy: vi.fn(() => ({ allowed: true })),
+}));
 vi.mock("@/lib/dispatch/adapter-factory", () => ({ selectAdapter: vi.fn() }));
 
 const { POST } = await import("../route");
 const { getDb } = await import("@/lib/db");
-const { getRemoteAgents } = await import("@/lib/agent-registry");
+const { getRemoteAgents, listRegisteredAgents } = await import("@/lib/agent-registry");
 const { writeAuditLog } = await import("@/lib/audit");
 const { scanContent } = await import("@/lib/content-scanner");
 const { scanIrisPreflight } = await import("@/lib/iris-scanner");
+const { checkDispatchPolicy } = await import("@/lib/security-policy");
 const { selectAdapter } = await import("@/lib/dispatch/adapter-factory");
 
 const mockGetDb = vi.mocked(getDb);
 const mockGetRemoteAgents = vi.mocked(getRemoteAgents);
+const mockListRegisteredAgents = vi.mocked(listRegisteredAgents);
 const mockWriteAuditLog = vi.mocked(writeAuditLog);
 const mockScanContent = vi.mocked(scanContent);
 const mockScanIrisPreflight = vi.mocked(scanIrisPreflight);
+const mockCheckDispatchPolicy = vi.mocked(checkDispatchPolicy);
 const mockSelectAdapter = vi.mocked(selectAdapter);
 
 function makeDb() {
@@ -53,8 +59,26 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockReturnValue(makeDb() as any);
   mockGetRemoteAgents.mockReturnValue([sophiaAgent]);
+  mockListRegisteredAgents.mockReturnValue([{
+    ...sophiaAgent,
+    protocol: "rest",
+    status: "active",
+    currentTask: null,
+    lastHeartbeat: null,
+    lessonsCount: 0,
+    todayMemoryCount: 0,
+    isRemote: true,
+    latencyMs: null,
+    capabilities: [],
+    metadata: {},
+    tunnelUrl: null,
+    createdAt: "2026-04-19T10:00:00Z",
+    updatedAt: "2026-04-19T10:00:00Z",
+    deregisteredAt: null,
+  }]);
   mockScanIrisPreflight.mockReturnValue({ blocked: false, findings: [], matches: [], cleanContent: "Draft blog post" });
   mockScanContent.mockReturnValue({ blocked: false, matches: [], cleanContent: "Draft blog post" });
+  mockCheckDispatchPolicy.mockReturnValue({ allowed: true });
   mockSelectAdapter.mockReturnValue(hivePollStub as any);
 });
 
@@ -100,10 +124,50 @@ describe("POST /api/dispatch", () => {
   });
 
   it("404 UNKNOWN_AGENT — agent not in registry", async () => {
+    mockListRegisteredAgents.mockReturnValue([]);
     const res = await POST(makeRequest({ to_agent: "ghost", task_summary: "do something" }) as any);
     const body = await res.json();
     expect(res.status).toBe(404);
     expect(body.code).toBe("UNKNOWN_AGENT");
+  });
+
+  it("200 — dispatches to local registered agents through a queue adapter", async () => {
+    mockGetRemoteAgents.mockReturnValue([]);
+    mockListRegisteredAgents.mockReturnValue([{
+      id: "codex-cli-agent",
+      name: "Codex CLI",
+      role: "Engineer",
+      platform: "codex",
+      protocol: "local",
+      status: "active",
+      location: "local",
+      host: null,
+      port: null,
+      healthEndpoint: null,
+      currentTask: null,
+      lastHeartbeat: null,
+      lessonsCount: 0,
+      todayMemoryCount: 0,
+      isRemote: false,
+      latencyMs: null,
+      capabilities: [],
+      metadata: {},
+      tunnelUrl: null,
+      createdAt: "2026-04-19T10:00:00Z",
+      updatedAt: "2026-04-19T10:00:00Z",
+      deregisteredAt: null,
+    }]);
+
+    const res = await POST(makeRequest({ to_agent: "codex-cli-agent", task_summary: "status check" }) as any);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(mockSelectAdapter).toHaveBeenCalledWith(expect.objectContaining({
+      id: "codex-cli-agent",
+      host: "localhost",
+      port: 0,
+    }));
   });
 
   it("403 CONTENT_BLOCKED — scanContent blocks", async () => {
@@ -132,6 +196,37 @@ describe("POST /api/dispatch", () => {
     expect(body.code).toBe("CONTENT_BLOCKED");
     expect(mockWriteAuditLog).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: "content_blocked",
+      target: "dispatch",
+      severity: "high",
+    }));
+    expect(mockSelectAdapter).not.toHaveBeenCalled();
+    expect(hivePollStub.dispatch).not.toHaveBeenCalled();
+  });
+
+  it("403 POLICY_DENIED — policy guard blocks before persistence and adapter dispatch", async () => {
+    mockCheckDispatchPolicy.mockReturnValue({
+      allowed: false,
+      code: "MISSING_CAPABILITY",
+      message: "Target agent does not declare dispatch capability",
+      detail: { required: ["dispatch"] },
+    });
+
+    const res = await POST(makeRequest({
+      to_agent: "sophia",
+      task_summary: "Draft blog post",
+      from_agent: "kitchen",
+    }) as any);
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body).toMatchObject({
+      ok: false,
+      code: "POLICY_DENIED",
+      error: "Target agent does not declare dispatch capability",
+    });
+    expect(mockWriteAuditLog).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      actor: "kitchen",
+      action: "policy_denied",
       target: "dispatch",
       severity: "high",
     }));

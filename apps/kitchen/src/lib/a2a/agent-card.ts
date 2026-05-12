@@ -6,7 +6,7 @@ const KITCHEN_A2A_SKILLS: A2aAgentSkill[] = [
   {
     id: "agent_registry",
     name: "Agent Registry",
-    description: "Register, validate, and track A2A-compatible agents in Kitchen's canonical roster.",
+    description: "Register, validate, and track A2A-compatible agents in MemroOS.",
     tags: ["registry", "discovery", "a2a"],
     inputModes: ["application/json"],
     outputModes: ["application/json"],
@@ -31,8 +31,8 @@ const KITCHEN_A2A_SKILLS: A2aAgentSkill[] = [
 
 export function buildKitchenAgentCard(config: A2aConfig = getA2aConfig()): A2aAgentCard {
   return {
-    name: "agentkitchen.dev",
-    description: "A2A-native agent operations hub and durable task broker",
+    name: "MemroOS",
+    description: "Agent memory OS and A2A-native durable task broker",
     version: A2A_VERSION,
     url: config.endpointBaseUrl,
     preferredTransport: "HTTP+JSON",
@@ -47,8 +47,8 @@ export function buildKitchenAgentCard(config: A2aConfig = getA2aConfig()): A2aAg
       bearerAuth: {
         type: "http",
         scheme: "bearer",
-        bearerFormat: "Kitchen registry credential",
-        description: "Use the bearer credential issued by Kitchen's canonical agent registry.",
+        bearerFormat: "MemroOS registry credential",
+        description: "Use the bearer credential issued by the MemroOS agent registry.",
       },
     },
     security: [{ bearerAuth: [] }],

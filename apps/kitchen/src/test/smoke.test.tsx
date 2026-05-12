@@ -3,12 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { SummaryBar } from "@/components/kitchen/summary-bar";
 import { KpiCard } from "@/components/ledger/kpi-card";
 
-describe("Kitchen components", () => {
+describe("MemroOS components", () => {
   it("SummaryBar renders stats", () => {
     render(<SummaryBar total={51} active={4} tasks={12} errors={1} />);
     expect(screen.getByText("51")).toBeDefined();
     expect(screen.getByText("4")).toBeDefined();
-    expect(screen.getByText("Total Chefs")).toBeDefined();
+    expect(screen.getByText("Agents")).toBeDefined();
   });
 });
 

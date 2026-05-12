@@ -93,7 +93,7 @@ describe("POST /api/paperclip — dispatch", () => {
   });
 
   it("Test 3 (PAPER-02): POST forwards dispatch upstream and returns {ok, taskId, sessionId} + writes hive_delegations row", async () => {
-    vi.stubGlobal("fetch", vi.fn(async (_url: string) => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     }));
 

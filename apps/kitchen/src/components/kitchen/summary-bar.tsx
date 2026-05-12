@@ -12,19 +12,19 @@ interface SummaryBarProps {
 export function SummaryBar({ total, active, tasks, errors, localRuntimeActive = 0 }: SummaryBarProps) {
   const stats = [
     {
-      label: "Total Chefs",
+      label: "Agents",
       value: total,
       color: "text-slate-100",
       tooltip: "All agents registered in the system — both local agents on this machine and remote agents connected via the remote-agents API. Counts both active and dormant agents.",
     },
     {
-      label: "On Shift",
+      label: "Active",
       value: active,
       color: "text-emerald-500",
-      tooltip: `Agents currently on shift. Counts remote active heartbeats plus local active heartbeats or live local agent CLI sessions, whichever is higher for this machine. Local CLI sessions detected now: ${localRuntimeActive}.`,
+      tooltip: `Agents currently active. Counts remote active heartbeats plus local active heartbeats or live local agent CLI sessions, whichever is higher for this machine. Local CLI sessions detected now: ${localRuntimeActive}.`,
     },
     {
-      label: "Orders Active",
+      label: "Tasks Active",
       value: tasks,
       color: "text-amber-500",
       tooltip: "Local agents currently executing a task (have a non-null currentTask). Remote agents are excluded from this count as their task state is managed on their host machine.",

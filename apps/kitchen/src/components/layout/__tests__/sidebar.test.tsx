@@ -7,16 +7,18 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("Sidebar", () => {
-  it("renders Paperclip-style navigation labels with concise descriptions", () => {
+  it("renders memory-workflow navigation labels with concise descriptions", () => {
     render(<Sidebar />);
 
-    expect(screen.getByText("Kitchen Floor")).toBeTruthy();
-    expect(screen.getByText("Agent status")).toBeTruthy();
-    expect(screen.getByText("Hire Crew")).toBeTruthy();
-    expect(screen.getByText("Agent registry")).toBeTruthy();
-    expect(screen.getByText("The Ledger")).toBeTruthy();
-    expect(screen.getByText("RTK token tracking")).toBeTruthy();
-    expect(screen.getByText("Notebook Wall")).toBeTruthy();
-    expect(screen.getByText("Memory graph")).toBeTruthy();
+    expect(screen.getAllByText("MemroOS").length).toBeGreaterThan(0);
+    expect(screen.getByText("Memory OS for agent workflows")).toBeTruthy();
+    expect(screen.getByText("Home")).toBeTruthy();
+    expect(screen.getByText("MemroOS landing")).toBeTruthy();
+    expect(screen.getByText("Memory")).toBeTruthy();
+    expect(screen.getByText("Retained context")).toBeTruthy();
+    expect(screen.getByText("Knowledge")).toBeTruthy();
+    expect(screen.getByText("Source corpus")).toBeTruthy();
+    expect(screen.getByText("Skills")).toBeTruthy();
+    expect(screen.getByText("Procedural playbooks")).toBeTruthy();
   });
 });

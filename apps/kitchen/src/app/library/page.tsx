@@ -7,6 +7,8 @@ import { HealthPanel } from "@/components/library/health-panel";
 import { GitNexusPanel } from "@/components/library/gitnexus-panel";
 import { SqliteHealthPanel } from "@/components/ledger/sqlite-health-panel";
 import { MemoryIntelligencePanel } from "@/components/ledger/memory-intelligence-panel";
+import { SecurityOperationsPanel } from "@/components/security/security-operations-panel";
+import { CacheHealthPanel } from "@/components/performance/cache-health-panel";
 import { LibraryAnalyticsPanel } from "@/components/library/analytics-panel";
 import { CollectionTrendsPanel } from "@/components/library/collection-trends-panel";
 import { InfoTip } from "@/components/ui/info-tip";
@@ -35,9 +37,9 @@ export default function LibraryPage() {
     <TooltipProvider>
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-amber-500">The Library</h1>
+        <h1 className="text-2xl font-bold text-amber-500">Knowledge</h1>
         <p className="text-slate-400 mt-1 text-sm">
-          Knowledge files, collection health, and separate memory stores
+          Source corpus, collection health, code graph, and memory infrastructure
         </p>
       </div>
 
@@ -86,15 +88,21 @@ export default function LibraryPage() {
       </section>
 
       {/* Conversation Memory */}
-      <section className="flex flex-col gap-6">
+      <section id="governance" className="flex flex-col gap-6">
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-          Conversation Memory
+          Memory Governance
         </h2>
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
           <SqliteHealthPanel />
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
           <MemoryIntelligencePanel />
+        </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <SecurityOperationsPanel />
+        </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <CacheHealthPanel />
         </div>
       </section>
 
