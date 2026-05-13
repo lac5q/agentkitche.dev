@@ -27,6 +27,12 @@ npm run build
 - Update docs when setup, APIs, security posture, or operator workflows change.
 - Redact secrets and local private URLs from logs, screenshots, and issue comments.
 
+## Contribution License
+
+By submitting a contribution, you agree that it is licensed under the repository license in effect at the time of submission. Current MemroOS contributions are under the PolyForm Small Business License 1.0.0 unless a separate written agreement says otherwise.
+
+Agent Kitchen versions up to the `agent-kitchen-mit-final` tag remain under the MIT License for copies received under those earlier terms.
+
 ## Coding Standards
 
 - Kitchen is a Next.js App Router app in `apps/kitchen`.

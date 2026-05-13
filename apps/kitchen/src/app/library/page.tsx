@@ -88,7 +88,7 @@ export default function LibraryPage() {
       </section>
 
       {/* Conversation Memory */}
-      <section id="governance" className="flex flex-col gap-6">
+      <section id="governance" className="scroll-mt-20 flex flex-col gap-6">
         <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
           Memory Governance
         </h2>

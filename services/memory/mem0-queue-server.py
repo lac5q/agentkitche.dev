@@ -11,7 +11,8 @@ from typing import Optional, List, Any
 import httpx
 
 # Import queue logic
-from mem0_queue import Mem0Queue  # Note: file is mem0-queue.py, module is mem0_queue
+from mem0_queue import Mem0Queue, is_retryable_response  # Note: file is mem0-queue.py, module is mem0_queue
+from provenance import normalize_metadata
 
 app = FastAPI(title="Mem0 Queue Server", version="1.0.0")
 
@@ -24,6 +25,7 @@ MEM0_URL = "http://localhost:3202"  # Backend mem0 server runs on 3202
 class MemorySaveRequest(BaseModel):
     text: str
     agent_id: str = "shared"
+    metadata: Optional[dict[str, Any]] = None
 
 
 class MemorySearchRequest(BaseModel):
@@ -45,19 +47,35 @@ class QueueStatus(BaseModel):
 @app.post("/memory/add")
 async def memory_add(req: MemorySaveRequest):
     """Save memory (queued if backend is down)."""
+    payload = {
+        "text": req.text,
+        "agent_id": req.agent_id,
+        "metadata": normalize_metadata(
+            req.metadata,
+            agent_id=req.agent_id,
+            default_source="mem0-queue-server",
+        ),
+    }
     try:
         # Try direct call first
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{MEM0_URL}/memory/add",
-                json={"text": req.text, "agent_id": req.agent_id},
+                json=payload,
                 timeout=30
             )
-            if response.status_code == 200:
+            if 200 <= response.status_code < 300:
                 return response.json()
+            if is_retryable_response(response):
+                queue._add_to_queue("/memory/add", "POST", payload)
+                return {
+                    "status": "queued",
+                    "message": "Backend temporarily failed, will retry later",
+                    "backend_status": response.status_code,
+                }
     except (httpx.ConnectError, httpx.TimeoutException):
         # Queue the request
-        queue.queue_request("/memory/add", "POST", {"text": req.text, "agent_id": req.agent_id})
+        queue._add_to_queue("/memory/add", "POST", payload)
         return {"status": "queued", "message": "Server down, will retry later"}
 
     raise HTTPException(status_code=503, detail="Backend unavailable")

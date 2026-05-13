@@ -2,7 +2,7 @@
   "name": "memroos-monorepo",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "workspaces": [
     "apps/*"
   ],

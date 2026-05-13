@@ -12,12 +12,14 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import httpx
 from mcp.server.fastmcp import FastMCP
-from mem0_queue import Mem0Queue
+from mem0_queue import Mem0Queue, is_retryable_response
+from provenance import format_memory_result, normalize_metadata
 
 MEM0_URL = "http://localhost:3201"
 
@@ -83,19 +85,30 @@ def check_server_health() -> dict:
 
 
 @mcp.tool()
-def memory_save(text: str, agent_id: str = "shared") -> str:
+def memory_save(text: str, agent_id: str = "shared", metadata: Optional[dict[str, Any]] = None) -> str:
     """
     Save something worth remembering to long-term memory.
     Call this when you learn a fact, preference, decision, or context
     that would be useful to you or other agents in future sessions.
     agent_id identifies who the memory belongs to (e.g. 'gwen', 'ceo', 'shared').
+
+    Include provenance in metadata when possible:
+    source_type (email, meeting, deliverable, repo, chat), source_title,
+    source_url or source_path, source_id, and captured_at.
     """
+    save_metadata = normalize_metadata(
+        metadata,
+        agent_id=agent_id,
+        default_source="mcp-mem0",
+    )
+    payload = {"text": text, "agent_id": agent_id, "metadata": save_metadata}
+
     # Pre-check server health
     health = check_server_health()
 
     if not health["up"]:
         # Server is down - queue the request
-        _queue._add_to_queue("/memory/add", "POST", {"text": text, "agent_id": agent_id})
+        _queue._add_to_queue("/memory/add", "POST", payload)
         qs = _queue.get_queue_status()
         log_failure("server_down", {"agent_id": agent_id, "text_preview": text[:50]})
         return f"Queued (mem0 offline). {qs['queued']} pending saves — will auto-replay when server recovers."
@@ -110,7 +123,7 @@ def memory_save(text: str, agent_id: str = "shared") -> str:
     try:
         r = httpx.post(
             f"{MEM0_URL}/memory/add",
-            json={"text": text, "agent_id": agent_id},
+            json=payload,
             timeout=30,
         )
         r.raise_for_status()
@@ -123,6 +136,19 @@ def memory_save(text: str, agent_id: str = "shared") -> str:
         return result
 
     except httpx.HTTPStatusError as e:
+        if is_retryable_response(e.response):
+            _queue._add_to_queue("/memory/add", "POST", payload)
+            qs = _queue.get_queue_status()
+            log_failure("save_queued_retryable_http", {
+                "agent_id": agent_id,
+                "text_preview": text[:50],
+                "status_code": e.response.status_code,
+            }, e)
+            return (
+                f"Queued (retryable backend error HTTP {e.response.status_code}). "
+                f"{qs['queued']} pending saves - will auto-replay when service recovers."
+            )
+
         # Server returned an error
         try:
             error_detail = e.response.json()
@@ -140,7 +166,7 @@ def memory_save(text: str, agent_id: str = "shared") -> str:
 
     except (httpx.ConnectError, httpx.TimeoutException) as e:
         # Server became unavailable
-        _queue._add_to_queue("/memory/add", "POST", {"text": text, "agent_id": agent_id})
+        _queue._add_to_queue("/memory/add", "POST", payload)
         qs = _queue.get_queue_status()
         log_failure("connection_lost", {"agent_id": agent_id, "text_preview": text[:50]}, e)
         return f"Queued (connection lost). {qs['queued']} pending saves — will auto-replay when server recovers."
@@ -169,10 +195,7 @@ def memory_search(query: str, agent_id: str = "", limit: int = 5) -> str:
             return "No relevant memories found."
         lines = []
         for i, m in enumerate(results, 1):
-            mem_text = m.get("memory", m.get("text", str(m)))
-            score = m.get("score", "")
-            score_str = f" (relevance: {score:.2f})" if isinstance(score, float) else ""
-            lines.append(f"{i}. {mem_text}{score_str}")
+            lines.append(format_memory_result(i, m))
         return "\n".join(lines)
 
     except httpx.HTTPStatusError as e:
@@ -208,8 +231,7 @@ def memory_get_all(agent_id: str = "shared") -> str:
             return f"No memories found for agent '{agent_id}'."
         lines = [f"Memories for '{agent_id}' ({len(memories)} total):"]
         for i, m in enumerate(memories, 1):
-            mem_text = m.get("memory", m.get("text", str(m)))
-            lines.append(f"{i}. {mem_text}")
+            lines.append(format_memory_result(i, m))
         return "\n".join(lines)
 
     except httpx.HTTPStatusError as e:

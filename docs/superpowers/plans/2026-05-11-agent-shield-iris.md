@@ -191,6 +191,6 @@ Gaps: prompt injection (semantic), jailbreak patterns, tool misuse, MCP permissi
 
 ## Notes
 
-- Agent Shield is MIT licensed — compatible with Kitchen's MIT license
+- Agent Shield is MIT licensed and remains compatible as a third-party dependency under the current project license
 - Iris name chosen to be distinct from existing "Iris" products (Spot AI camera agent, Delinea identity security)
 - The existing `content-scanner.ts` should be enhanced, not replaced — it works and is integrated into dispatch/hive routes

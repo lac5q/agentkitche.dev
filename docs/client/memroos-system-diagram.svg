@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">MemroOS System Diagram</title>
+  <desc id="desc">Single-page client diagram showing how MemroOS connects business workflows, agent runtimes, governed dispatch, and three memory tiers.</desc>
+  <defs>
+    <style>
+      .page { fill: #ffffff; }
+      .title { font: 800 54px Inter, Arial, sans-serif; fill: #171717; }
+      .subtitle { font: 400 22px Inter, Arial, sans-serif; fill: #4a4a45; }
+      .eyebrow { font: 700 13px Inter, Arial, sans-serif; fill: #a8392c; letter-spacing: 0; text-transform: uppercase; }
+      .section-label { font: 800 19px Inter, Arial, sans-serif; fill: #262626; }
+      .section-note { font: 400 13px Inter, Arial, sans-serif; fill: #62625d; }
+      .node-title { font: 800 17px Inter, Arial, sans-serif; fill: #20201d; }
+      .node-copy { font: 400 13px Inter, Arial, sans-serif; fill: #55554f; }
+      .small { font: 700 12px Inter, Arial, sans-serif; fill: #5a5a54; }
+      .flow-label { font: 800 13px Inter, Arial, sans-serif; fill: #171717; }
+      .shell { fill: #faf9f6; stroke: #e5e0d6; stroke-width: 1.5; rx: 8; }
+      .core { fill: #fff7f2; stroke: #d46b4d; stroke-width: 2; rx: 8; }
+      .memory { fill: #f4fbf9; stroke: #4d9b8e; stroke-width: 1.6; rx: 8; }
+      .memory-vector { fill: #eef8f5; stroke: #1f8a77; stroke-width: 2.2; rx: 8; }
+      .memory-graph { fill: #f2f5ff; stroke: #5262b8; stroke-width: 2.2; rx: 8; }
+      .memory-episodic { fill: #fff6e8; stroke: #b97812; stroke-width: 2.2; rx: 8; }
+      .memory-knowledge { fill: #ffffff; stroke: #dedbd2; stroke-width: 1.25; rx: 8; }
+      .memory-badge-vector { fill: #1f8a77; }
+      .memory-badge-graph { fill: #5262b8; }
+      .memory-badge-episodic { fill: #b97812; }
+      .badge-text { font: 800 11px Inter, Arial, sans-serif; fill: #ffffff; }
+      .runtime { fill: #f5f7ff; stroke: #6675c9; stroke-width: 1.6; rx: 8; }
+      .govern { fill: #fffaf0; stroke: #c58d24; stroke-width: 1.6; rx: 8; }
+      .node { fill: #ffffff; stroke: #dedbd2; stroke-width: 1.25; rx: 8; }
+      .node-accent-red { fill: #a8392c; }
+      .node-accent-teal { fill: #257f75; }
+      .node-accent-blue { fill: #5262b8; }
+      .node-accent-gold { fill: #9c6a0c; }
+      .pill { fill: #ffffff; stroke: #ddd8cc; stroke-width: 1.1; rx: 8; }
+      .boundary { fill: #fbfbfa; stroke: #d9d4ca; stroke-width: 1.2; rx: 8; }
+      .line { fill: none; stroke: #74746d; stroke-width: 2.2; }
+      .line-red { fill: none; stroke: #a8392c; stroke-width: 2.8; }
+      .line-teal { fill: none; stroke: #257f75; stroke-width: 2.8; }
+      .line-blue { fill: none; stroke: #5262b8; stroke-width: 2.8; }
+      .line-gold { fill: none; stroke: #9c6a0c; stroke-width: 2.8; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#74746d" />
+    </marker>
+    <marker id="arrow-red" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#a8392c" />
+    </marker>
+    <marker id="arrow-teal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#257f75" />
+    </marker>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#5262b8" />
+    </marker>
+    <marker id="arrow-gold" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#9c6a0c" />
+    </marker>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="1600" height="900" />
+  <rect x="34" y="32" width="1532" height="836" rx="8" fill="#ffffff" stroke="#ece7dd" stroke-width="1.5" />
+
+  <text class="eyebrow" x="82" y="82">Client system overview</text>
+  <text class="title" x="80" y="143">MemroOS</text>
+  <text class="subtitle" x="82" y="178">Memory OS for agent workflows: retain context, retrieve the right knowledge, dispatch agents, and improve repeatable work.</text>
+
+  <rect class="pill" x="1180" y="64" width="304" height="54" />
+  <text class="small" x="1204" y="87">Deployment posture</text>
+  <text class="node-copy" x="1204" y="106">Private network first - operator gated</text>
+
+  <rect class="shell" x="70" y="230" width="310" height="420" />
+  <text class="section-label" x="96" y="268">Business Workflows</text>
+  <text class="section-note" x="96" y="292">Where agent work begins</text>
+
+  <g transform="translate(96 324)">
+    <rect class="node" x="0" y="0" width="232" height="58" />
+    <rect class="node-accent-red" x="0" y="0" width="7" height="58" rx="3" />
+    <text class="node-title" x="22" y="25">Product</text>
+    <text class="node-copy" x="22" y="45">PRDs, launches, roadmap</text>
+  </g>
+  <g transform="translate(96 398)">
+    <rect class="node" x="0" y="0" width="232" height="58" />
+    <rect class="node-accent-teal" x="0" y="0" width="7" height="58" rx="3" />
+    <text class="node-title" x="22" y="25">Sales</text>
+    <text class="node-copy" x="22" y="45">Accounts, calls, follow-up</text>
+  </g>
+  <g transform="translate(96 472)">
+    <rect class="node" x="0" y="0" width="232" height="58" />
+    <rect class="node-accent-blue" x="0" y="0" width="7" height="58" rx="3" />
+    <text class="node-title" x="22" y="25">Engineering</text>
+    <text class="node-copy" x="22" y="45">Incidents, reviews, runbooks</text>
+  </g>
+  <g transform="translate(96 546)">
+    <rect class="node" x="0" y="0" width="232" height="58" />
+    <rect class="node-accent-gold" x="0" y="0" width="7" height="58" rx="3" />
+    <text class="node-title" x="22" y="25">Operations</text>
+    <text class="node-copy" x="22" y="45">Tasks, reports, approvals</text>
+  </g>
+
+  <rect class="core" x="454" y="214" width="430" height="452" />
+  <text class="section-label" x="486" y="253">MemroOS Control Plane</text>
+  <text class="section-note" x="486" y="277">Thin broker, durable center, operator visibility</text>
+
+  <g transform="translate(486 314)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">Workspace UI</text>
+    <text class="node-copy" x="18" y="50">Memory, agents, flow</text>
+  </g>
+  <g transform="translate(690 314)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">Registry</text>
+    <text class="node-copy" x="18" y="50">Identity, keys, roles</text>
+  </g>
+  <g transform="translate(486 420)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">Engage</text>
+    <text class="node-copy" x="18" y="50">Dispatch + delegation</text>
+  </g>
+  <g transform="translate(690 420)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">A2A Broker</text>
+    <text class="node-copy" x="18" y="50">Cards, tasks, streams</text>
+  </g>
+  <g transform="translate(486 526)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">REST Shim</text>
+    <text class="node-copy" x="18" y="50">Fast integration path</text>
+  </g>
+  <g transform="translate(690 526)">
+    <rect class="node" x="0" y="0" width="160" height="70" />
+    <text class="node-title" x="18" y="29">Governance</text>
+    <text class="node-copy" x="18" y="50">Policy, audit, approvals</text>
+  </g>
+
+  <rect class="memory" x="954" y="214" width="286" height="452" />
+  <text class="section-label" x="984" y="253">Memory + Knowledge</text>
+  <text class="section-note" x="984" y="277">Three tiers retain context by type</text>
+
+  <g transform="translate(984 314)">
+    <rect class="memory-vector" x="0" y="0" width="214" height="62" />
+    <rect class="memory-badge-vector" x="126" y="12" width="68" height="20" rx="8" />
+    <text class="badge-text" x="140" y="26">Semantic</text>
+    <text class="node-title" x="18" y="24">Vector</text>
+    <text class="node-copy" x="18" y="47">mem0 + Qdrant recall</text>
+  </g>
+  <g transform="translate(984 392)">
+    <rect class="memory-graph" x="0" y="0" width="214" height="62" />
+    <rect class="memory-badge-graph" x="112" y="12" width="82" height="20" rx="8" />
+    <text class="badge-text" x="125" y="26">Relationship</text>
+    <text class="node-title" x="18" y="24">Graph</text>
+    <text class="node-copy" x="18" y="47">Neo4j people, agents, deps</text>
+  </g>
+  <g transform="translate(984 470)">
+    <rect class="memory-episodic" x="0" y="0" width="214" height="62" />
+    <rect class="memory-badge-episodic" x="126" y="12" width="68" height="20" rx="8" />
+    <text class="badge-text" x="142" y="26">Events</text>
+    <text class="node-title" x="18" y="24">Episodic</text>
+    <text class="node-copy" x="18" y="47">SQLite reports + audit trail</text>
+  </g>
+  <g transform="translate(984 552)">
+    <rect class="memory-knowledge" x="0" y="0" width="214" height="48" />
+    <text class="node-title" x="18" y="24">Knowledge + Skills</text>
+    <text class="node-copy" x="18" y="40">Files, playbooks, source health</text>
+  </g>
+
+  <rect class="runtime" x="1312" y="230" width="218" height="420" />
+  <text class="section-label" x="1340" y="268">Agent Runtimes</text>
+  <text class="section-note" x="1340" y="292">Existing tools stay in place</text>
+
+  <g transform="translate(1340 324)">
+    <rect class="node" x="0" y="0" width="154" height="50" />
+    <text class="node-title" x="18" y="30">Claude Code</text>
+  </g>
+  <g transform="translate(1340 386)">
+    <rect class="node" x="0" y="0" width="154" height="50" />
+    <text class="node-title" x="18" y="30">Codex CLI</text>
+  </g>
+  <g transform="translate(1340 448)">
+    <rect class="node" x="0" y="0" width="154" height="50" />
+    <text class="node-title" x="18" y="30">Google ADK</text>
+  </g>
+  <g transform="translate(1340 510)">
+    <rect class="node" x="0" y="0" width="154" height="50" />
+    <text class="node-title" x="18" y="30">OpenClaw</text>
+  </g>
+  <g transform="translate(1340 572)">
+    <rect class="node" x="0" y="0" width="154" height="50" />
+    <text class="node-title" x="18" y="30">Custom HTTP</text>
+  </g>
+
+  <path class="line-red" d="M380 438 C414 438 416 438 454 438" marker-end="url(#arrow-red)" />
+  <text class="flow-label" x="394" y="421">1. request work</text>
+  <path class="line-teal" d="M884 440 C918 440 920 440 954 440" marker-end="url(#arrow-teal)" />
+  <text class="flow-label" x="892" y="422">2. retrieve context</text>
+  <path class="line-blue" d="M884 534 C1040 700 1240 700 1312 548" marker-end="url(#arrow-blue)" />
+  <text class="flow-label" x="1068" y="684">3. dispatch with context</text>
+  <path class="line-gold" d="M1312 386 C1268 338 1264 306 1240 306 C1210 306 1210 306 1198 314" marker-end="url(#arrow-gold)" />
+  <text class="flow-label" x="1248" y="326">4. report outcomes</text>
+  <path class="line" d="M984 570 C820 752 490 744 318 606" marker-end="url(#arrow)" />
+  <text class="flow-label" x="532" y="746">5. promote repeated wins into durable skills</text>
+
+  <rect class="boundary" x="110" y="704" width="1380" height="112" />
+  <text class="section-label" x="140" y="740">Security + Operating Boundary</text>
+  <text class="subtitle" x="140" y="770" style="font-size:18px;">
+    <tspan x="140" y="770">Operator keys guard registry and memory reads. Per-agent bearer keys guard runtime writes.</tspan>
+    <tspan x="140" y="794">A2A cards are treated as untrusted input. Self-learning changes queue for human approval.</tspan>
+  </text>
+
+  <text class="small" x="82" y="838">Source: MemroOS README, Architecture, REST API, and Memory Architecture docs.</text>
+  <text class="small" x="1288" y="838">Shareable one-page overview</text>
+</svg>

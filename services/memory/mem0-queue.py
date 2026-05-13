@@ -9,7 +9,6 @@ import json
 import threading
 import time
 import httpx
-from datetime import datetime
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -17,17 +16,48 @@ DB_PATH = str(Path(__file__).resolve().parent / "logs" / "queue.db")
 MEM0_URL = "http://localhost:3201"
 REPLAY_INTERVAL = 10  # seconds
 MAX_RETRIES = 3
+RETRYABLE_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
+RETRYABLE_ERROR_MARKERS = (
+    "RESOURCE_EXHAUSTED",
+    "SERVICE_DISABLED",
+    "PERMISSION_DENIED",
+    "quota",
+    "rate limit",
+    "temporarily unavailable",
+    "timeout",
+    "timed out",
+    "connection",
+    "overloaded",
+)
+
+
+def _canonical_payload(payload: dict) -> str:
+    """Serialize payloads consistently so queued requests can be deduped."""
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def is_retryable_response(response: httpx.Response) -> bool:
+    """Return True when a backend failure should preserve the request for replay."""
+    if response.status_code in RETRYABLE_STATUS_CODES:
+        return True
+
+    if response.status_code not in {400, 401, 403}:
+        return False
+
+    body = response.text.lower()
+    return any(marker.lower() in body for marker in RETRYABLE_ERROR_MARKERS)
 
 
 class Mem0Queue:
     """Queue wrapper for mem0 memory operations."""
 
-    def __init__(self, db_path: str = DB_PATH):
+    def __init__(self, db_path: str = DB_PATH, start_replay: bool = True):
         self.db_path = db_path
         self._init_db()
         self._replay_thread = None
         self._stop_replay = False
-        self._start_replay_thread()
+        if start_replay:
+            self._start_replay_thread()
 
     def _init_db(self):
         """Initialize SQLite database."""
@@ -100,16 +130,31 @@ class Mem0Queue:
             payload = json.loads(req['payload'])
 
             if req['method'] == 'POST':
-                response = httpx.post(url, json=payload, timeout=30)
+                response = httpx.post(
+                    url,
+                    json=payload,
+                    timeout=30,
+                    headers={"X-Mem0-Queue-Replay": "1"},
+                )
             elif req['method'] == 'GET':
                 response = httpx.get(url, params=payload, timeout=30)
             else:
                 return False
 
-            if response.status_code == 200:
+            if 200 <= response.status_code < 300:
+                try:
+                    data = response.json()
+                except ValueError:
+                    data = {}
+                if data.get("status") == "queued":
+                    self._log_replay(req['id'], 'retryable', "Backend accepted into queue again")
+                    return False
                 self._log_replay(req['id'], 'success')
                 print(f"[Queue] Replayed request {req['id']}: {req['endpoint']}")
                 return True
+            elif is_retryable_response(response):
+                self._log_replay(req['id'], 'retryable', f"Status {response.status_code}")
+                return False
             else:
                 self._log_replay(req['id'], 'failed', f"Status {response.status_code}")
                 return False
@@ -135,7 +180,7 @@ class Mem0Queue:
 
     def queue_request(self, endpoint: str, method: str, payload: dict) -> bool:
         """
-        Try to send request, queue if server is down.
+        Try to send request, queue if the backend is temporarily unavailable.
         Returns True if sent successfully (or queued), False on error.
         """
         # Try to send directly first
@@ -148,7 +193,11 @@ class Mem0Queue:
             else:
                 return False
 
-            if response.status_code == 200:
+            if 200 <= response.status_code < 300:
+                return True
+            if is_retryable_response(response):
+                self._add_to_queue(endpoint, method, payload)
+                print(f"[Queue] Retryable backend failure {response.status_code}, queued request to {endpoint}")
                 return True
 
         except (httpx.ConnectError, httpx.TimeoutException) as e:
@@ -159,15 +208,25 @@ class Mem0Queue:
 
         return False
 
-    def _add_to_queue(self, endpoint: str, method: str, payload: dict):
-        """Add request to queue."""
+    def _add_to_queue(self, endpoint: str, method: str, payload: dict) -> bool:
+        """Add request to queue, deduping identical pending payloads."""
+        payload_json = _canonical_payload(payload)
         with self._get_connection() as conn:
+            existing = conn.execute(
+                """SELECT id FROM queued_requests
+                   WHERE endpoint = ? AND method = ? AND payload = ?
+                   LIMIT 1""",
+                (endpoint, method, payload_json)
+            ).fetchone()
+            if existing:
+                return False
             conn.execute(
                 """INSERT INTO queued_requests (endpoint, method, payload)
                    VALUES (?, ?, ?)""",
-                (endpoint, method, json.dumps(payload))
+                (endpoint, method, payload_json)
             )
             conn.commit()
+        return True
 
     def get_queue_status(self) -> dict:
         """Get current queue status."""
@@ -203,18 +262,25 @@ class Mem0Queue:
         self._stop_replay = True
 
 
-# Global queue instance
-queue = Mem0Queue()
+queue = None
+
+
+def _get_global_queue() -> Mem0Queue:
+    """Lazily create the process-wide queue."""
+    global queue
+    if queue is None:
+        queue = Mem0Queue()
+    return queue
 
 
 def queue_memory_save(text: str, agent_id: str = "shared") -> dict:
     """Queue a memory save request."""
-    success = queue.queue_request(
+    success = _get_global_queue().queue_request(
         "/memory/add",
         "POST",
         {"text": text, "agent_id": agent_id}
     )
-    return {"status": "queued" if not success else "saved", "queued": not success}
+    return {"status": "accepted" if success else "failed", "accepted": success}
 
 
 def queue_memory_search(query: str, agent_id: str = "", limit: int = 5) -> dict:
@@ -234,12 +300,12 @@ def queue_memory_search(query: str, agent_id: str = "", limit: int = 5) -> dict:
 
 def queue_get_status() -> dict:
     """Get queue status."""
-    return queue.get_queue_status()
+    return _get_global_queue().get_queue_status()
 
 
 def queue_clear() -> dict:
     """Clear the queue."""
-    return queue.clear_queue()
+    return _get_global_queue().clear_queue()
 
 
 # For testing
@@ -249,13 +315,14 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
         if cmd == "status":
-            print(json.dumps(queue.get_queue_status(), indent=2))
+            print(json.dumps(_get_global_queue().get_queue_status(), indent=2))
         elif cmd == "clear":
-            print(json.dumps(queue.clear_queue(), indent=2))
+            print(json.dumps(_get_global_queue().clear_queue(), indent=2))
         elif cmd == "test":
             # Test queuing
             print("Testing queue...")
-            queue.queue_request("/memory/add", "POST", {"text": "test", "agent_id": "test"})
-            print(json.dumps(queue.get_queue_status(), indent=2))
+            q = _get_global_queue()
+            q.queue_request("/memory/add", "POST", {"text": "test", "agent_id": "test"})
+            print(json.dumps(q.get_queue_status(), indent=2))
     else:
         print("Usage: python mem0-queue.py [status|clear|test]")

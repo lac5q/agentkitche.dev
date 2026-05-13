@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lac5q/memroos/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0f0f0e.svg"></a>
+  <a href="https://github.com/lac5q/memroos/blob/main/LICENSE"><img alt="License: PolyForm Small Business 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Small%20Business-a8392c.svg"></a>
   <img alt="Release: v0.1.0" src="https://img.shields.io/badge/release-v0.1.0-a8392c.svg">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black.svg">
   <img alt="A2A ready" src="https://img.shields.io/badge/A2A-ready-7a2a1e.svg">
@@ -135,7 +135,7 @@ The current release includes:
 
 ## Completed Roadmap
 
-- **Phase 41: OSS Polish** - MIT license, public README, contribution guide, security policy, issue templates, and GitHub Actions checks for public collaboration.
+- **Phase 41: Public Polish** - public README, contribution guide, security policy, issue templates, and GitHub Actions checks for public collaboration.
 - **Phases 42-45: v2.1 Security + Trust Layer** - Iris dispatch preflight, prompt-injection checks, tool-permission governance, security reporting, and progressive capability exposure.
 - **Phases 46-49: v2.2 LLM Optimization + Evaluation** - model-routing telemetry, recommendation surfaces, evaluation fixtures, optimization dashboards, and quality reports.
 - **Phases 50-52: v2.3 Agent Runtime Enhancements** - runtime middleware, memory client v2 paths, richer engagement state, and observability surfaces for live agents.
@@ -560,4 +560,6 @@ If MemroOS helps you stop making every agent start from zero, please star the re
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MemroOS is distributed under the [PolyForm Small Business License 1.0.0](LICENSE). Small businesses that meet the license thresholds may use it under those terms. Larger commercial use requires a separate commercial license. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
+
+Agent Kitchen versions up to the `agent-kitchen-mit-final` tag were distributed under the MIT License. Those earlier MIT rights remain governed by those earlier terms. The current license applies to MemroOS copies and contributions after the license-change commit.

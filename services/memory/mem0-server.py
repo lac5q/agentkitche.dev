@@ -10,6 +10,7 @@ import json
 import logging
 import traceback
 import shutil
+import sqlite3
 from datetime import datetime
 from typing import Any, Optional
 from pathlib import Path
@@ -17,6 +18,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from provenance import normalize_metadata
 try:
     from qdrant_client import QdrantClient
     QDRANT_AVAILABLE = True
@@ -57,6 +59,19 @@ app = FastAPI(title="Mem0 Agent Memory Service", version="1.2.0")
 # ---------------------------------------------------------------------------
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "mem0-config.yaml")
+QUEUE_DB_PATH = LOG_DIR / "queue.db"
+RETRYABLE_MEMORY_ERROR_MARKERS = (
+    "RESOURCE_EXHAUSTED",
+    "SERVICE_DISABLED",
+    "PERMISSION_DENIED",
+    "quota",
+    "rate limit",
+    "temporarily unavailable",
+    "timeout",
+    "timed out",
+    "connection",
+    "overloaded",
+)
 
 def load_config() -> dict:
     with open(CONFIG_PATH) as f:
@@ -187,6 +202,56 @@ def log_failure(error_type: str, details: dict, exc: Exception = None):
 
     failure_logger.error(json.dumps(record))
     logger.error(f"[{error_type}] {details} - {exc}")
+
+
+def _is_retryable_memory_error(exc: Exception) -> bool:
+    """Detect provider and transient backend failures that should not drop a save."""
+    text = f"{type(exc).__name__}: {exc}".lower()
+    return any(marker.lower() in text for marker in RETRYABLE_MEMORY_ERROR_MARKERS)
+
+
+def _queue_failed_memory_add(req: "AddMemoryRequest") -> bool:
+    """Persist a failed memory add into the replay queue without starting a worker."""
+    metadata = normalize_metadata(
+        req.metadata,
+        agent_id=req.agent_id,
+        default_source="mem0-server",
+    )
+    payload = json.dumps(
+        {
+            "text": req.text,
+            "agent_id": req.agent_id,
+            "metadata": metadata,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with sqlite3.connect(QUEUE_DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS queued_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                endpoint TEXT NOT NULL,
+                method TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                retry_count INTEGER DEFAULT 0
+            )
+        """)
+        existing = conn.execute(
+            """SELECT id FROM queued_requests
+               WHERE endpoint = ? AND method = ? AND payload = ?
+               LIMIT 1""",
+            ("/memory/add", "POST", payload),
+        ).fetchone()
+        if existing:
+            return False
+        conn.execute(
+            """INSERT INTO queued_requests (endpoint, method, payload)
+               VALUES (?, ?, ?)""",
+            ("/memory/add", "POST", payload),
+        )
+        conn.commit()
+    return True
 
 
 def check_disk_space(path: str = "~") -> dict:
@@ -331,14 +396,19 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ---------------------------------------------------------------------------
 
 @app.post("/memory/add", response_model=AddMemoryResponse)
-def add_memory(req: AddMemoryRequest):
+def add_memory(req: AddMemoryRequest, request: Request):
     """Store a new memory for an agent."""
     try:
         mem = get_memory()
+        metadata = normalize_metadata(
+            req.metadata,
+            agent_id=req.agent_id,
+            default_source="mem0-server",
+        )
         result = mem.add(
             req.text,
             user_id=req.agent_id,
-            metadata=req.metadata or {},
+            metadata=metadata,
         )
         logger.info(f"Memory added for agent {req.agent_id}: {req.text[:50]}...")
         return AddMemoryResponse(status="ok", result=result)
@@ -348,6 +418,17 @@ def add_memory(req: AddMemoryRequest):
             {"agent_id": req.agent_id, "text_preview": req.text[:100]},
             exc
         )
+        is_replay = request.headers.get("x-mem0-queue-replay") == "1"
+        if _is_retryable_memory_error(exc) and not is_replay:
+            queued = _queue_failed_memory_add(req)
+            return AddMemoryResponse(
+                status="queued",
+                result={
+                    "message": "Memory backend temporarily failed; save preserved for replay.",
+                    "queued": queued,
+                    "reason": str(exc),
+                },
+            )
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

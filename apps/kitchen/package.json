@@ -2,7 +2,7 @@
   "name": "memroos",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import secrets
+import sys
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
@@ -44,6 +45,12 @@ try:
     import httpx  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
     httpx = None
+
+MEMORY_SERVICE_DIR = Path(__file__).resolve().parents[2] / "memory"
+if str(MEMORY_SERVICE_DIR) not in sys.path:
+    sys.path.insert(0, str(MEMORY_SERVICE_DIR))
+
+from provenance import extract_metadata, normalize_metadata, provenance_label
 
 try:
     from .capabilities import get_capabilities, open_workspace
@@ -278,7 +285,17 @@ def memory_search(query: str, agent_id: str = "", limit: int = 5) -> dict:
             params["agent_id"] = agent_id
         response = httpx.get(f"{_mem0_url()}/memory/search", params=params, timeout=10)
         response.raise_for_status()
-        return {"status": "ok", "results": response.json().get("results", [])}
+        results = response.json().get("results", [])
+        enriched = []
+        for item in results:
+            if isinstance(item, dict):
+                result = dict(item)
+                result.setdefault("metadata", extract_metadata(item))
+                result["provenance"] = provenance_label(item)
+                enriched.append(result)
+            else:
+                enriched.append({"memory": str(item), "metadata": {}, "provenance": "source: unknown"})
+        return {"status": "ok", "results": enriched}
     except Exception as exc:
         return {"status": "unavailable", "error": str(exc), "results": []}
 
@@ -291,7 +308,15 @@ def memory_save(text: str, agent_id: str = "shared", metadata: Optional[dict] = 
     try:
         response = httpx.post(
             f"{_mem0_url()}/memory/add",
-            json={"text": text, "agent_id": agent_id, "metadata": metadata or {}},
+            json={
+                "text": text,
+                "agent_id": agent_id,
+                "metadata": normalize_metadata(
+                    metadata,
+                    agent_id=agent_id,
+                    default_source="knowledge-mcp",
+                ),
+            },
             timeout=10,
         )
         response.raise_for_status()

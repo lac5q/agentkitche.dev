@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -7,16 +7,24 @@ import { spawnSync } from "node:child_process";
 const width = 1280;
 const height = 720;
 const fps = 12;
-const duration = 56;
+const duration = 64;
 const frameCount = duration * fps;
 const root = path.resolve(import.meta.dirname, "..");
 const outDir = path.join(root, "public", "demo");
 const frameDir = path.join(tmpdir(), `memroos-demo-frames-${Date.now()}`);
-const audioPath = path.join(frameDir, "memroos-demo.wav");
+const scorePath = path.join(frameDir, "memroos-demo-score.wav");
+const narrationPath = path.join(frameDir, "memroos-demo-voiceover.aiff");
+const mixedAudioPath = path.join(frameDir, "memroos-demo-mixed.wav");
+const websiteQrPath = path.join(frameDir, "memroos-site-qr.png");
+const repoQrPath = path.join(frameDir, "memroos-repo-qr.png");
 const outputPath = path.join(outDir, "memroos-demo.mp4");
 const posterPath = path.join(outDir, "memroos-demo-poster.jpg");
+const docsDemoPath = path.join(root, "..", "..", "docs", "demo", "memroos-demo.mp4");
+const websiteUrl = "https://memroos.com";
+const repoUrl = "https://github.com/lac5q/memroos";
 
 mkdirSync(outDir, { recursive: true });
+mkdirSync(path.dirname(docsDemoPath), { recursive: true });
 mkdirSync(frameDir, { recursive: true });
 
 function run(command, args) {
@@ -26,69 +34,81 @@ function run(command, args) {
   }
 }
 
+function hasCommand(command) {
+  return spawnSync("which", [command], { stdio: "ignore" }).status === 0;
+}
+
+function writeQrCode(filePath, url) {
+  const script = [
+    "import qrcode, sys",
+    "url, path = sys.argv[1], sys.argv[2]",
+    "qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=12, border=2)",
+    "qr.add_data(url)",
+    "qr.make(fit=True)",
+    "img = qr.make_image(fill_color='black', back_color='white')",
+    "img.save(path)",
+  ].join("\n");
+  const result = spawnSync("python3", ["-c", script, url, filePath], { stdio: "inherit" });
+  if (result.status !== 0 || !existsSync(filePath)) {
+    throw new Error(`QR generation failed for ${url}`);
+  }
+}
+
 function writeSynthAudio(filePath) {
   const sampleRate = 44100;
   const channels = 2;
   const totalSamples = sampleRate * duration;
   const data = Buffer.alloc(totalSamples * channels * 2);
-  const bpm = 126;
+  const bpm = 92;
   const beat = 60 / bpm;
   const chords = [
-    [261.63, 329.63, 392.0],
-    [220.0, 261.63, 329.63],
-    [293.66, 349.23, 440.0],
-    [196.0, 246.94, 293.66],
+    [196.0, 246.94, 293.66, 392.0],
+    [220.0, 261.63, 329.63, 440.0],
+    [174.61, 220.0, 261.63, 349.23],
+    [164.81, 196.0, 246.94, 329.63],
   ];
-  const bass = [65.41, 55.0, 73.42, 49.0];
-  const lead = [523.25, 659.25, 783.99, 587.33, 698.46, 880.0, 783.99, 659.25];
+  const bass = [49.0, 55.0, 43.65, 41.2];
+  const motif = [392.0, 440.0, 329.63, 293.66, 349.23, 329.63, 246.94, 293.66];
 
   for (let i = 0; i < totalSamples; i += 1) {
     const t = i / sampleRate;
     const bar = Math.floor(t / (beat * 4));
-    const beatPhase = (t % beat) / beat;
     const barPhase = (t % (beat * 4)) / (beat * 4);
     const chord = chords[bar % chords.length];
     const bassFreq = bass[bar % bass.length];
-    const sidechain = 0.62 + 0.38 * Math.min(1, beatPhase * 2.7);
+    const shimmer = 0.68 + 0.32 * Math.sin(Math.PI * barPhase);
     let sample = 0;
 
     for (const freq of chord) {
-      sample += Math.sin(2 * Math.PI * freq * t) * 0.045;
-      sample += Math.sin(2 * Math.PI * freq * 2.005 * t) * 0.012;
+      sample += Math.sin(2 * Math.PI * freq * t) * 0.028;
+      sample += Math.sin(2 * Math.PI * freq * 2.01 * t) * 0.007;
+      sample += Math.sin(2 * Math.PI * freq * 0.5 * t) * 0.012;
     }
 
-    const padEnv = 0.45 + 0.55 * Math.sin(Math.PI * barPhase);
-    sample *= padEnv * sidechain;
-    sample += Math.sin(2 * Math.PI * bassFreq * t) * 0.11 * sidechain;
+    sample *= shimmer;
+    sample += Math.sin(2 * Math.PI * bassFreq * t) * 0.055;
+    sample += Math.sin(2 * Math.PI * bassFreq * 2 * t) * 0.012;
 
-    const kickPhase = t % beat;
-    if (kickPhase < 0.12) {
-      const env = Math.exp(-kickPhase * 36);
-      const sweep = 74 - kickPhase * 230;
-      sample += Math.sin(2 * Math.PI * sweep * t) * env * 0.42;
+    const pulsePhase = t % (beat * 2);
+    if (pulsePhase < 0.18) {
+      const env = Math.exp(-pulsePhase * 16);
+      sample += Math.sin(2 * Math.PI * 96 * t) * env * 0.07;
     }
 
-    const clapPhase = (t + beat * 2) % (beat * 4);
-    if (clapPhase < 0.055 && Math.floor(t / beat) % 4 === 2) {
-      const env = Math.exp(-clapPhase * 45);
-      const noise = Math.sin(i * 12.9898) * Math.sin(i * 78.233);
-      sample += noise * env * 0.19;
+    const tickPhase = (t + beat * 0.5) % beat;
+    if (tickPhase < 0.018 && t > 8 && t < 48) {
+      const env = Math.exp(-tickPhase * 160);
+      const noise = Math.sin(i * 19.19) * Math.sin(i * 43.71);
+      sample += noise * env * 0.018;
     }
 
-    const hatPhase = (t + beat / 2) % (beat / 2);
-    if (hatPhase < 0.025) {
-      const env = Math.exp(-hatPhase * 120);
-      const noise = Math.sin(i * 33.31) * Math.sin(i * 7.71);
-      sample += noise * env * 0.055;
-    }
-
-    if (t > 8) {
-      const phrase = Math.floor((t - 8) / (beat / 2));
-      const leadFreq = lead[phrase % lead.length];
-      const phrasePhase = ((t - 8) % (beat / 2)) / (beat / 2);
+    if (t > 6 && t < 52) {
+      const phrase = Math.floor((t - 6) / (beat * 2));
+      const motifFreq = motif[phrase % motif.length];
+      const phrasePhase = ((t - 6) % (beat * 2)) / (beat * 2);
       const env = Math.sin(Math.PI * phrasePhase);
-      sample += Math.sin(2 * Math.PI * leadFreq * t) * env * 0.045;
-      sample += Math.sin(2 * Math.PI * leadFreq * 1.5 * t) * env * 0.018;
+      sample += Math.sin(2 * Math.PI * motifFreq * t) * env * 0.025;
+      sample += Math.sin(2 * Math.PI * motifFreq * 2.004 * t) * env * 0.006;
     }
 
     const intro = Math.min(1, t / 5);
@@ -120,6 +140,66 @@ function writeSynthAudio(filePath) {
   writeFileSync(filePath, Buffer.concat([header, data]));
 }
 
+const narrationScript = [
+  "MemroOS is the memory operating system for agent workflows.",
+  "It stops every agent from starting from zero.",
+  "First, it captures the work already happening across files, calls, commits, chats, customer notes, and outcomes.",
+  "Then it retrieves the right context before dispatch, assembling source-backed memories, knowledge, and reusable skills.",
+  "Product, sales, and engineering teams start sharper because every handoff keeps the lived context attached.",
+  "Completed work feeds the next run, turning repeated workflows into durable skills.",
+  "The full system brings memory, knowledge, agents, trust, optimization, runtime, and performance into one loop.",
+  "Give every agent the team's lived context before it starts.",
+  "Scan the codes to visit the website or open the source repository.",
+].join(" ");
+
+function writeNarrationAudio(filePath) {
+  if (!hasCommand("say")) {
+    console.warn("macOS say command not found; rendering score-only audio.");
+    return false;
+  }
+
+  const result = spawnSync("say", [
+    "-r",
+    "166",
+    "-o",
+    filePath,
+    narrationScript,
+  ], { stdio: "inherit" });
+
+  if (result.status !== 0 || !existsSync(filePath)) {
+    console.warn("Voiceover generation failed; rendering score-only audio.");
+    return false;
+  }
+
+  return true;
+}
+
+function mixAudio(scoreFile, narrationFile, outputFile) {
+  if (!existsSync(narrationFile)) {
+    return scoreFile;
+  }
+
+  run("ffmpeg", [
+    "-y",
+    "-i", scoreFile,
+    "-i", narrationFile,
+    "-filter_complex",
+    "[0:a]volume=0.24,afade=t=in:st=0:d=2,afade=t=out:st=63:d=1[score];[1:a]adelay=900|900,volume=1.45,highpass=f=120,lowpass=f=9000,acompressor=threshold=-18dB:ratio=2.5:attack=18:release=180[narration];[score][narration]amix=inputs=2:duration=first:dropout_transition=0,alimiter=limit=0.92,loudnorm=I=-16:LRA=9:TP=-1.2[out]",
+    "-map", "[out]",
+    "-t", String(duration),
+    "-ar", "44100",
+    "-ac", "2",
+    outputFile,
+  ]);
+
+  return outputFile;
+}
+
+writeQrCode(websiteQrPath, websiteUrl);
+writeQrCode(repoQrPath, repoUrl);
+const websiteQrDataUrl = `data:image/png;base64,${readFileSync(websiteQrPath).toString("base64")}`;
+const repoQrDataUrl = `data:image/png;base64,${readFileSync(repoQrPath).toString("base64")}`;
+
 const html = String.raw`<!doctype html>
 <html>
   <head>
@@ -147,15 +227,22 @@ const html = String.raw`<!doctype html>
         green: "#33c481",
         dark: "#171715"
       };
+      const qrImages = {
+        website: new Image(),
+        repo: new Image()
+      };
+      qrImages.website.src = "${websiteQrDataUrl}";
+      qrImages.repo.src = "${repoQrDataUrl}";
 
       const scenes = [
-        { start: 0, end: 7, eyebrow: "MEMORY IS FEATURE ONE", title: "Stop making every agent start from zero.", body: "MemroOS gives product, sales, and engineering agents a shared company memory before they act.", mode: "intro" },
-        { start: 7, end: 15, eyebrow: "RETAIN", title: "Capture what happened.", body: "Files, calls, commits, chats, decisions, customer notes, and agent outcomes become durable memory.", mode: "memory" },
-        { start: 15, end: 23, eyebrow: "RETRIEVE", title: "Pull the right context at runtime.", body: "Before dispatch, MemroOS assembles source-backed memories, knowledge files, and relevant skills.", mode: "pack" },
-        { start: 23, end: 31, eyebrow: "PRODUCT + SALES + ENGINEERING", title: "Every team starts sharper.", body: "PRDs, account briefs, follow-ups, debug plans, code reviews, migrations, and runbooks stay connected.", mode: "teams" },
-        { start: 31, end: 39, eyebrow: "REINFORCE", title: "Completed work improves the next run.", body: "Successful workflows feed back into memory and become durable skills your agents can reuse.", mode: "loop" },
-        { start: 39, end: 48, eyebrow: "FULL FEATURE MAP", title: "Memory, context, engagement, skills, trust, evals, runtime, and caching.", body: "A practical operating system for AI-native small businesses running real agent work.", mode: "features" },
-        { start: 48, end: 56, eyebrow: "MEMROOS.COM", title: "Give every agent the team's lived context before it starts.", body: "Shared memory for agent workflows.", mode: "final" }
+        { start: 0, end: 4, mode: "logoIntro" },
+        { start: 4, end: 12, eyebrow: "MEMORY IS FEATURE ONE", title: "Agents should not start from zero.", body: "MemroOS gives every agent the company memory it needs before work begins.", mode: "intro" },
+        { start: 12, end: 20, eyebrow: "RETAIN", title: "Capture what happened.", body: "Files, calls, commits, chats, decisions, customer notes, and agent outcomes become durable memory.", mode: "memory" },
+        { start: 20, end: 28, eyebrow: "RETRIEVE", title: "Pull the right context at runtime.", body: "Before dispatch, MemroOS assembles source-backed memories, knowledge files, and relevant skills.", mode: "pack" },
+        { start: 28, end: 36, eyebrow: "PRODUCT + SALES + ENGINEERING", title: "Every team starts sharper.", body: "PRDs, account briefs, follow-ups, debug plans, code reviews, migrations, and runbooks stay connected.", mode: "teams" },
+        { start: 36, end: 44, eyebrow: "REINFORCE", title: "Completed work improves the next run.", body: "Successful workflows feed back into memory and become durable skills your agents can reuse.", mode: "loop" },
+        { start: 44, end: 54, eyebrow: "FULL FEATURE MAP", title: "Memory, context, skills, trust, evals, runtime, and caching.", body: "A practical operating system for AI-native small businesses running real agent work.", mode: "features" },
+        { start: 54, end: 64, mode: "closing" }
       ];
 
       function ease(x) {
@@ -212,8 +299,9 @@ const html = String.raw`<!doctype html>
         text(label, x + 18, y + 27, { size: 13, weight: 800, color: "#fff", max: 150 });
         ctx.restore();
       }
-      function drawBrand(t, dark = false) {
+      function drawBrand(t, dark = false, alpha = 1) {
         ctx.save();
+        ctx.globalAlpha = alpha;
         ctx.fillStyle = dark ? "#fff" : colors.paper;
         roundRect(54, 42, 54, 54, 12);
         ctx.fill();
@@ -223,6 +311,28 @@ const html = String.raw`<!doctype html>
         text("MemroOS", 122, 64, { size: 24, weight: 800, color: dark ? "#fff" : colors.ink, max: 260 });
         text("Memory OS for agent workflows", 123, 90, { size: 14, weight: 600, color: dark ? "#d8d4cb" : colors.muted, max: 300 });
         ctx.restore();
+      }
+      function drawLogoIntro(local, span) {
+        const outro = ease((local - span + 1.25) / 1.25);
+        const hold = 1 - outro;
+        ctx.save();
+        ctx.globalAlpha = hold;
+        const markSize = 150 + pulse(local, 2.1) * 8;
+        const markX = W / 2 - markSize / 2;
+        const markY = 190;
+        ctx.fillStyle = "#fff";
+        roundRect(markX, markY, markSize, markSize, 28);
+        ctx.fill();
+        ctx.strokeStyle = colors.line;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        text("M", W / 2, markY + 101, { size: 74, weight: 900, color: colors.red, align: "center", max: 120 });
+        text("MemroOS", W / 2, 405, { size: 54, weight: 900, color: colors.ink, align: "center", max: 420 });
+        text("Memory OS for agent workflows", W / 2, 447, { size: 20, weight: 700, color: colors.muted, align: "center", max: 440 });
+        ctx.restore();
+        if (outro > 0) {
+          drawBrand(local, false, outro);
+        }
       }
       function drawNodes(t, cx, cy, scale = 1, dark = false) {
         const nodes = [
@@ -292,6 +402,59 @@ const html = String.raw`<!doctype html>
         });
         ctx.restore();
       }
+      function drawIntroSummary(t) {
+        const p = ease(t);
+        const x = 705;
+        const y = 146;
+        ctx.save();
+        ctx.globalAlpha = p;
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = colors.ink;
+        roundRect(x, y, 455, 386, 0);
+        ctx.fill();
+        ctx.stroke();
+
+        text("Before dispatch", x + 34, y + 52, { size: 24, weight: 900, max: 340 });
+        text("Every agent receives the context the company already learned.", x + 34, y + 84, { size: 15, weight: 700, color: colors.muted, max: 350, line: 22 });
+        ctx.fillStyle = colors.red;
+        roundRect(x + 296, y + 28, 124, 36, 0);
+        ctx.fill();
+        text("START READY", x + 312, y + 51, { size: 12, weight: 900, color: "#fff", max: 96 });
+
+        const steps = [
+          ["01", "Company memory", "Calls, files, commits, chats, decisions"],
+          ["02", "Context pack", "Relevant memories, knowledge, and skills"],
+          ["03", "Agent starts ready", "Product, sales, and engineering work"],
+        ];
+
+        steps.forEach(([number, label, detail], i) => {
+          const stepP = ease(t - 0.18 - i * 0.16);
+          const yy = y + 132 + i * 78;
+          ctx.globalAlpha = p * stepP;
+          ctx.fillStyle = i === 1 ? colors.redSoft : colors.paper;
+          ctx.fillRect(x + 34, yy, 386, 58);
+          text(number, x + 54, yy + 36, { size: 15, weight: 900, color: colors.red, max: 36 });
+          text(label, x + 104, yy + 26, { size: 18, weight: 900, max: 250 });
+          text(detail, x + 104, yy + 48, { size: 13, weight: 700, color: colors.muted, max: 265 });
+
+          if (i < steps.length - 1) {
+            ctx.strokeStyle = colors.red;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = p * stepP * 0.7;
+            ctx.beginPath();
+            ctx.moveTo(x + 226, yy + 60);
+            ctx.lineTo(x + 226, yy + 76);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + 219, yy + 70);
+            ctx.lineTo(x + 226, yy + 78);
+            ctx.lineTo(x + 233, yy + 70);
+            ctx.stroke();
+          }
+        });
+
+        ctx.restore();
+      }
       function drawTeamCards(t) {
         const cards = [
           ["Product", "Prioritize roadmap", "PRDs + release notes + beta feedback"],
@@ -357,6 +520,34 @@ const html = String.raw`<!doctype html>
           ctx.globalAlpha = 1;
         });
       }
+      function drawQrCard(img, x, y, title, url, delay, local) {
+        const p = ease(local - delay);
+        ctx.save();
+        ctx.globalAlpha = p;
+        ctx.fillStyle = "#fff";
+        ctx.strokeStyle = colors.line;
+        ctx.lineWidth = 2;
+        roundRect(x, y, 270, 342, 0);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = colors.paper;
+        ctx.fillRect(x + 34, y + 34, 202, 202);
+        if (img.complete) {
+          ctx.drawImage(img, x + 44, y + 44, 182, 182);
+        }
+        text(title, x + 34, y + 278, { size: 24, weight: 900, max: 210 });
+        text(url, x + 34, y + 309, { size: 14, weight: 700, color: colors.muted, max: 210, line: 20 });
+        ctx.restore();
+      }
+      function drawClosing(local) {
+        ctx.save();
+        text("OPEN MEMROOS", 86, 168, { size: 14, weight: 900, color: colors.red, max: 520 });
+        text("Scan to visit the website or open the source repo.", 86, 236, { size: 48, weight: 900, max: 560, line: 56 });
+        text("MemroOS is open source, built for teams running real agent workflows.", 90, 430, { size: 22, weight: 650, color: colors.muted, max: 520, line: 34 });
+        drawQrCard(qrImages.website, 692, 170, "Website", "memroos.com", 0.15, local);
+        drawQrCard(qrImages.repo, 984, 170, "Source repo", "github.com/lac5q/memroos", 0.35, local);
+        ctx.restore();
+      }
       function drawBackground(t, sceneIndex, dark = false) {
         ctx.fillStyle = dark ? colors.ink : colors.paper;
         ctx.fillRect(0, 0, W, H);
@@ -392,20 +583,30 @@ const html = String.raw`<!doctype html>
         const p = ease(local / 1.1);
         const fadeOut = ease((scene.end - time) / 0.8);
         const alpha = Math.min(p, fadeOut);
-        const dark = scene.mode === "memory" || scene.mode === "final";
+        const dark = scene.mode === "memory";
         drawBackground(time, sceneIndex, dark);
-        drawBrand(time, dark);
+        if (scene.mode === "logoIntro") {
+          drawLogoIntro(local, span);
+        } else {
+          drawBrand(time, dark);
+        }
 
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        text(scene.eyebrow, 86, 168, { size: 14, weight: 900, color: dark ? colors.blush : colors.red, max: 520 });
-        text(scene.title, 86, 236, { size: scene.mode === "features" ? 52 : 62, weight: 900, color: dark ? "#fff" : colors.ink, max: 560, line: scene.mode === "features" ? 58 : 66 });
-        text(scene.body, 90, scene.mode === "features" ? 405 : 450, { size: 22, weight: 600, color: dark ? colors.line : colors.muted, max: 520, line: 34 });
-        ctx.restore();
+        if (scene.mode !== "logoIntro" && scene.mode !== "closing") {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          text(scene.eyebrow, 86, 168, { size: 14, weight: 900, color: dark ? colors.blush : colors.red, max: 520 });
+          const titleSize = scene.mode === "features" ? 44 : 62;
+          const titleLine = scene.mode === "features" ? 50 : 66;
+          const titleY = scene.mode === "features" ? 226 : 236;
+          const titleMax = scene.mode === "intro" ? 540 : scene.mode === "features" ? 540 : 560;
+          const titleHeight = text(scene.title, 86, titleY, { size: titleSize, weight: 900, color: dark ? "#fff" : colors.ink, max: titleMax, line: titleLine });
+          const bodyY = scene.mode === "features" || scene.mode === "intro" ? titleY + titleHeight + 38 : 450;
+          text(scene.body, 90, bodyY, { size: 22, weight: 600, color: dark ? colors.line : colors.muted, max: 520, line: 34 });
+          ctx.restore();
+        }
 
         if (scene.mode === "intro") {
-          drawContextPack(Math.min(1, local / 2.4));
-          drawNodes(local / 5, 965, 500, 0.5, false);
+          drawIntroSummary(Math.min(1, local / 1.8));
         } else if (scene.mode === "memory") {
           drawNodes(local / 3.2, 910, 356, 1.08, true);
         } else if (scene.mode === "pack") {
@@ -422,23 +623,24 @@ const html = String.raw`<!doctype html>
           drawLoop(local);
         } else if (scene.mode === "features") {
           drawFeatures(local / 1.8);
-        } else if (scene.mode === "final") {
-          drawNodes(1, 890, 360, 0.9, true);
-          pill("SEE THE LOOP", 90, 565, colors.red);
+        } else if (scene.mode === "closing") {
+          drawClosing(local);
         }
 
         ctx.save();
         ctx.fillStyle = dark ? "rgba(255,255,255,0.18)" : "rgba(15,15,14,0.12)";
         ctx.fillRect(86, 650, 1090, 2);
         ctx.fillStyle = colors.red;
-        ctx.fillRect(86, 650, 1090 * (time / 56), 2);
+        ctx.fillRect(86, 650, 1090 * (time / 64), 2);
         ctx.restore();
       };
     </script>
   </body>
 </html>`;
 
-writeSynthAudio(audioPath);
+writeSynthAudio(scorePath);
+writeNarrationAudio(narrationPath);
+const finalAudioPath = mixAudio(scorePath, narrationPath, mixedAudioPath);
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
@@ -462,7 +664,7 @@ run("ffmpeg", [
   "-y",
   "-framerate", String(fps),
   "-i", path.join(frameDir, "frame-%05d.png"),
-  "-i", audioPath,
+  "-i", finalAudioPath,
   "-shortest",
   "-c:v", "libx264",
   "-pix_fmt", "yuv420p",
@@ -477,8 +679,8 @@ run("ffmpeg", [
 
 run("ffmpeg", [
   "-y",
-  "-ss", "00:00:02",
   "-i", outputPath,
+  "-ss", "00:00:03",
   "-vframes", "1",
   "-update", "1",
   "-q:v", "2",
@@ -486,5 +688,7 @@ run("ffmpeg", [
 ]);
 
 rmSync(frameDir, { recursive: true, force: true });
+copyFileSync(outputPath, docsDemoPath);
 console.log(`wrote ${outputPath}`);
 console.log(`wrote ${posterPath}`);
+console.log(`wrote ${docsDemoPath}`);

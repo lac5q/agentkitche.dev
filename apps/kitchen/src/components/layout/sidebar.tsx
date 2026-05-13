@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -31,6 +31,21 @@ const NAV_ITEMS = [
   { href: "/library#governance", label: "Governance", description: "Health and audit", icon: ShieldCheck },
 ];
 
+function scrollToHashTarget(hash: string, attempt = 0) {
+  const targetId = decodeURIComponent(hash.replace(/^#/, ""));
+  if (!targetId) return;
+
+  const target = document.getElementById(targetId);
+  if (target) {
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  if (attempt < 5) {
+    window.setTimeout(() => scrollToHashTarget(hash, attempt + 1), 50);
+  }
+}
+
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
@@ -38,12 +53,26 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [currentHash, setCurrentHash] = useState(() =>
+    typeof window === "undefined" ? "" : window.location.hash
+  );
 
   // Close sidebar on route change on mobile
   useEffect(() => {
+    const nextHash = window.location.hash;
+    window.setTimeout(() => {
+      setCurrentHash(nextHash);
+      if (nextHash) scrollToHashTarget(nextHash);
+    }, 0);
     if (onClose) onClose();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
+
+  useEffect(() => {
+    const syncHash = () => setCurrentHash(window.location.hash);
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
 
   // Prevent body scroll when mobile drawer is open
   useEffect(() => {
@@ -56,6 +85,18 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    const [targetPath, rawHash] = href.split("#");
+    if (!rawHash || pathname !== targetPath) return;
+
+    const hash = `#${rawHash}`;
+    event.preventDefault();
+    window.history.pushState(null, "", `${targetPath}${hash}`);
+    setCurrentHash(hash);
+    scrollToHashTarget(hash);
+    onClose?.();
+  };
 
   const navContent = (showClose: boolean) => (
     <>
@@ -81,11 +122,15 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       </div>
       <nav className="flex flex-1 flex-col gap-1.5">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const [targetPath, rawHash] = item.href.split("#");
+          const isActive = rawHash
+            ? pathname === targetPath && currentHash === `#${rawHash}`
+            : pathname === item.href && !(item.href === "/library" && currentHash);
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={(event) => handleNavClick(event, item.href)}
               className={cn(
                 "group flex items-center gap-3 rounded-sm border border-transparent px-3 py-2.5 text-sm transition-all",
                 isActive

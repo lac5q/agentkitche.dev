@@ -71,12 +71,27 @@ export async function GET(req: NextRequest) {
   const limit = clampLimit(url.searchParams.get("limit"));
   const db = getDb();
   const version = db
-    .prepare("SELECT COUNT(*) as count, MAX(id) as maxId FROM audit_log")
-    .get() as { count: number; maxId: number | null };
+    .prepare(
+      `SELECT
+         COUNT(*) as count,
+         MAX(id) as maxId,
+         MAX(timestamp) as lastTimestamp,
+         (
+           SELECT group_concat(id || ':' || timestamp || ':' || action || ':' || target || ':' || severity, '|')
+           FROM (
+             SELECT id, timestamp, action, target, severity
+             FROM audit_log
+             ORDER BY id DESC
+             LIMIT 20
+           )
+         ) as fingerprint
+       FROM audit_log`
+    )
+    .get() as { count: number; maxId: number | null; lastTimestamp: string | null; fingerprint: string | null };
   return Response.json(
     await responseCache.getOrSet(
       "security-report",
-      cacheKey([limit, version.count, version.maxId]),
+      cacheKey([limit, version.count, version.maxId, version.lastTimestamp, version.fingerprint]),
       5_000,
       async () => buildSecurityReport(limit),
       ["security", "audit"]
@@ -102,15 +117,23 @@ function buildSecurityReport(limit: number) {
     detail: redactDetail(row.detail),
     blocked: isBlockedEvent(row),
   }));
+  const auditActivity = rows.slice(0, limit).map((row) => ({
+    ...row,
+    detail: redactDetail(row.detail),
+    blocked: isBlockedEvent(row),
+    securityEvent: isSecurityEvent(row),
+  }));
 
   return {
     summary: {
       status: statusFor(securityRows),
       securityEvents: securityRows.length,
+      auditEvents: rows.length,
       highSeverity: securityRows.filter((row) => row.severity === "high").length,
       mediumSeverity: securityRows.filter((row) => row.severity === "medium").length,
       blockedAttempts: securityRows.filter(isBlockedEvent).length,
       lastEventAt: securityRows[0]?.timestamp ?? null,
+      lastAuditAt: rows[0]?.timestamp ?? null,
       topActors: topActors(securityRows),
     },
     controls: [
@@ -120,6 +143,7 @@ function buildSecurityReport(limit: number) {
       { id: "secret-redaction", label: "Dashboard redaction", status: "active" },
     ],
     timeline,
+    auditActivity,
     timestamp: new Date().toISOString(),
   };
 }

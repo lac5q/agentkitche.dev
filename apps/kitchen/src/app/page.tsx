@@ -194,8 +194,8 @@ const featureGroups = [
 const completedRoadmap = [
   {
     phase: "Phase 41",
-    label: "OSS Polish",
-    detail: "MIT license, public README, contribution guide, security policy, issue templates, and GitHub Actions checks.",
+    label: "Public Polish",
+    detail: "Public README, contribution guide, security policy, issue templates, license boundary, and GitHub Actions checks.",
   },
   {
     phase: "Phases 42-45",
@@ -450,7 +450,7 @@ function LandingPage() {
               See the memory loop in motion.
             </h2>
             <p className="mt-4 text-[17px] leading-8 text-[#4a4a45]">
-              A 56-second animated product demo with a custom electronic score, starting with memory as the core value prop and moving through context packs, teams, skills, trust, and runtime.
+              A 64-second animated product demo with voiceover, logo intro, QR links, and a custom electronic score, starting with memory as the core value prop and moving through context packs, teams, skills, trust, and runtime.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
