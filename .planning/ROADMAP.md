@@ -389,3 +389,71 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 - Cross-project recall (similar-task recommendations across repos)
 
 Run `/gsd-new-milestone` to formally define the next milestone after v2.4.
+
+---
+
+## v3.0 Compliance Platform + Finance Vertical (Phases 63–67)
+
+Compliance infrastructure done right once, with bank transaction reconciliation as the reference vertical. CoVe ships as a callable reliability module across all agent runtimes.
+
+- [ ] **Phase 63**: Rename + Team Auth — Kitchen → Memoroos rename, RBAC (admin/operator/reviewer), multi-user JWT auth, team invitation
+- [ ] **Phase 64**: Immutable Audit + HIL Escalation — append-only audit log, every agent/eval/seal decision logged, escalation queue with SLA, CSV/JSON export
+- [ ] **Phase 65**: Finance Reconciliation Vertical — bank transaction adapter, reconciliation golden sets, finance UI terminology, FIN-01..03
+- [ ] **Phase 66**: Self-hosted Hardening + Compliance Posture — full Docker compose, data residency mode, local judge model support (Ollama/vLLM), admin controls
+- [ ] **Phase 67**: CoVe Integration — Chain-of-Verification as callable agent runtime module + registered eval scorer, works on any LLM endpoint, COVE-01..03
+
+### Phase 63: Rename + Team Auth
+**Goal**: Kitchen is renamed to Memoroos throughout, and the platform supports multiple authenticated users with role-based access (admin/operator/reviewer).
+**Depends on**: Phase 62 tenant foundation
+**Requirements**: RENAME-01, TEAM-01, TEAM-02, TEAM-03
+**Success Criteria**:
+1. All references to "Kitchen" replaced with "Memoroos" in codebase, UI, docs, package names, and config files
+2. Three roles enforced: admin sees everything + user management; operator can run agents, approve SEAL proposals, trigger evals; reviewer is read-only on audit + escalations
+3. JWT-based login with per-user API keys; team invitation via email or invite link
+**UI hint**: yes
+
+### Phase 64: Immutable Audit + HIL Escalation
+**Goal**: Every agent decision, SEAL proposal action, and eval run is appended to an immutable log with actor/timestamp/reason. HIL escalations surface in a team-visible queue with SLA countdown.
+**Depends on**: Phase 63 (needs user identity for actor field)
+**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03, AUDIT-04
+**Success Criteria**:
+1. `audit_entries` table is append-only — no UPDATE/DELETE paths exist in code; schema enforced
+2. Every agent match/flag/escalate decision, SEAL apply/rollback, and eval run writes an audit entry
+3. Audit log queryable by agent, time range, decision type, actor — results in under 200ms on 1M rows
+4. CSV and JSON export of any audit query works end-to-end
+5. Open HIL escalations appear in team queue with configurable SLA; overdue items flagged red
+**UI hint**: yes
+
+### Phase 65: Finance Reconciliation Vertical
+**Goal**: Bank transaction reconciliation governance runs on Memoroos — transaction events feed the L3 scorer, reconciliation-specific golden sets power evals, and the UI speaks finance terminology.
+**Depends on**: Phase 61 (L3 adapter pattern), Phase 64 (audit trail for every reconciliation decision)
+**Requirements**: FIN-01, FIN-02, FIN-03
+**Success Criteria**:
+1. Transaction adapter ingests bank transaction events (CSV or webhook), maps to correlation_id, persists to `business_outcome_events`
+2. Reconciliation golden sets ship with match/mismatch/escalation examples; drift guard validates at 0.85 agreement
+3. UI terminology is configurable — "transaction", "reconciliation", "exception" labels replace generic "trace", "eval", "proposal" labels when finance mode is enabled
+4. End-to-end demo: agent processes 100 mock transactions, audit log captures all decisions, escalations appear in HIL queue
+**UI hint**: yes
+
+### Phase 66: Self-hosted Hardening + Compliance Posture
+**Goal**: Memoroos runs fully self-hosted with zero external data egress in data-residency mode; the judge model is configurable to a local Ollama/vLLM endpoint; admin controls are production-ready.
+**Depends on**: Phase 63 (auth), Phase 64 (audit)
+**Requirements**: INFRA-01, INFRA-02
+**Success Criteria**:
+1. `docker compose up` brings up full stack: Memoroos app, mem0, Qdrant, Neo4j, SQLite — no external services required
+2. Data residency mode: when enabled, all LLM calls route to configured local endpoint; no calls to external APIs
+3. Ollama and vLLM endpoints work as drop-in judge model replacements with identical W output
+4. Admin panel: user management, API key rotation, audit log retention policy, adapter enable/disable
+**UI hint**: yes
+
+### Phase 67: CoVe Integration
+**Goal**: Chain-of-Verification ships as a callable 4-step pipeline in the agent runtime (draft → verification questions → independent fact-checks → revised answer) and as a registered eval scorer that measures hallucination reduction vs baseline.
+**Depends on**: Phase 57 (eval scorer registry), Phase 63 (Memoroos rename complete)
+**Requirements**: COVE-01, COVE-02, COVE-03
+**Success Criteria**:
+1. `cove(agentFn, config)` wrapper is callable from any agent; executes 4 steps as sequential LLM calls; returns revised answer + verification trace
+2. CoVe registered as eval scorer: scores a CoVe-enhanced trace against the baseline trace on the same input; returns hallucination delta
+3. Works on Claude API, Hermes via Ollama endpoint, and any OpenAI-compatible endpoint — no model-specific code paths
+4. Config: `cove.enabled`, `cove.max_verification_questions`, `cove.parallel_verification` (batch calls), `cove.judge_endpoint`
+5. Demo: same prompt run with and without CoVe shows measurable W improvement on a factual golden set
+**UI hint**: yes

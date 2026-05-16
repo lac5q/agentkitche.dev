@@ -231,3 +231,35 @@ Derived from `.planning/notes/eval-engine-3-layer-composite.md` (locked decision
 ---
 *Requirements defined: 2026-05-04*
 *Last updated: 2026-05-15 — added v2.5 Eval Engine + Self-Improvement Platform (40 requirements across 6 phases)*
+
+---
+
+## v3 Requirements
+
+### Authentication + Teams
+- TEAM-01: Role-based access control — admin (full access), operator (run/approve agents), reviewer (read-only audit + escalations)
+- TEAM-02: Multi-user session auth — JWT-based, per-user API keys, team invitation flow
+- TEAM-03: Operator approval queue — team members can be assigned to review HIL escalations
+
+### Audit + Compliance
+- AUDIT-01: Immutable audit log — every agent decision (match/flag/escalate), SEAL proposal action, and eval run is appended with actor, timestamp, reason; no deletes
+- AUDIT-02: Audit log is queryable by agent, time range, decision type, actor
+- AUDIT-03: Audit export — CSV/JSON export for compliance review
+- AUDIT-04: HIL escalation queue — unresolved escalations surface in the UI with SLA countdown
+
+### Rename
+- RENAME-01: Product rename Kitchen → Memoroos across codebase, docs, config, UI, and package names
+
+### Self-hosted
+- INFRA-01: Full-stack Docker compose for self-hosted deployment (app + mem0 + Qdrant + Neo4j + SQLite)
+- INFRA-02: Data residency mode — no external API calls except to configured endpoints; judge model configurable as local Ollama/vLLM endpoint
+
+### Finance Vertical
+- FIN-01: Bank transaction reconciliation adapter — ingests transaction events, maps to correlation_id, feeds L3 scorer
+- FIN-02: Reconciliation golden sets — match/mismatch/escalation examples, finance-role drift guard
+- FIN-03: Finance-specific UI terminology option — "reconciliation" / "transaction" / "exception" labels configurable
+
+### CoVe
+- COVE-01: CoVe callable module — 4-step pipeline (draft → verification questions → independent answers → revised answer) available as agent runtime wrapper
+- COVE-02: CoVe registered as eval scorer — measures hallucination reduction vs baseline on same trace
+- COVE-03: CoVe works on any configured LLM endpoint (Claude API, Hermes/Ollama, vLLM)
