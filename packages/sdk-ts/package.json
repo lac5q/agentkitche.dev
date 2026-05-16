@@ -1,0 +1,19 @@
+{
+  "name": "@memoroos/eval-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the MemroOS Public Eval API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.3"
+  }
+}

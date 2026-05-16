@@ -1,0 +1,154 @@
+[
+  {
+    "id": "canary-vector-sentinel",
+    "layer": "canary",
+    "scenario": "Vector memory can write and recall a synthetic sentinel",
+    "agentId": "memory-eval",
+    "taskPrompt": "Recall the synthetic vector sentinel before planning.",
+    "fixtures": [
+      {
+        "id": "eval-vector-sentinel",
+        "tier": "vector",
+        "content": "MemroOS eval vector sentinel: emerald ledger policy requires recall before planning.",
+        "metadata": { "source": "memory-recall-eval", "canary": true }
+      }
+    ],
+    "expectedFacts": ["emerald ledger policy", "recall before planning"],
+    "expectedMemoryIds": ["eval-vector-sentinel"],
+    "expectedTiers": ["vector"],
+    "requiredTiming": "before_plan"
+  },
+  {
+    "id": "canary-episodic-sentinel",
+    "layer": "canary",
+    "scenario": "Episodic SQLite recall can find a synthetic sentinel",
+    "agentId": "memory-eval",
+    "taskPrompt": "Recall the synthetic episodic sentinel before using tools.",
+    "fixtures": [
+      {
+        "id": "eval-episodic-sentinel",
+        "tier": "episodic",
+        "content": "MemroOS eval episodic sentinel: cobalt handoff says verify memory before tool use.",
+        "metadata": { "source": "memory-recall-eval", "canary": true }
+      }
+    ],
+    "expectedFacts": ["cobalt handoff", "verify memory before tool use"],
+    "expectedMemoryIds": ["eval-episodic-sentinel"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_tool_use"
+  },
+  {
+    "id": "gold-marketing-strategy",
+    "layer": "gold",
+    "scenario": "Marketing agent needs prior spend decision before recommendation",
+    "agentId": "marketing-orchestrator",
+    "taskPrompt": "Recommend whether to scale paid media today.",
+    "fixtures": [
+      {
+        "id": "gold-marketing-mer",
+        "tier": "episodic",
+        "content": "Prior decision: MER remains below target, so do not scale spend until funnel structure stabilizes.",
+        "metadata": { "topic": "paid-media", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["MER remains below target", "do not scale spend"],
+    "expectedMemoryIds": ["gold-marketing-mer"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_plan"
+  },
+  {
+    "id": "gold-codebase-impact",
+    "layer": "gold",
+    "scenario": "Coding agent needs GitNexus impact requirement before edits",
+    "agentId": "codex",
+    "taskPrompt": "Modify a shared function in MemroOS.",
+    "fixtures": [
+      {
+        "id": "gold-gitnexus-impact",
+        "tier": "episodic",
+        "content": "Workspace rule: run GitNexus impact analysis before editing any function, class, or method.",
+        "metadata": { "topic": "code-safety", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["GitNexus impact analysis", "before editing"],
+    "expectedMemoryIds": ["gold-gitnexus-impact"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_tool_use"
+  },
+  {
+    "id": "gold-owner-preference",
+    "layer": "gold",
+    "scenario": "Agent needs Luis's report delivery preference",
+    "agentId": "shared",
+    "taskPrompt": "Prepare a stakeholder-facing report.",
+    "fixtures": [
+      {
+        "id": "gold-google-doc-preference",
+        "tier": "episodic",
+        "content": "Luis prefers stakeholder-facing reports as shareable Google Doc links when possible.",
+        "metadata": { "topic": "user-preference", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["shareable Google Doc", "stakeholder-facing reports"],
+    "expectedMemoryIds": ["gold-google-doc-preference"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_final"
+  },
+  {
+    "id": "gold-operational-recovery",
+    "layer": "gold",
+    "scenario": "Agent needs MemroOS Cloudflare recovery procedure",
+    "agentId": "ops-agent",
+    "taskPrompt": "Diagnose memroos.epiloguecapital.com returning 502.",
+    "fixtures": [
+      {
+        "id": "gold-cloudflare-recovery",
+        "tier": "episodic",
+        "content": "MemroOS Cloudflare 502 usually means the Agent Kitchen origin on port 3002 is stopped or unreachable.",
+        "metadata": { "topic": "ops-recovery", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["port 3002", "origin", "stopped or unreachable"],
+    "expectedMemoryIds": ["gold-cloudflare-recovery"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_tool_use"
+  },
+  {
+    "id": "gold-cross-agent-handoff",
+    "layer": "gold",
+    "scenario": "Agent needs handoff context from another agent",
+    "agentId": "paperclip",
+    "taskPrompt": "Continue a delegated research task.",
+    "fixtures": [
+      {
+        "id": "gold-handoff-checkpoint",
+        "tier": "episodic",
+        "content": "Cross-agent handoff: preserve checkpoint summaries under 150 chars and post significant task completion to hive.",
+        "metadata": { "topic": "hive", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["post significant task completion to hive", "under 150 chars"],
+    "expectedMemoryIds": ["gold-handoff-checkpoint"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_final"
+  },
+  {
+    "id": "gold-memory-quota",
+    "layer": "gold",
+    "scenario": "Memory system detects quota failures even when health is up",
+    "agentId": "memory-eval",
+    "taskPrompt": "Check whether memory can answer a live retrieval query.",
+    "fixtures": [
+      {
+        "id": "gold-quota-failure-mode",
+        "tier": "episodic",
+        "content": "Memory health can be green while retrieval fails from Gemini embedding or generation quota exhaustion.",
+        "metadata": { "topic": "memory-quality", "source": "gold-suite" }
+      }
+    ],
+    "expectedFacts": ["health can be green", "quota exhaustion"],
+    "expectedMemoryIds": ["gold-quota-failure-mode"],
+    "expectedTiers": ["episodic"],
+    "requiredTiming": "before_plan"
+  }
+]

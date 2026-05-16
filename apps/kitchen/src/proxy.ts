@@ -1,4 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyAccessToken } from "@/lib/auth/jwt";
+import { ROLE_RANK } from "@/lib/auth/middleware-roles";
+import type { UserRole } from "@/lib/auth/types";
 
 const PUBLIC_HOSTS = new Set(["memroos.com", "www.memroos.com", "memroos.vercel.app"]);
 const LEGACY_HOSTS = new Set(["agentkitchen.dev", "www.agentkitchen.dev"]);
@@ -21,19 +24,122 @@ function isLandingAsset(pathname: string): boolean {
   );
 }
 
-export function proxy(request: NextRequest) {
+/** Routes that require at least operator role */
+const OPERATOR_ROUTES: Array<{ method?: string; pattern: RegExp }> = [
+  { method: "PUT", pattern: /^\/api\/evals\/config$/ },
+  { method: "POST", pattern: /^\/api\/evals\/run$/ },
+  { method: "POST", pattern: /^\/api\/seal\// },
+  { method: "PATCH", pattern: /^\/api\/seal\// },
+  { method: "POST", pattern: /^\/api\/l3\/poll$/ },
+];
+
+/** Routes that require admin role */
+const ADMIN_ROUTES: Array<{ method?: string; pattern: RegExp }> = [
+  { method: "POST", pattern: /^\/api\/auth\/invite$/ },
+];
+
+function getTokenFromRequest(req: NextRequest): string | null {
+  const auth = req.headers.get("authorization");
+  if (auth?.startsWith("Bearer ")) return auth.slice(7).trim();
+
+  // Cookie fallback for SSR
+  const cookie = req.cookies.get("access_token");
+  return cookie?.value ?? null;
+}
+
+async function enforceAuth(req: NextRequest): Promise<NextResponse> {
+  const { pathname } = req.nextUrl;
+
+  // 1. Always pass through auth endpoints and public API
+  if (pathname.startsWith("/api/auth/") || pathname.startsWith("/api/public/")) {
+    return NextResponse.next();
+  }
+
+  // 2. Pass through login/invite/register UI pages
+  if (pathname === "/login" || pathname.startsWith("/invite/") || pathname === "/register") {
+    return NextResponse.next();
+  }
+
+  // 3. For all other /api/* routes: require valid JWT
+  if (pathname.startsWith("/api/")) {
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      return NextResponse.json({ error: "authentication required" }, { status: 401 });
+    }
+
+    const payload = await verifyAccessToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "authentication required" }, { status: 401 });
+    }
+
+    const userRole = payload.role as UserRole;
+    const method = req.method;
+
+    for (const rule of ADMIN_ROUTES) {
+      if (rule.pattern.test(pathname) && (!rule.method || rule.method === method)) {
+        if (ROLE_RANK[userRole] < ROLE_RANK["admin"]) {
+          return NextResponse.json({ error: "insufficient permissions" }, { status: 403 });
+        }
+      }
+    }
+
+    for (const rule of OPERATOR_ROUTES) {
+      if (rule.pattern.test(pathname) && (!rule.method || rule.method === method)) {
+        if (ROLE_RANK[userRole] < ROLE_RANK["operator"]) {
+          return NextResponse.json({ error: "insufficient permissions" }, { status: 403 });
+        }
+      }
+    }
+
+    if (ROLE_RANK[userRole] < ROLE_RANK["reviewer"]) {
+      return NextResponse.json({ error: "insufficient permissions" }, { status: 403 });
+    }
+
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-id", payload.sub);
+    requestHeaders.set("x-user-role", userRole);
+
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // 4. UI routes: redirect to /login if no valid access token cookie
+  if (!pathname.startsWith("/_next") && !pathname.startsWith("/favicon")) {
+    const accessCookie = req.cookies.get("access_token");
+    if (!accessCookie?.value) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+    const payload = await verifyAccessToken(accessCookie.value);
+    if (!payload) {
+      const loginUrl = req.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  return NextResponse.next();
+}
+
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const host = normalizeHost(request.headers.get("host") ?? "");
   const { pathname } = request.nextUrl;
 
+  // Legacy host → permanent redirect to canonical domain
   if (LEGACY_HOSTS.has(host)) {
     return NextResponse.redirect("https://memroos.com/", 308);
   }
 
-  if (!isPublicLandingHost(host) || isLandingAsset(pathname)) {
-    return NextResponse.next();
+  // Public marketing host: serve landing assets, redirect everything else to "/"
+  if (isPublicLandingHost(host)) {
+    if (isLandingAsset(pathname)) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.redirect(new URL("/", request.url));
+  // App host: enforce RBAC auth (formerly middleware.ts)
+  return enforceAuth(request);
 }
 
 export const config = {

@@ -98,6 +98,29 @@ export interface MultiMemorySearchResponse {
   timestamp: string;
 }
 
+export interface MemoryEvalRunSummary {
+  totalCases: number;
+  passedCases: number;
+  failedCases: number;
+  passRate: number;
+  p95LatencyMs: number;
+  tierFailures: Array<"vector" | "graph" | "episodic" | "qmd">;
+}
+
+export interface MemoryEvalLatestResponse {
+  ok: boolean;
+  run: {
+    id: string;
+    mode: "canary" | "gold" | "full";
+    status: "passed" | "failed";
+    startedAt: string;
+    completedAt: string;
+    summary: MemoryEvalRunSummary;
+    results: unknown[];
+  } | null;
+  timestamp: string;
+}
+
 export interface SecurityReportResponse {
   summary: {
     status: "clear" | "watch" | "attention";
@@ -236,6 +259,71 @@ export interface CacheStatsResponse {
   timestamp: string;
 }
 
+export interface EvalConfigResponse {
+  config: import("@/lib/evals/types").EvalConfig;
+  yaml: string;
+  timestamp: string;
+}
+
+export interface EvalRunResponse {
+  ok: boolean;
+  result: import("@/lib/evals/types").EvalRunResult;
+  timestamp: string;
+}
+
+export interface EvalHistoryResponse {
+  runs: Array<import("@/lib/evals/types").EvalRunResult & {
+    examples: import("@/lib/evals/types").EvalDriftGuardResult["examples"];
+  }>;
+  timestamp: string;
+}
+
+export interface SealProposal {
+  id: string;
+  traceId: string;
+  runId: string;
+  agentId: string;
+  proposalType: string;
+  status: "pending" | "approved" | "rejected" | "applied" | "rolled_back";
+  diff: Record<string, unknown>;
+  rationale: string;
+  forecastWDelta: number;
+  baselineW: number;
+  baselineRunId: string;
+  baselineLayers: Record<string, { score: number; weight: number }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SealAuditLogEntry {
+  id: string;
+  proposalId: string;
+  event: "proposed" | "approved" | "rejected" | "apply_started" | "apply_succeeded" | "apply_failed" | "rolled_back";
+  baselineW: number | null;
+  postApplyW: number | null;
+  deltaL1: number | null;
+  deltaL2: number | null;
+  deltaL3: number | null;
+  deltaComposite: number | null;
+  detail: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface SealProposalsResponse {
+  proposals: SealProposal[];
+  timestamp: string;
+}
+
+export interface SealProposalResponse {
+  proposal: SealProposal;
+  timestamp: string;
+}
+
+export interface SealAuditLogResponse {
+  entries: SealAuditLogEntry[];
+  timestamp: string;
+}
+
 async function fetchJSON<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
@@ -356,6 +444,117 @@ export function useModelUsage() {
         "/api/model-usage"
       ),
     refetchInterval: POLL_INTERVALS.tokens,
+  });
+}
+
+export function useEvalConfig() {
+  return useQuery({
+    queryKey: ["evals", "config"],
+    queryFn: () => fetchJSON<EvalConfigResponse>("/api/evals/config"),
+    staleTime: 15_000,
+  });
+}
+
+export function updateEvalConfig(config: import("@/lib/evals/types").EvalConfig) {
+  return mutateJSON<EvalConfigResponse & { ok: boolean }>("/api/evals/config", {
+    method: "PUT",
+    body: JSON.stringify({ config }),
+  });
+}
+
+export function useUpdateEvalConfigMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateEvalConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evals"] });
+    },
+  });
+}
+
+export function runEvalTrace(trace: import("@/lib/evals/types").AgentEvalTrace) {
+  return mutateJSON<EvalRunResponse>("/api/evals/run", {
+    method: "POST",
+    body: JSON.stringify({ trace }),
+  });
+}
+
+export function useRunEvalTraceMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: runEvalTrace,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evals", "history"] });
+    },
+  });
+}
+
+export function useEvalHistory(limit = 25) {
+  return useQuery({
+    queryKey: ["evals", "history", limit],
+    queryFn: () => fetchJSON<EvalHistoryResponse>(`/api/evals/history?limit=${limit}`),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useSealProposals(status?: SealProposal["status"]) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  const qs = params.toString();
+  return useQuery({
+    queryKey: ["seal", "proposals", status ?? "all"],
+    queryFn: () => fetchJSON<SealProposalsResponse>(`/api/seal/proposals${qs ? `?${qs}` : ""}`),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useSealProposal(id: string | null) {
+  return useQuery({
+    queryKey: ["seal", "proposal", id],
+    queryFn: () => fetchJSON<SealProposalResponse>(`/api/seal/proposals/${encodeURIComponent(id as string)}`),
+    enabled: Boolean(id),
+  });
+}
+
+export function useSealAuditLog(proposalId?: string) {
+  const params = new URLSearchParams();
+  if (proposalId) params.set("proposalId", proposalId);
+  const qs = params.toString();
+  return useQuery({
+    queryKey: ["seal", "audit", proposalId ?? "all"],
+    queryFn: () => fetchJSON<SealAuditLogResponse>(`/api/seal/audit${qs ? `?${qs}` : ""}`),
+    refetchInterval: 30_000,
+  });
+}
+
+function decideSealProposal(input: { id: string; action: "approve" | "reject" | "apply"; reasoning?: string }) {
+  return mutateJSON<SealProposalResponse & { ok: boolean }>(`/api/seal/proposals/${encodeURIComponent(input.id)}`, {
+    method: "POST",
+    body: JSON.stringify({ action: input.action, reasoning: input.reasoning }),
+  });
+}
+
+export function useApproveMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; reasoning?: string }) => decideSealProposal({ ...input, action: "approve" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seal"] }),
+  });
+}
+
+export function useRejectMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; reasoning?: string }) => decideSealProposal({ ...input, action: "reject" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seal"] }),
+  });
+}
+
+export function useApplyMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; reasoning?: string }) => decideSealProposal({ ...input, action: "apply" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["seal"] }),
   });
 }
 
@@ -840,6 +1039,14 @@ export function useMemoryTierHealth() {
   });
 }
 
+export function useMemoryEvalLatest() {
+  return useQuery({
+    queryKey: ["memory-eval-latest"],
+    queryFn: () => fetchJSON<MemoryEvalLatestResponse>("/api/memory/evals/latest"),
+    refetchInterval: 60000,
+  });
+}
+
 export type TimeSeriesMetric =
   | "docs_ingested"
   | "memory_writes"
@@ -930,6 +1137,163 @@ export function useLineage(taskId: string | null) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Memory autogen — proposals and policy lab
+// ---------------------------------------------------------------------------
+
+export interface MemoryProposalTypeMeta {
+  label: string;
+  description: string;
+}
+
+export interface MemoryProposalsResponse {
+  proposals: SealProposal[];
+  types: Record<string, MemoryProposalTypeMeta>;
+  timestamp: string;
+}
+
+export interface PolicyRankResult {
+  rank: number;
+  name: string;
+  compositeW: number;
+  layerScores: { l1: number; l2: number; l3: number };
+  variantConfig: Record<string, unknown>;
+  evalRunId: string;
+}
+
+export interface PolicyLabResponse {
+  ok: boolean;
+  goldenSetId: string;
+  ranked: PolicyRankResult[];
+  timestamp: string;
+}
+
+export interface MemoryPolicyVariant {
+  name: string;
+  config: Record<string, unknown>;
+}
+
+export function useMemoryProposals(status?: string) {
+  const params = status ? `?status=${encodeURIComponent(status)}` : "";
+  return useQuery({
+    queryKey: ["memory-proposals", status],
+    queryFn: () => fetchJSON<MemoryProposalsResponse>(`/api/memory/proposals${params}`),
+    refetchInterval: 15000,
+  });
+}
+
+export function useRunPolicyLabMutation() {
+  return useMutation({
+    mutationFn: (payload: { variants: MemoryPolicyVariant[]; goldenSetId?: string }) =>
+      mutateJSON<PolicyLabResponse>("/api/memory/policy-lab", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Eval preset selector hooks (Phase 60)
+// ---------------------------------------------------------------------------
+
+export interface AgentProposal {
+  id: string;
+  traceId: string;
+  runId: string;
+  agentId: string;
+  proposalType: "agent_instruction_patch" | "skill_addition" | "tool_routing_update";
+  status: SealProposal["status"];
+  diff: Record<string, unknown>;
+  rationale: string;
+  forecastWDelta: number;
+  baselineW: number;
+  createdAt: string;
+}
+
+export interface AgentProposalsResponse {
+  proposals: AgentProposal[];
+  timestamp: string;
+}
+
+export function useEvalPresets() {
+  return useQuery({
+    queryKey: ["evals", "presets"],
+    queryFn: () => fetchJSON<EvalConfigResponse>("/api/evals/config").then((r) => ({
+      presets: r.config.weightPresets ?? {},
+      activePreset: r.config.activePreset ?? null,
+    })),
+    staleTime: 15_000,
+  });
+}
+
+function setActivePreset(activePreset: string | null) {
+  return mutateJSON<EvalConfigResponse & { ok: boolean }>("/api/evals/config", {
+    method: "POST",
+    body: JSON.stringify({ active_preset: activePreset }),
+  });
+}
+
+export function useSetActivePresetMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setActivePreset,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["evals"] });
+    },
+  });
+}
+
+export function useAgentProposals(status?: AgentProposal["status"]) {
+  const params = status ? `?status=${encodeURIComponent(status)}` : "";
+  return useQuery({
+    queryKey: ["agent-proposals", status ?? "all"],
+    queryFn: () => fetchJSON<AgentProposalsResponse>(`/api/agents/proposals${params}`),
+    refetchInterval: 30_000,
+  });
+}
+
+function triggerAgentReflection(agentId: string) {
+  return mutateJSON<{ ok: boolean; proposals: AgentProposal[]; timestamp: string }>(
+    "/api/agents/proposals",
+    { method: "POST", body: JSON.stringify({ action: "reflect", agentId }) }
+  );
+}
+
+export function useTriggerAgentReflectionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: triggerAgentReflection,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-proposals"] });
+    },
+  });
+}
+
+export function useMemoryProposalActionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      action,
+    }: {
+      id: string;
+      action: "approve" | "reject" | "apply";
+    }) =>
+      mutateJSON<{
+        ok: boolean;
+        proposal: SealProposal;
+        timestamp: string;
+      }>(`/api/seal/proposals/${encodeURIComponent(id)}`, {
+        method: "POST",
+        body: JSON.stringify({ action }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["memory-proposals"] });
+      queryClient.invalidateQueries({ queryKey: ["seal"] });
+    },
+  });
+}
+
 export function useAgentCards() {
   return useQuery({
     queryKey: ["agent-cards"],
@@ -960,5 +1324,83 @@ export function useAgentCards() {
         timestamp: string;
       }>("/api/agents/cards"),
     refetchInterval: POLL_INTERVALS.health,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Phase 61 — Business-Ops Outcome Layer (L3) hooks
+// ---------------------------------------------------------------------------
+
+export interface BusinessOutcomeEventRow {
+  id: number;
+  tenantId: string;
+  correlationId: string;
+  sourceSystem: "crm" | "helpdesk" | "finance";
+  adapter: string;
+  eventType: string;
+  kpiKey: string;
+  kpiValue: number;
+  rawJson: string;
+  agentId?: string;
+  polledAt: string;
+  createdAt: string;
+}
+
+export interface BusinessOutcomeEventsResponse {
+  events: BusinessOutcomeEventRow[];
+  count: number;
+  timestamp: string;
+}
+
+export interface BusinessOpsPollSummary {
+  ok: boolean;
+  totalEventsWritten: number;
+  errors: string[];
+  adapterResults: Array<{
+    adapter: string;
+    category: string;
+    eventsPolled: number;
+    eventsWritten: number;
+    error: string | null;
+  }>;
+  polledAt: string;
+  timestamp: string;
+}
+
+export interface BusinessOutcomeEventsFilter {
+  correlationId?: string;
+  agentId?: string;
+  since?: string;
+  limit?: number;
+}
+
+export function useBusinessOutcomeEvents(filter: BusinessOutcomeEventsFilter = {}) {
+  const params = new URLSearchParams();
+  if (filter.correlationId) params.set("correlationId", filter.correlationId);
+  if (filter.agentId) params.set("agentId", filter.agentId);
+  if (filter.since) params.set("since", filter.since);
+  if (filter.limit) params.set("limit", String(filter.limit));
+  const qs = params.toString();
+  return useQuery({
+    queryKey: ["l3-events", filter],
+    queryFn: () => fetchJSON<BusinessOutcomeEventsResponse>(`/api/l3/events${qs ? `?${qs}` : ""}`),
+    refetchInterval: 30_000,
+  });
+}
+
+function triggerAdapterPoll(input: { since?: string; adapters?: string[] }) {
+  return mutateJSON<BusinessOpsPollSummary>("/api/l3/poll", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function useTriggerAdapterPollMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: triggerAdapterPoll,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["l3-events"] });
+    },
   });
 }

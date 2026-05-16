@@ -7,14 +7,21 @@ import {
   BarChart3,
   Bot,
   Brain,
+  ClipboardCheck,
   Database,
   GitBranch,
+  Key,
   LayoutDashboard,
+  Layers,
+  RefreshCw,
   Send,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
+  Users,
   Wrench,
 } from "lucide-react";
+import { UserMenu } from "./user-menu";
 import { cn } from "@/lib/utils";
 import { KangarooMark } from "./brand-mark";
 
@@ -28,7 +35,14 @@ const NAV_ITEMS = [
   { href: "/dispatch", label: "Engage", description: "Chat, voice, standups", icon: Send },
   { href: "/apo", label: "Improvements", description: "Optimization queue", icon: Sparkles },
   { href: "/ledger", label: "Usage", description: "Cost and model mix", icon: BarChart3 },
+  { href: "/evals", label: "Evals", description: "Eval engine and drift guard", icon: ClipboardCheck },
+  { href: "/business-ops", label: "Business Ops", description: "L3 outcome signals", icon: TrendingUp },
+  { href: "/seal", label: "SEAL", description: "Self-improvement substrate", icon: RefreshCw },
+  { href: "/agent-autogen", label: "Agent Autogen", description: "Agent autogen proposals", icon: Bot },
+  { href: "/memory-autogen", label: "Memory Autogen", description: "Memory proposals & policy lab", icon: Layers },
   { href: "/library#governance", label: "Governance", description: "Health and audit", icon: ShieldCheck },
+  { href: "/team", label: "Team", description: "Users and invitations", icon: Users },
+  { href: "/settings/api-keys", label: "API Keys", description: "Per-user API keys", icon: Key },
 ];
 
 function scrollToHashTarget(hash: string, attempt = 0) {
@@ -164,6 +178,9 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       <div className="border-t border-[#c9c9c2] px-2 pt-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a2a1e]">Operating model</p>
         <p className="mt-1 text-xs text-[#4a4a45]">Retain, retrieve, dispatch, improve</p>
+      </div>
+      <div className="border-t border-[#c9c9c2] mt-4 pt-2">
+        <UserMenu />
       </div>
     </>
   );

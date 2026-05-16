@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { KpiCard } from "@/components/ledger/kpi-card";
-import { useMemoryStats, useMemoryTierHealth } from "@/lib/api-client";
+import { useMemoryEvalLatest, useMemoryStats, useMemoryTierHealth } from "@/lib/api-client";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -40,6 +40,7 @@ type ButtonState = "idle" | "loading" | "success" | "error";
 export function MemoryIntelligencePanel() {
   const { data, isLoading } = useMemoryStats();
   const tierHealth = useMemoryTierHealth();
+  const memoryEval = useMemoryEvalLatest();
   const queryClient = useQueryClient();
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
 
@@ -66,6 +67,7 @@ export function MemoryIntelligencePanel() {
   const healthTiers = tierHealth.data?.tiers ?? [];
   const consolidationModel = data?.consolidationModel ?? null;
   const sources = data?.sources ?? [];
+  const latestEval = memoryEval.data?.run ?? null;
 
   const pendingValue = isLoading ? dash : String(pendingUnconsolidated);
 
@@ -91,6 +93,14 @@ export function MemoryIntelligencePanel() {
       : lastRun?.status === "running"
       ? "text-sky-400"
       : "text-slate-400";
+
+  const evalPassRate = latestEval ? `${(latestEval.summary.passRate * 100).toFixed(1)}%` : dash;
+  const evalStatusColor =
+    latestEval?.status === "passed"
+      ? "text-emerald-400"
+      : latestEval?.status === "failed"
+        ? "text-rose-400"
+        : "text-slate-400";
 
   // ── button classes ──────────────────────────────────────────────────────────
 
@@ -199,6 +209,43 @@ export function MemoryIntelligencePanel() {
               </div>
             </div>
           )}
+
+          <div className="rounded-lg border border-slate-800 bg-slate-900/30 p-3">
+            <div className="mb-2 flex items-center gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Recall Quality
+              </p>
+              <InfoTooltip text="Latest memory eval result. This checks recall quality and timing separately from whether the memory services are merely reachable." />
+            </div>
+            {memoryEval.isLoading ? (
+              <div className="h-10 rounded-md bg-slate-800/30" />
+            ) : latestEval ? (
+              <div className="grid gap-2 sm:grid-cols-4">
+                <div className="rounded-md border border-slate-700/50 bg-slate-800/40 px-3 py-2">
+                  <p className="text-xs text-slate-500">Pass Rate</p>
+                  <p className={`mt-1 text-lg font-semibold ${evalStatusColor}`}>{evalPassRate}</p>
+                </div>
+                <div className="rounded-md border border-slate-700/50 bg-slate-800/40 px-3 py-2">
+                  <p className="text-xs text-slate-500">Cases</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">
+                    {latestEval.summary.passedCases}/{latestEval.summary.totalCases} passing
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-700/50 bg-slate-800/40 px-3 py-2">
+                  <p className="text-xs text-slate-500">p95 Latency</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">{latestEval.summary.p95LatencyMs} ms</p>
+                </div>
+                <div className="rounded-md border border-slate-700/50 bg-slate-800/40 px-3 py-2">
+                  <p className="text-xs text-slate-500">Tier Failures</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">
+                    {latestEval.summary.tierFailures.length ? latestEval.summary.tierFailures.join(", ") : "none"}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500">No eval run recorded yet.</p>
+            )}
+          </div>
 
           {/* Ingested sources */}
           {sources.length > 0 && (

@@ -122,6 +122,63 @@ Healthy deployments should show:
 - Graph tier up when Neo4j is reachable.
 - Episodic tier up when Kitchen SQLite is writable.
 
+## Recall Quality Evals
+
+Tier health only proves that backends respond. Recall evals prove that agents can retrieve the right memories at the right time.
+
+The canonical eval suite lives in `evals/memory-recall/cases.json`. Each case declares the scenario, target agent, task prompt, seed fixtures, expected facts or memory IDs, expected tiers, required recall timing, and scoring thresholds.
+
+Run the suite through Kitchen:
+
+```bash
+npm --prefix apps/kitchen run eval:memory
+npm --prefix apps/kitchen run eval:memory -- --canary
+npm --prefix apps/kitchen run eval:memory -- --full
+```
+
+The API surface is:
+
+- `GET /api/memory/evals/latest` for the latest persisted run.
+- `POST /api/memory/evals/run?mode=canary|gold|full` for an on-demand run.
+
+Results are stored in Kitchen SQLite tables created lazily by the eval subsystem:
+
+- `memory_eval_runs`
+- `memory_eval_cases`
+- `memory_eval_results`
+
+Core metrics:
+
+- `recallAtK`: expected memories or facts found in the top K.
+- `precisionAtK`: relevant results divided by returned top-K results.
+- `mrr`: reciprocal rank of the first relevant result.
+- `tierCoverage`: required memory tiers represented in results.
+- `falsePositiveRate`: non-relevant top-K results divided by returned top-K results.
+- `latencyMs`: slowest observed retrieval latency in the case.
+
+Default thresholds are `recall@5 >= 0.85`, `precision@5 >= 0.70`, `MRR >= 0.75`, and latency under 5s. Canary cases should run hourly, gold cases nightly, and the full suite before major routing or memory backend changes.
+
+## Self-Learning Memory Loop
+
+MemroOS should treat recall quality as the objective function for memory learning. The v1 loop is inspired by Karpathy's `autoresearch` pattern, but it does not fine-tune model weights:
+
+1. Run memory recall evals.
+2. Convert failures into deterministic reflections.
+3. Generate typed memory self-edit proposals.
+4. Require operator approval before applying any proposal.
+5. Apply approved changes through typed handlers.
+6. Rerun the relevant eval suite.
+7. Keep the change only if recall metrics improve or remain above threshold; otherwise roll back.
+
+The autoresearch-style extension is a memory policy lab:
+
+- fixed harness: eval cases, fixtures, scoring, rollback, and experiment ledger
+- one mutable candidate file: query expansion, tier fallback, reranking, and salience policy hooks
+- objective: a scalar score derived from `recallAtK`, `mrr`, `precisionAtK`, `tierCoverage`, false-positive rate, and latency
+- audit: every accepted, rejected, errored, or rolled-back experiment is persisted
+
+AR model training is deferred. The first implementation should collect clean eval/proposal/experiment trajectories so a later lightweight autoregressive predictor can learn from audited memory outcomes instead of raw, unreviewed agent traces.
+
 ## Privacy Notes
 
 - Do not write raw secrets to any memory tier.

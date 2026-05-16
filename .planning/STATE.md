@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Eval Engine + Self-Improvement Platform
-status: planning
-last_updated: "2026-05-15T15:00:17.418Z"
-last_activity: 2026-05-15
+status: v2.5 PARTIAL — committed, build GREEN, 593/593 tests pass; feature gaps remain
+stopped_at: reconciliation complete + committed 2026-05-16
+last_updated: "2026-05-16T13:44:34.665Z"
+last_activity: 2026-05-16 — reconciliation: fixed build + tests, honest SUMMARYs, committed
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 5
   completed_plans: 0
   percent: 0
 ---
@@ -20,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
 **Core value:** Any agent framework plugs into Kitchen — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
-**Current focus:** Next product milestone definition
+**Current focus:** v2.5 reconciliation — large uncommitted partial implementation needs decision (fix-then-commit vs WIP-park)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-15 — Milestone v2.5 started
+Phase: v2.5 (57-62) — COMMITTED, build green, tests green; PARTIAL feature completeness
+Plan: PARTIAL SUMMARYs written for 57,58,60,61,62 (phase 59 unplanned, no plan)
+Status: build passes, 593/593 tests; golden sets ~4% (top follow-up), no dogfood W-lift
+Last activity: 2026-05-16 — reconciliation complete + committed
 
 ## Roadmap Summary (v2.0)
 
@@ -78,20 +79,50 @@ Last activity: 2026-05-15 — Milestone v2.5 started
 - **Outbound A2A credentials are env-key-only** — metadata may name an env var, but UI must not render bearer/API-key values or raw auth headers
 - **ADK proof fixture is optional** — `examples/adk-a2a-agent/` is not imported by Kitchen startup
 
-### Pending Todos
+### v2.5 ACTUAL Status (reconciliation audit 2026-05-16)
 
-- Define the next milestone after the Phase 56 code review and UAT/E2E pass.
+Prior STATE.md claimed "all 6 phases shipped" — that was FALSE. No SUMMARY.md
+exists for any phase; all work is uncommitted; production build is broken.
+Verdict: coherent partial work (real logic, not scaffolding), NOT shippable.
 
-### Blockers/Concerns
+| Phase | Name | Actual Status |
+|-------|------|---------------|
+| 57 | Eval Engine Core | PARTIAL — engine/scorers/judge real; golden set ~3/50 rows |
+| 58 | SEAL Self-Improvement | PARTIAL — full loop coded; 4 real test failures (audit FK, eval lookups) |
+| 59 | Memory Autogen | UNPLANNED — code exists, NO phase dir/plan/contract |
+| 60 | Agent Autogen | PARTIAL/MISSING — golden sets 2/50 each; no dogfood W-lift evidence |
+| 61 | Business-Ops L3 | PARTIAL — schema/code column mismatch will break L3 at runtime |
+| 62 | Public Eval API + SDK | PARTIAL — SDKs real, route paths diverge from plan |
 
-- Production build has a non-blocking Turbopack NFT warning involving `/api/apo` — documented in code comment (OPSGW-02)
-- Lint passes with 12 pre-existing warnings unrelated to Phase 35
-- Full tests pass with a pre-existing Vitest hoisting warning in `src/app/api/agents/__tests__/card.test.ts`
+Scope creep outside v2.5: phases 63 (Rename+Team Auth) & 64 (Immutable Audit+HIL)
+have plan dirs + code (lib/auth/, /api/auth/, login/register) — v3 direction.
+
+### Blockers/Concerns (verified)
+
+- **BUILD BROKEN:** new untracked `apps/kitchen/src/middleware.ts` (auth, ph63/64)
+  collides with `proxy.ts`. This Next.js replaced middleware→proxy; the two files
+  hold *different* logic (RBAC vs host-redirect) and must be merged, not deleted.
+- **91/545 tests fail** (25 files): SEAL audit-log FK bug, L3 schema mismatch,
+  plus mock-setup failures (hive lineage, memory tier routes).
+- Golden sets ~4% populated — drift guard / agreement criteria cannot be validated.
+- `bcryptjs` declared in package.json but may need `npm install`.
+- `.codex/` & `.agents/` untracked tool state — should be gitignored, NOT committed.
 - GitNexus embeddings partial (285/473) — upstream crash bug (abhigyanpatwari/GitNexus#824)
+
+### Pending Todos (post-reconciliation)
+
+- **TOP: populate golden sets** — 57 (~3/50) and 60 (~2/50 per role). Drift
+  guard / agreement criteria cannot be validated until done. Blocks "v2.5 done".
+- Capture dogfood W-lift evidence for phases 58/60 (success criteria unmet)
+- Reconcile path/naming divergences: L3 `lib/l3` vs planned `lib/business-ops`;
+  public API `/v1/traces` vs planned `/v1/eval`; confirm `docs/eval-quickstart.md`
+- Phase 59 (memory-autogen) shipped without a plan — author a retro plan or
+  fold into v3 scope
+- Auth/63/64 code kept on main (build depends on it); tracked as v3 in ROADMAP
 
 ## Session Continuity
 
-Last session: 2026-05-05T09:27:41Z
-Stopped at: Completed 35-04-PLAN.md
+Last session: 2026-05-16 — resume-work reconciliation audit
+Stopped at: STATE.md corrected; awaiting user decision on commit strategy
 Resume file: None
-Next action: define the next product milestone and run a code-review gate over the completed /goal batches
+Next action: user picks fix-then-commit vs park-as-WIP; then execute that path

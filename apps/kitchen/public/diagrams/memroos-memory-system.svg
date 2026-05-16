@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">MemroOS memory system diagram</title>
+  <desc id="desc">Diagram showing how business work enters MemroOS, retrieves memory and knowledge, dispatches agents, and records outcomes into vector, graph, episodic, and skill memory.</desc>
+  <defs>
+    <style>
+      .page { fill: #fbfbf8; }
+      .frame { fill: #ffffff; stroke: #d8d3c8; stroke-width: 2; }
+      .panel { fill: #ffffff; stroke: #d8d3c8; stroke-width: 2; }
+      .panel-tint { fill: #fff7f3; stroke: #cc6a4d; stroke-width: 3; }
+      .panel-memory { fill: #f2fbf8; stroke: #2a8c7c; stroke-width: 3; }
+      .panel-runtime { fill: #f3f5ff; stroke: #5a68bd; stroke-width: 3; }
+      .node { fill: #ffffff; stroke: #d8d3c8; stroke-width: 2; }
+      .node-soft { fill: #fafaf7; stroke: #d8d3c8; stroke-width: 2; }
+      .vector { fill: #eef9f5; stroke: #218a77; stroke-width: 3; }
+      .graph { fill: #f0f3ff; stroke: #5262b8; stroke-width: 3; }
+      .episodic { fill: #fff6e6; stroke: #ad730f; stroke-width: 3; }
+      .knowledge { fill: #ffffff; stroke: #8a8478; stroke-width: 2; }
+      .skills { fill: #fff7f3; stroke: #a8392c; stroke-width: 2; }
+      .title { font: 800 64px Inter, Arial, sans-serif; fill: #11110f; }
+      .subtitle { font: 400 24px Inter, Arial, sans-serif; fill: #4a4a45; }
+      .eyebrow { font: 800 16px Inter, Arial, sans-serif; fill: #a8392c; letter-spacing: 0; text-transform: uppercase; }
+      .section { font: 800 30px Inter, Arial, sans-serif; fill: #171715; }
+      .section-copy { font: 400 18px Inter, Arial, sans-serif; fill: #55554f; }
+      .node-title { font: 800 23px Inter, Arial, sans-serif; fill: #171715; }
+      .node-copy { font: 400 17px Inter, Arial, sans-serif; fill: #55554f; }
+      .small { font: 700 14px Inter, Arial, sans-serif; fill: #62625d; }
+      .step { font: 800 18px Inter, Arial, sans-serif; fill: #171715; }
+      .tag { font: 800 14px Inter, Arial, sans-serif; fill: #ffffff; }
+      .line-red { fill: none; stroke: #a8392c; stroke-width: 5; }
+      .line-teal { fill: none; stroke: #257f75; stroke-width: 5; }
+      .line-blue { fill: none; stroke: #5262b8; stroke-width: 5; }
+      .line-gold { fill: none; stroke: #9c6a0c; stroke-width: 5; }
+      .line-gray { fill: none; stroke: #77776f; stroke-width: 4; }
+    </style>
+    <marker id="arrow-red" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#a8392c" />
+    </marker>
+    <marker id="arrow-teal" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#257f75" />
+    </marker>
+    <marker id="arrow-blue" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#5262b8" />
+    </marker>
+    <marker id="arrow-gold" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#9c6a0c" />
+    </marker>
+    <marker id="arrow-gray" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#77776f" />
+    </marker>
+  </defs>
+
+  <rect class="page" width="1600" height="980" />
+  <rect class="frame" x="48" y="46" width="1504" height="888" rx="14" />
+
+  <text class="eyebrow" x="96" y="112">Memory architecture</text>
+  <text class="title" x="94" y="184">How MemroOS remembers</text>
+  <text class="subtitle" x="98" y="226">Work requests pull from the right memory. Completed outcomes make the next agent smarter.</text>
+
+  <rect class="panel" x="96" y="300" width="280" height="350" rx="12" />
+  <text class="section" x="126" y="356">Work starts here</text>
+  <text class="section-copy" x="126" y="388">Teams create useful traces</text>
+
+  <g transform="translate(126 430)">
+    <rect class="node-soft" x="0" y="0" width="220" height="54" rx="8" />
+    <rect x="0" y="0" width="8" height="54" rx="4" fill="#a8392c" />
+    <text class="node-title" x="24" y="34">Product</text>
+  </g>
+  <g transform="translate(126 502)">
+    <rect class="node-soft" x="0" y="0" width="220" height="54" rx="8" />
+    <rect x="0" y="0" width="8" height="54" rx="4" fill="#257f75" />
+    <text class="node-title" x="24" y="34">Sales</text>
+  </g>
+  <g transform="translate(126 574)">
+    <rect class="node-soft" x="0" y="0" width="220" height="54" rx="8" />
+    <rect x="0" y="0" width="8" height="54" rx="4" fill="#5262b8" />
+    <text class="node-title" x="24" y="34">Engineering</text>
+  </g>
+
+  <rect class="panel-tint" x="486" y="276" width="320" height="398" rx="12" />
+  <text class="section" x="522" y="336">MemroOS</text>
+  <text class="section-copy" x="522" y="368">Governs identity, context,</text>
+  <text class="section-copy" x="522" y="392">dispatch, and audit.</text>
+
+  <g transform="translate(522 444)">
+    <rect class="node" x="0" y="0" width="248" height="68" rx="8" />
+    <text class="node-title" x="22" y="30">Context pack</text>
+    <text class="node-copy" x="22" y="52">What the agent needs now</text>
+  </g>
+  <g transform="translate(522 544)">
+    <rect class="node" x="0" y="0" width="248" height="68" rx="8" />
+    <text class="node-title" x="22" y="30">Governed dispatch</text>
+    <text class="node-copy" x="22" y="52">Policy, keys, approval</text>
+  </g>
+
+  <rect class="panel-memory" x="900" y="258" width="340" height="500" rx="12" />
+  <text class="section" x="936" y="298">Memory + knowledge</text>
+  <text class="section-copy" x="936" y="330">Each store has a job.</text>
+
+  <g transform="translate(936 376)">
+    <rect class="vector" x="0" y="0" width="268" height="72" rx="9" />
+    <rect x="162" y="16" width="86" height="24" rx="9" fill="#218a77" />
+    <text class="tag" x="176" y="33">MEANING</text>
+    <text class="node-title" x="22" y="31">Vector</text>
+    <text class="node-copy" x="22" y="55">mem0 + Qdrant recall</text>
+  </g>
+  <g transform="translate(936 468)">
+    <rect class="graph" x="0" y="0" width="268" height="72" rx="9" />
+    <rect x="146" y="16" width="102" height="24" rx="9" fill="#5262b8" />
+    <text class="tag" x="158" y="33">RELATIONS</text>
+    <text class="node-title" x="22" y="31">Graph</text>
+    <text class="node-copy" x="22" y="55">People, agents, dependencies</text>
+  </g>
+  <g transform="translate(936 560)">
+    <rect class="episodic" x="0" y="0" width="268" height="72" rx="9" />
+    <rect x="174" y="16" width="74" height="24" rx="9" fill="#ad730f" />
+    <text class="tag" x="188" y="33">EVENTS</text>
+    <text class="node-title" x="22" y="31">Episodic</text>
+    <text class="node-copy" x="22" y="55">SQLite reports and audits</text>
+  </g>
+  <g transform="translate(936 652)">
+    <rect class="knowledge" x="0" y="0" width="268" height="64" rx="9" />
+    <text class="node-title" x="22" y="29">Knowledge + skills</text>
+    <text class="node-copy" x="22" y="51">Files, playbooks, source health</text>
+  </g>
+
+  <rect class="panel-runtime" x="1324" y="320" width="184" height="318" rx="12" />
+  <text class="section" x="1354" y="374">Agents</text>
+  <text class="section-copy" x="1354" y="408">Existing runtimes</text>
+
+  <g transform="translate(1354 450)">
+    <rect class="node" x="0" y="0" width="124" height="44" rx="8" />
+    <text class="small" x="18" y="28">Claude</text>
+  </g>
+  <g transform="translate(1354 510)">
+    <rect class="node" x="0" y="0" width="124" height="44" rx="8" />
+    <text class="small" x="18" y="28">Codex</text>
+  </g>
+  <g transform="translate(1354 570)">
+    <rect class="node" x="0" y="0" width="124" height="44" rx="8" />
+    <text class="small" x="18" y="28">ADK / HTTP</text>
+  </g>
+
+  <path class="line-red" d="M376 486 C420 486 438 486 486 486" marker-end="url(#arrow-red)" />
+  <text class="step" x="392" y="466">1. request work</text>
+
+  <path class="line-teal" d="M806 438 C840 396 858 390 900 402" marker-end="url(#arrow-teal)" />
+  <text class="step" x="810" y="380">2. retrieve context</text>
+
+  <path class="line-blue" d="M806 578 C982 840 1246 832 1324 610" marker-end="url(#arrow-blue)" />
+  <text class="step" x="984" y="826">3. dispatch with context</text>
+
+  <path class="line-gold" d="M1324 462 C1284 418 1260 402 1230 430" marker-end="url(#arrow-gold)" />
+  <text class="step" x="1228" y="344">4. report outcomes</text>
+
+  <path class="line-gray" d="M936 684 C760 838 462 792 272 628" marker-end="url(#arrow-gray)" />
+  <text class="step" x="430" y="812">5. repeated wins become durable skills</text>
+
+  <rect x="96" y="846" width="560" height="62" rx="10" fill="#fff7f3" stroke="#e8c4b8" stroke-width="2" />
+  <text class="node-title" x="126" y="875">Operating boundary</text>
+  <text class="node-copy" x="126" y="898">Operator keys guard reads. Agent keys guard writes.</text>
+
+  <text class="small" x="96" y="924">Source: MemroOS README and memory architecture docs.</text>
+</svg>

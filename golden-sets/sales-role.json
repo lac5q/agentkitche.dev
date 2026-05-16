@@ -1,0 +1,68 @@
+[
+  {
+    "id": "sales-role-001",
+    "role": "sales",
+    "input": "Create an account brief from prior objections logged in the CRM.",
+    "expectedOutput": "Account brief summarizing prior objections and recommended next steps",
+    "humanScore": 1,
+    "agentId": "sales-agent",
+    "tags": ["single-turn", "account-brief", "crm"],
+    "trace": {
+      "traceId": "sales-role-001",
+      "agentId": "sales-agent",
+      "agentModelFamily": "openai",
+      "role": "sales",
+      "input": "Create an account brief from prior objections logged in the CRM.",
+      "output": "Account brief: Acme Corp — prior objections include budget constraints (Q1) and integration concerns (Q2). Recommended next steps: schedule exec sponsor call, present ROI calculator.",
+      "expectedFacts": ["account brief", "prior objections", "next steps"],
+      "toolCalls": [{ "name": "crm.search", "valid": true }, { "name": "memory.retrieve", "valid": true }],
+      "memory": { "expectedFacts": ["prior objection", "budget"], "retrievedFacts": ["prior objection", "budget"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 22000, "costUsd": 0.14 }
+    }
+  },
+  {
+    "id": "sales-role-002",
+    "role": "sales",
+    "input": "Walk me through a multi-step renewal call for a customer who escalated last quarter.",
+    "expectedOutput": "Step-by-step renewal talking points and objection handling playbook",
+    "humanScore": 1,
+    "agentId": "sales-agent",
+    "tags": ["trajectory", "renewal", "objection-handling"],
+    "trace": {
+      "traceId": "sales-role-002",
+      "agentId": "sales-agent",
+      "agentModelFamily": "openai",
+      "role": "sales",
+      "input": "Walk me through a multi-step renewal call for a customer who escalated last quarter.",
+      "output": "Renewal call playbook completed with objection handling at each stage.",
+      "expectedFacts": ["renewal", "objection handling", "escalation"],
+      "toolCalls": [{ "name": "crm.search", "valid": true }],
+      "memory": { "expectedFacts": ["escalation history", "renewal date"], "retrievedFacts": ["escalation history", "renewal date"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 45000, "costUsd": 0.22 },
+      "steps": [
+        {
+          "stepIndex": 0,
+          "input": "Retrieve escalation history for the account.",
+          "output": "Found 2 escalations in Q3: billing dispute and integration failure.",
+          "toolCalls": [{ "name": "crm.search", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 1,
+          "input": "Draft opening talking points addressing the escalations.",
+          "output": "Opening: acknowledge Q3 issues, present resolution summary and SLA improvements.",
+          "toolCalls": [],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 2,
+          "input": "Generate renewal pricing proposal based on usage data.",
+          "output": "Renewal proposal: 12-month contract at current rate with 10% loyalty discount.",
+          "toolCalls": [{ "name": "pricing.calculate", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        }
+      ],
+      "finalOutput": "Renewal call playbook: acknowledge escalations, present SLA improvements, offer 10% loyalty discount on 12-month renewal."
+    }
+  }
+]

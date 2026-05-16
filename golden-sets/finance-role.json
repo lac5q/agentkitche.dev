@@ -1,0 +1,68 @@
+[
+  {
+    "id": "finance-role-001",
+    "role": "finance",
+    "input": "Categorize this expense report and flag any policy violations.",
+    "expectedOutput": "Categorized expense line items with policy compliance flags",
+    "humanScore": 1,
+    "agentId": "finance-agent",
+    "tags": ["single-turn", "expense-categorization", "compliance"],
+    "trace": {
+      "traceId": "finance-role-001",
+      "agentId": "finance-agent",
+      "agentModelFamily": "openai",
+      "role": "finance",
+      "input": "Categorize this expense report and flag any policy violations.",
+      "output": "Expenses categorized: Travel $1,200 (compliant), Meals $480 (flag: exceeds $150/day policy on 3 days), Software $299 (compliant).",
+      "expectedFacts": ["categorized", "policy violation", "meals"],
+      "toolCalls": [{ "name": "policy.lookup", "valid": true, "schemaValid": true }, { "name": "expense.parse", "valid": true, "schemaValid": true }],
+      "memory": { "expectedFacts": ["expense policy", "daily limit"], "retrievedFacts": ["expense policy", "daily limit"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 12000, "costUsd": 0.08 }
+    }
+  },
+  {
+    "id": "finance-role-002",
+    "role": "finance",
+    "input": "Process a multi-step invoice reconciliation for three vendors with partial payments.",
+    "expectedOutput": "Reconciliation report with outstanding balances and approval recommendations",
+    "humanScore": 1,
+    "agentId": "finance-agent",
+    "tags": ["trajectory", "invoice-reconciliation", "approval-flow"],
+    "trace": {
+      "traceId": "finance-role-002",
+      "agentId": "finance-agent",
+      "agentModelFamily": "openai",
+      "role": "finance",
+      "input": "Process a multi-step invoice reconciliation for three vendors with partial payments.",
+      "output": "Reconciliation complete. Outstanding: Vendor A $2,400, Vendor B $0, Vendor C $800.",
+      "expectedFacts": ["reconciliation", "outstanding", "vendor"],
+      "toolCalls": [{ "name": "invoice.fetch", "valid": true, "schemaValid": true }],
+      "memory": { "expectedFacts": ["payment history", "vendor terms"], "retrievedFacts": ["payment history", "vendor terms"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 52000, "costUsd": 0.27 },
+      "steps": [
+        {
+          "stepIndex": 0,
+          "input": "Fetch invoices for Vendor A, B, and C.",
+          "output": "Retrieved: Vendor A inv#1042 $3,200, Vendor B inv#887 $1,100, Vendor C inv#2204 $2,000.",
+          "toolCalls": [{ "name": "invoice.fetch", "valid": true, "schemaValid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 1,
+          "input": "Match invoices against payment records.",
+          "output": "Vendor A: partial pay $800 received. Vendor B: full pay $1,100. Vendor C: partial pay $1,200.",
+          "toolCalls": [{ "name": "payment.match", "valid": true, "schemaValid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 2,
+          "input": "Generate reconciliation report and flag outstanding balances for approval.",
+          "output": "Outstanding: Vendor A $2,400 (approve payment), Vendor C $800 (approve payment). Vendor B reconciled.",
+          "toolCalls": [{ "name": "approval.queue", "valid": true, "schemaValid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        }
+      ],
+      "finalOutput": "Reconciliation complete. Outstanding: Vendor A $2,400 and Vendor C $800 queued for approval. Vendor B fully reconciled."
+    }
+  }
+]

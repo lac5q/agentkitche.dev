@@ -4,7 +4,8 @@
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "npm --prefix apps/kitchen run dev --",
@@ -12,8 +13,8 @@
     "typecheck": "npm --prefix apps/kitchen run typecheck",
     "start": "npm --prefix apps/kitchen run start -- --port 3002",
     "start:all": "bash start.sh",
-    "mcp": "bash scripts/agentkitchen-mcp.sh",
-    "mcp:http": "bash scripts/agentkitchen-mcp.sh --http --host 0.0.0.0 --port ${KITCHEN_MCP_PORT:-8765}",
+    "mcp": "bash scripts/memoroos-mcp.sh",
+    "mcp:http": "bash scripts/memoroos-mcp.sh --http --host 0.0.0.0 --port ${KITCHEN_MCP_PORT:-8765}",
     "install:mcp:chatgpt": "bash scripts/install-chatgpt-mcp-launchd.sh",
     "test": "npm --prefix apps/kitchen run test --",
     "lint": "npm --prefix apps/kitchen run lint",

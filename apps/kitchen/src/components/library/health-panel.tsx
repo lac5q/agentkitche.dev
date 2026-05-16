@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KnowledgeCollection } from "@/types";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const MEETING_COLLECTION_NAMES = ["meet-recordings", "spark-recordings"];
 
 function InfoTip({ text }: { text: string }) {
   return (
@@ -40,7 +41,14 @@ export function HealthPanel({ collections, totalFiles }: HealthPanelProps) {
   const avgSize =
     collections.length > 0 ? Math.round(totalFiles / collections.length) : 0;
 
-  const meetingsCollection = collections.find((c) => c.name === "meet-recordings");
+  const meetingCollections = collections.filter((c) =>
+    MEETING_COLLECTION_NAMES.includes(c.name)
+  );
+  const meetingDocCount = meetingCollections.reduce((sum, c) => sum + c.docCount, 0);
+  const missingMeetingCollections = MEETING_COLLECTION_NAMES.filter(
+    (name) => !collections.some((c) => c.name === name)
+  );
+  const hasAllMeetingCollections = missingMeetingCollections.length === 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,22 +59,31 @@ export function HealthPanel({ collections, totalFiles }: HealthPanelProps) {
               <div className="flex items-center gap-2">
                 <span
                   className={`h-2 w-2 rounded-full ${
-                    meetingsCollection ? "bg-emerald-400" : "bg-slate-600"
+                    hasAllMeetingCollections
+                      ? "bg-emerald-400"
+                      : meetingCollections.length > 0
+                        ? "bg-amber-400"
+                        : "bg-slate-600"
                   }`}
                 />
                 <span className="text-xs font-medium text-slate-300">
                   Meeting + Call Recordings
                 </span>
-                <InfoTip text="The 'meet-recordings' QMD collection. Green = Google Meet transcripts and exported Apple Notes call recordings are indexed and searchable. Grey = collection not found — add .md, .mdx, or .txt files to ~/github/knowledge/gdrive/meet-recordings/ or ~/github/knowledge/apple-notes/call-recordings/." />
+                <InfoTip text="The meet-recordings and spark-recordings QMD collections. Green = Google Meet, Apple Notes call recordings, and Spark meeting transcripts are indexed and searchable. Amber = one meeting collection is missing. Grey = no meeting collections found." />
               </div>
-              {meetingsCollection ? (
+              {meetingCollections.length > 0 ? (
                 <span className="text-xs font-semibold text-emerald-400">
-                  {meetingsCollection.docCount} files indexed
+                  {meetingDocCount} files indexed
                 </span>
               ) : (
                 <span className="text-xs text-slate-600">not found</span>
               )}
             </div>
+            {!hasAllMeetingCollections && (
+              <p className="mt-2 text-xs text-amber-300">
+                Missing {missingMeetingCollections.join(", ")}
+              </p>
+            )}
           </CardContent>
         </Card>
 

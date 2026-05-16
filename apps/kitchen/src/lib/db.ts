@@ -4,6 +4,7 @@ import fs from 'fs';
 import { SQLITE_DB_PATH } from './constants';
 import { initSchema } from './db-schema';
 import { resolveFromRepoRoot } from './paths';
+import { seedDefaultAdmin } from './auth/seed';
 
 let _db: Database.Database | null = null;
 
@@ -22,6 +23,10 @@ export function getDb(): Database.Database {
     db.pragma('synchronous = NORMAL');
     db.pragma('busy_timeout = 5000');
     initSchema(db);
+    // Fire-and-forget: seed default admin on first startup (async bcrypt hash)
+    seedDefaultAdmin(db).catch((err: unknown) =>
+      console.error('[Memoroos] seedDefaultAdmin error:', err)
+    );
     _db = db;
   }
   return _db;

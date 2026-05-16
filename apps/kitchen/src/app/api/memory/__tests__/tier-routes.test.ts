@@ -38,12 +38,13 @@ describe("memory tier routes", () => {
 
     const response = await GET(new Request("http://localhost/api/memory/search?q=agent&limit=3"));
     const body = await response.json();
-    const outbound = JSON.parse(vi.mocked(fetch).mock.calls[0][1]?.body as string);
+    const outboundUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as string);
 
     expect(response.status).toBe(200);
     expect(body).toMatchObject({ ok: true, tier: "vector" });
-    expect(vi.mocked(fetch).mock.calls[0][0]).toBe("http://mem0.test/memory/search");
-    expect(outbound).toMatchObject({ query: "agent", limit: 3 });
+    expect(`${outboundUrl.origin}${outboundUrl.pathname}`).toBe("http://mem0.test/memory/search");
+    expect(outboundUrl.searchParams.get("q")).toBe("agent");
+    expect(outboundUrl.searchParams.get("limit")).toBe("3");
   });
 
   it("queries graph memory through Neo4j HTTP with parameterized search", async () => {

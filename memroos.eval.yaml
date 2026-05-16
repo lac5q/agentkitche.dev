@@ -1,0 +1,55 @@
+judge_model:
+  provider: anthropic
+  model: claude-haiku-4-5-20251001
+  model_family: anthropic
+  prompt_template_version: v1
+
+golden_sets:
+  default: ./golden-sets/business-ops-50.jsonl
+  per_role:
+    sales: ./golden-sets/sales-50.jsonl
+    support: ./golden-sets/support-50.jsonl
+    finance: ./golden-sets/finance-50.jsonl
+    ops: ./golden-sets/ops-50.jsonl
+
+scorers:
+  l1_capability: [tool_call_schema, json_valid, on_task, memory_recall_l1]
+  l2_quality: [rubric_5pt_faithful, rubric_5pt_useful, rubric_5pt_policy, memory_recall_l2, trajectory_multi_step]
+  l3_outcome: [completion_rate, escalation_rate, ttr_p50, operator_approval, cost_per_task]
+
+weights:
+  l1: 0.25
+  l2: 0.5
+  l3: 0.25
+
+weight_presets:
+  outcome-weighted: { l1: 0.1, l2: 0.4, l3: 0.5 }
+  quality-weighted: { l1: 0.2, l2: 0.6, l3: 0.2 }
+  compliance-weighted: { l1: 0.4, l2: 0.4, l3: 0.2 }
+
+active_preset: null
+
+drift_guard:
+  golden_agreement_floor: 0.85
+  judge_rotation_requires_rebaseline: true
+
+seal:
+  reflection_threshold: 0.6
+  auto_apply: false
+  proposal_types: [noop_test]
+
+agents:
+  # per-agent overrides can be added here
+
+business_ops:
+  poll_interval_seconds: 300
+  correlation_id_field: kitchen_correlation_id
+
+companies:
+  default:
+    l3_sub_weights:
+      completion_rate: 0.35
+      escalation_rate: 0.25
+      ttr_p50: 0.2
+      operator_approval_rate: 0.1
+      cost_per_task: 0.1

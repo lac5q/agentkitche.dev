@@ -1,0 +1,68 @@
+[
+  {
+    "id": "support-role-001",
+    "role": "support",
+    "input": "A customer reports their integration broke after the last platform update.",
+    "expectedOutput": "Ticket resolution steps and root cause analysis",
+    "humanScore": 1,
+    "agentId": "support-agent",
+    "tags": ["single-turn", "ticket-resolution", "integration"],
+    "trace": {
+      "traceId": "support-role-001",
+      "agentId": "support-agent",
+      "agentModelFamily": "openai",
+      "role": "support",
+      "input": "A customer reports their integration broke after the last platform update.",
+      "output": "Root cause: API schema change in v2.3.1 broke backward compatibility. Fix: update client SDK to v2.3.1+. ETA: same-day patch available.",
+      "expectedFacts": ["root cause", "fix", "API change"],
+      "toolCalls": [{ "name": "kb.search", "valid": true }, { "name": "changelog.lookup", "valid": true }],
+      "memory": { "expectedFacts": ["v2.3.1", "api change"], "retrievedFacts": ["v2.3.1", "api change"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 18000, "costUsd": 0.10 }
+    }
+  },
+  {
+    "id": "support-role-002",
+    "role": "support",
+    "input": "Walk through a multi-step troubleshooting flow for a customer who cannot log in.",
+    "expectedOutput": "Systematic troubleshooting with escalation detection if unresolved",
+    "humanScore": 1,
+    "agentId": "support-agent",
+    "tags": ["trajectory", "troubleshooting", "login"],
+    "trace": {
+      "traceId": "support-role-002",
+      "agentId": "support-agent",
+      "agentModelFamily": "openai",
+      "role": "support",
+      "input": "Walk through a multi-step troubleshooting flow for a customer who cannot log in.",
+      "output": "Login issue resolved: SSO misconfiguration corrected.",
+      "expectedFacts": ["login", "SSO", "resolved"],
+      "toolCalls": [{ "name": "account.lookup", "valid": true }],
+      "memory": { "expectedFacts": ["SSO config", "last login"], "retrievedFacts": ["SSO config", "last login"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 35000, "costUsd": 0.18 },
+      "steps": [
+        {
+          "stepIndex": 0,
+          "input": "Check account status and last login timestamp.",
+          "output": "Account active; last login 7 days ago via SSO.",
+          "toolCalls": [{ "name": "account.lookup", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 1,
+          "input": "Check SSO provider configuration for the customer's domain.",
+          "output": "SSO provider: Okta. Certificate expired 2 days ago.",
+          "toolCalls": [{ "name": "sso.config.lookup", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 2,
+          "input": "Instruct customer to renew Okta certificate and test login.",
+          "output": "Renewal instructions sent. Customer confirmed login restored.",
+          "toolCalls": [],
+          "outcome": { "completed": true, "escalated": false }
+        }
+      ],
+      "finalOutput": "Login issue resolved: Okta SSO certificate had expired. Customer renewed certificate and restored access."
+    }
+  }
+]

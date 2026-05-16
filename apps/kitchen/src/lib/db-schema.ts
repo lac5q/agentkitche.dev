@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import type Database from 'better-sqlite3';
 
 /**
@@ -406,5 +407,302 @@ export function initSchema(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS a2a_task_events_task_sequence
       ON a2a_task_events(task_id, sequence);
+  `);
+
+  // eval_runs / eval_run_examples: Phase 57 composite W audit history
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS eval_runs (
+      id                       TEXT PRIMARY KEY,
+      trace_id                 TEXT NOT NULL,
+      agent_id                 TEXT NOT NULL,
+      role                     TEXT NOT NULL,
+      composite_w              REAL NOT NULL,
+      trusted                  INTEGER NOT NULL,
+      drift_agreement          REAL NOT NULL,
+      drift_status             TEXT NOT NULL,
+      layer_breakdown_json     TEXT NOT NULL,
+      scorer_results_json      TEXT NOT NULL,
+      judge_provider           TEXT NOT NULL,
+      judge_model              TEXT NOT NULL,
+      judge_model_family       TEXT NOT NULL,
+      prompt_template_version  TEXT NOT NULL,
+      prompt_hash              TEXT NOT NULL,
+      golden_set_path          TEXT NOT NULL,
+      golden_set_version       TEXT NOT NULL,
+      config_hash              TEXT NOT NULL,
+      started_at               TEXT NOT NULL,
+      completed_at             TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS eval_runs_completed
+      ON eval_runs(completed_at DESC);
+    CREATE INDEX IF NOT EXISTS eval_runs_agent
+      ON eval_runs(agent_id, completed_at DESC);
+
+    CREATE TABLE IF NOT EXISTS eval_run_examples (
+      id            INTEGER PRIMARY KEY,
+      run_id        TEXT NOT NULL REFERENCES eval_runs(id) ON DELETE CASCADE,
+      example_id    TEXT NOT NULL,
+      human_score   REAL NOT NULL,
+      judge_score   REAL NOT NULL,
+      agreed        INTEGER NOT NULL,
+      created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS eval_run_examples_run
+      ON eval_run_examples(run_id);
+  `);
+
+  // Phase 61: business_outcome_events — adapter pull sink for L3 scorer.
+  // tenant_id defaults to 'default-tenant'; Phase 62 backfills real tenant IDs.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS business_outcome_events (
+      id              INTEGER PRIMARY KEY,
+      tenant_id       TEXT    NOT NULL DEFAULT 'default-tenant',
+      correlation_id  TEXT    NOT NULL,
+      source_system   TEXT    NOT NULL CHECK(source_system IN ('crm','helpdesk','finance')),
+      adapter         TEXT    NOT NULL,
+      event_type      TEXT    NOT NULL,
+      kpi_key         TEXT    NOT NULL,
+      kpi_value       REAL    NOT NULL,
+      raw_json        TEXT    NOT NULL,
+      agent_id        TEXT,
+      polled_at       TEXT    NOT NULL,
+      created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      UNIQUE(correlation_id, adapter, event_type, polled_at)
+    );
+    CREATE INDEX IF NOT EXISTS boe_correlation
+      ON business_outcome_events(correlation_id);
+    CREATE INDEX IF NOT EXISTS boe_agent
+      ON business_outcome_events(agent_id, polled_at DESC);
+    CREATE INDEX IF NOT EXISTS boe_tenant
+      ON business_outcome_events(tenant_id, polled_at DESC);
+    CREATE INDEX IF NOT EXISTS boe_adapter
+      ON business_outcome_events(adapter, polled_at DESC);
+  `);
+
+  // Phase 60 agent autogen tables — additive only (CREATE TABLE IF NOT EXISTS).
+
+  // agent_instructions: mutation target for agent_instruction_patch proposals
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_instructions (
+      id                INTEGER PRIMARY KEY,
+      agent_id          TEXT    NOT NULL REFERENCES registered_agents(id) ON DELETE CASCADE,
+      instructions_text TEXT    NOT NULL,
+      version           INTEGER NOT NULL DEFAULT 1,
+      proposal_id       TEXT    REFERENCES seal_proposals(id),
+      is_active         INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+      created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS agent_instructions_active
+      ON agent_instructions(agent_id, is_active, version DESC);
+  `);
+
+  // proposed_skills: staging/promotion target for skill_addition proposals.
+  // proposal_id is nullable so applyShadow can embed it in diff and update post-persist.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS proposed_skills (
+      id          INTEGER PRIMARY KEY,
+      agent_id    TEXT    NOT NULL REFERENCES registered_agents(id) ON DELETE CASCADE,
+      skill_id    TEXT    NOT NULL,
+      action      TEXT    NOT NULL,
+      metadata    TEXT    NOT NULL DEFAULT '{}',
+      proposal_id TEXT    REFERENCES seal_proposals(id),
+      status      TEXT    NOT NULL DEFAULT 'proposed'
+                  CHECK(status IN ('proposed','promoted','rolled_back')),
+      created_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS proposed_skills_proposal
+      ON proposed_skills(proposal_id, status);
+  `);
+
+  // agent_tool_routing_policies: mutation target for tool_routing_update proposals
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_tool_routing_policies (
+      id                INTEGER PRIMARY KEY,
+      agent_id          TEXT    NOT NULL REFERENCES registered_agents(id) ON DELETE CASCADE,
+      tool_name         TEXT    NOT NULL,
+      context_pattern   TEXT    NOT NULL DEFAULT '*',
+      preference_weight REAL    NOT NULL DEFAULT 1.0,
+      proposal_id       TEXT    REFERENCES seal_proposals(id),
+      is_active         INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+      created_at        TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS agent_tool_routing_active
+      ON agent_tool_routing_policies(agent_id, tool_name, is_active);
+  `);
+
+  // Phase 62: tenants + tenant_api_keys (multi-tenant public API isolation).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tenants (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    INSERT OR IGNORE INTO tenants (id, name) VALUES ('default-tenant', 'Default Tenant');
+
+    CREATE TABLE IF NOT EXISTS tenant_api_keys (
+      id         TEXT PRIMARY KEY,
+      tenant_id  TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      key_hash   TEXT NOT NULL UNIQUE,
+      scopes     TEXT NOT NULL DEFAULT 'eval:submit,eval:read,proposals:read',
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      revoked_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS tak_tenant ON tenant_api_keys(tenant_id);
+    CREATE INDEX IF NOT EXISTS tak_hash   ON tenant_api_keys(key_hash);
+  `);
+
+  // Seed the default internal API key for dogfood SDK calls.
+  // Key value: "memroos-internal-default-key" — used by MEMROOS_INTERNAL_API_KEY env var.
+  const defaultKeyHash = createHash("sha256").update("memroos-internal-default-key").digest("hex");
+  db.prepare(
+    "INSERT OR IGNORE INTO tenant_api_keys (id, tenant_id, key_hash) VALUES (?, ?, ?)"
+  ).run("tak-default-internal", "default-tenant", defaultKeyHash);
+
+  // Phase 62: additive tenant_id column on eval_runs and eval_run_examples only
+  // (seal_proposals and other tables are created later in this function).
+  // Those tables are migrated after their CREATE TABLE IF NOT EXISTS statements below.
+  for (const table of ["eval_runs", "eval_run_examples"]) {
+    try {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default-tenant'`);
+    } catch {
+      // Column already exists — safe to ignore on re-runs.
+    }
+  }
+
+  // seal_*: Phase 58 self-improvement substrate. Additive-only DDL.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS seal_proposals (
+      id                  TEXT PRIMARY KEY,
+      trace_id            TEXT NOT NULL,
+      run_id              TEXT NOT NULL REFERENCES eval_runs(id),
+      agent_id            TEXT NOT NULL,
+      proposal_type       TEXT NOT NULL,
+      status              TEXT NOT NULL DEFAULT 'pending'
+                          CHECK(status IN ('pending','approved','rejected','applied','rolled_back')),
+      diff_json           TEXT NOT NULL,
+      rationale           TEXT NOT NULL,
+      forecast_w_delta    REAL NOT NULL,
+      baseline_w          REAL NOT NULL,
+      baseline_run_id     TEXT NOT NULL REFERENCES eval_runs(id),
+      baseline_layer_json TEXT NOT NULL,
+      created_at          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      updated_at          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS seal_proposals_status
+      ON seal_proposals(status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS seal_proposals_agent
+      ON seal_proposals(agent_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS seal_proposal_decisions (
+      id          TEXT PRIMARY KEY,
+      proposal_id TEXT NOT NULL REFERENCES seal_proposals(id),
+      action      TEXT NOT NULL CHECK(action IN ('approved','rejected','applied','rolled_back')),
+      operator    TEXT NOT NULL,
+      reasoning   TEXT,
+      decided_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS seal_audit_log (
+      id              TEXT PRIMARY KEY,
+      -- No FK to seal_proposals: an append-only audit log must always record,
+      -- even if the referenced proposal is absent or later purged (phase 64).
+      proposal_id     TEXT NOT NULL,
+      event           TEXT NOT NULL
+                      CHECK(event IN ('proposed','approved','rejected','apply_started','apply_succeeded','apply_failed','rolled_back')),
+      baseline_w      REAL,
+      post_apply_w    REAL,
+      delta_l1        REAL,
+      delta_l2        REAL,
+      delta_l3        REAL,
+      delta_composite REAL,
+      detail_json     TEXT NOT NULL DEFAULT '{}',
+      timestamp       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS seal_audit_log_ts
+      ON seal_audit_log(timestamp DESC);
+    CREATE INDEX IF NOT EXISTS seal_audit_log_proposal
+      ON seal_audit_log(proposal_id, timestamp DESC);
+  `);
+
+  // Phase 62: additive tenant_id column on remaining v2.5 tables
+  // (created above in this function — safe to migrate now).
+  for (const table of [
+    "seal_proposals",
+    "seal_proposal_decisions",
+    "seal_audit_log",
+    "agent_instructions",
+    "proposed_skills",
+    "agent_tool_routing_policies",
+  ]) {
+    try {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default-tenant'`);
+    } catch {
+      // Column already exists — safe to ignore on re-runs.
+    }
+  }
+
+  // Phase 62: indexes for tenant-scoped queries (after all tables and tenant_id columns exist).
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS eval_runs_tenant
+      ON eval_runs(tenant_id, completed_at DESC);
+    CREATE INDEX IF NOT EXISTS seal_proposals_tenant
+      ON seal_proposals(tenant_id, created_at DESC);
+  `);
+
+  // Phase 63: human team member auth tables
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id            TEXT PRIMARY KEY,
+      email         TEXT NOT NULL UNIQUE,
+      display_name  TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      tenant_id     TEXT NOT NULL DEFAULT 'default-tenant'
+                    REFERENCES tenants(id) ON DELETE CASCADE,
+      created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      last_login_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS users_tenant ON users(tenant_id);
+
+    CREATE TABLE IF NOT EXISTS user_roles (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role    TEXT NOT NULL CHECK(role IN ('admin','operator','reviewer')),
+      PRIMARY KEY (user_id, role)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_api_keys (
+      id           TEXT PRIMARY KEY,
+      user_id      TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      key_hash     TEXT NOT NULL UNIQUE,
+      label        TEXT NOT NULL DEFAULT '',
+      created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      last_used_at TEXT,
+      revoked_at   TEXT
+    );
+    CREATE INDEX IF NOT EXISTS uak_user ON user_api_keys(user_id, revoked_at);
+    CREATE INDEX IF NOT EXISTS uak_hash ON user_api_keys(key_hash);
+
+    CREATE TABLE IF NOT EXISTS user_refresh_tokens (
+      id         TEXT PRIMARY KEY,
+      user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+      revoked_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS urt_user ON user_refresh_tokens(user_id, revoked_at);
+    CREATE INDEX IF NOT EXISTS urt_hash ON user_refresh_tokens(token_hash);
+
+    CREATE TABLE IF NOT EXISTS team_invitations (
+      id         TEXT PRIMARY KEY,
+      token_hash TEXT NOT NULL UNIQUE,
+      role       TEXT NOT NULL CHECK(role IN ('admin','operator','reviewer')),
+      invited_by TEXT NOT NULL REFERENCES users(id),
+      email_hint TEXT,
+      used_at    TEXT,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS inv_token ON team_invitations(token_hash, used_at);
   `);
 }

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "memoroos": {
+      "url": "http://<memoroos-tailscale-host-or-ip>:8765/mcp"
+    }
+  }
+}

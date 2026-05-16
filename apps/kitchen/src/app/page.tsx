@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { headers } from "next/headers";
 import {
   Archive,
@@ -374,6 +375,37 @@ function LandingPage() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section id="memory-architecture" className="border-b border-[#c9c9c2] bg-[#fafaf7]">
+        <div className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8 lg:py-20">
+          <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
+            <div>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#7a2a1e]">Memory map</p>
+              <h2 className="mt-3 text-[42px] font-semibold leading-tight tracking-normal text-[#0f0f0e]">
+                The right memory for the right kind of context.
+              </h2>
+            </div>
+            <p className="text-[17px] leading-8 text-[#4a4a45]">
+              MemroOS keeps operational work, semantic recall, relationship context, source files, and durable skills distinct so agents can retrieve useful context without mixing every trace into one undifferentiated pile.
+            </p>
+          </div>
+          <figure className="mt-8 overflow-hidden border border-[#1f1f1c] bg-white shadow-[0_16px_36px_rgba(15,15,14,0.08)]">
+            <div className="relative aspect-[80/49] w-full bg-[#fbfbf8]">
+              <Image
+                src="/diagrams/memroos-memory-system.png"
+                alt="Diagram of MemroOS routing work requests through governed context packs, memory and knowledge stores, agent runtimes, and outcome capture."
+                fill
+                loading="eager"
+                sizes="(max-width: 768px) 100vw, 1180px"
+                className="object-contain"
+              />
+            </div>
+            <figcaption className="border-t border-[#c9c9c2] bg-[#fafaf7] px-5 py-4 text-[14px] leading-6 text-[#4a4a45]">
+              Vector memory handles meaning, graph memory handles relationships, episodic memory handles events, and knowledge plus skills keep source-backed playbooks close to agent dispatch.
+            </figcaption>
+          </figure>
         </div>
       </section>
 

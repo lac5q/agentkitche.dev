@@ -24,14 +24,13 @@ export function neo4jConfig() {
 }
 
 export async function searchVectorMemory(query: string, limit: number) {
-  const response = await fetch(`${MEM0_URL}/memory/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query: query || "recent", user_id: "luis", limit }),
-    signal: timeoutSignal(5000),
-  });
+  const params = new URLSearchParams({ q: query || "recent", agent_id: "luis", limit: String(limit) });
+  const response = await fetch(`${MEM0_URL}/memory/search?${params}`, { signal: timeoutSignal(5000) });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error("Vector memory backend unavailable");
+  if (!response.ok) {
+    const detail = typeof result.detail === "string" ? result.detail : "Vector memory backend unavailable";
+    throw new Error(detail);
+  }
   return result;
 }
 

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "ops-role-001",
+    "role": "ops",
+    "input": "Check SLA compliance for all open tickets and flag any breaches.",
+    "expectedOutput": "SLA compliance report with breach list and recommended escalations",
+    "humanScore": 1,
+    "agentId": "ops-agent",
+    "tags": ["single-turn", "sla-monitoring", "compliance"],
+    "trace": {
+      "traceId": "ops-role-001",
+      "agentId": "ops-agent",
+      "agentModelFamily": "openai",
+      "role": "ops",
+      "input": "Check SLA compliance for all open tickets and flag any breaches.",
+      "output": "SLA check: 42 open tickets. 3 breaches: TKT-1082 (P1, 4h overdue), TKT-1091 (P2, 2h overdue), TKT-1103 (P1, 1h overdue). Escalation recommended for P1 tickets.",
+      "expectedFacts": ["SLA", "breach", "escalation"],
+      "toolCalls": [{ "name": "ticket.list", "valid": true }, { "name": "sla.check", "valid": true }],
+      "memory": { "expectedFacts": ["SLA policy", "P1 threshold"], "retrievedFacts": ["SLA policy", "P1 threshold"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 9000, "costUsd": 0.07 }
+    }
+  },
+  {
+    "id": "ops-role-002",
+    "role": "ops",
+    "input": "Route an incoming complex request through the multi-step handoff workflow.",
+    "expectedOutput": "Completed handoff chain with tool invocations and state transitions",
+    "humanScore": 1,
+    "agentId": "ops-agent",
+    "tags": ["trajectory", "workflow-routing", "handoff"],
+    "trace": {
+      "traceId": "ops-role-002",
+      "agentId": "ops-agent",
+      "agentModelFamily": "openai",
+      "role": "ops",
+      "input": "Route an incoming complex request through the multi-step handoff workflow.",
+      "output": "Request routed and completed through 3-step handoff. Final status: resolved.",
+      "expectedFacts": ["handoff", "routed", "resolved"],
+      "toolCalls": [{ "name": "router.classify", "valid": true }],
+      "memory": { "expectedFacts": ["routing rules", "handoff config"], "retrievedFacts": ["routing rules", "handoff config"], "recallAtK": 1.0, "precisionAtK": 1.0, "mrr": 1.0 },
+      "outcome": { "completed": true, "escalated": false, "operatorApproved": true, "ttrMs": 38000, "costUsd": 0.20 },
+      "steps": [
+        {
+          "stepIndex": 0,
+          "input": "Classify the incoming request by type and priority.",
+          "output": "Request classified: infrastructure / P2.",
+          "toolCalls": [{ "name": "router.classify", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 1,
+          "input": "Assign to the appropriate on-call team based on classification.",
+          "output": "Assigned to infra-oncall-team-west. Ticket TKT-2201 created.",
+          "toolCalls": [{ "name": "ticket.create", "valid": true }, { "name": "oncall.assign", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        },
+        {
+          "stepIndex": 2,
+          "input": "Confirm assignment and send notification to requester.",
+          "output": "Notification sent. ETA: 2 hours. Requester acknowledged.",
+          "toolCalls": [{ "name": "notify.send", "valid": true }],
+          "outcome": { "completed": true, "escalated": false }
+        }
+      ],
+      "finalOutput": "Multi-step handoff complete: P2 infra request classified, assigned to infra-oncall-west (TKT-2201), requester notified with 2-hour ETA."
+    }
+  }
+]
