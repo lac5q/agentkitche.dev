@@ -37,3 +37,13 @@ substrate tests pass after reconciliation.
   design, but end-to-end dogfood evidence (W actually improving) is not captured.
 - Closed registry currently exercises `noop_test` proposal type in tests; real
   mutation surfaces validated via phases 59/60 code (separately committed).
+- **Dogfood W-lift NOT capturable (architectural, confirmed 2026-05-16).**
+  `EvalService.runForTrace` (src/lib/evals/service.ts:111) clones the latest
+  baseline run with a new id/timestamps — it does **not** re-score the
+  post-apply artifact. Production `SealService` defaults to this `EvalService`,
+  so post-apply W always equals baseline W: the keep/rollback machinery works
+  but real W improvement can never be observed. SEAL test evidence (keep when
+  W improves, rollback when W regresses) only exists because the test injects a
+  mock `evalService` returning a distinct post-run. **To meet the W-lift
+  criterion, `runForTrace` must actually re-evaluate the mutated artifact via
+  `scoreTraceWithEvalEngine`.** Tracked as a v2.5 follow-up in STATE.md.

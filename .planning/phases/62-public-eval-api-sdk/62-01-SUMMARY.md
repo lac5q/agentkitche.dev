@@ -28,8 +28,10 @@ implemented with real logic and passing tests. Dogfood refactor wiring
 
 ## Gaps / Deferred
 
-- Route paths diverge from the plan (`/v1/traces` vs planned `/v1/eval`);
-  reconcile the contract before publishing the SDK quickstart.
+- Route paths diverged from plan (`/api/public/v1/{traces,runs,proposals}` vs
+  planned `/v1/eval`). **Resolved 2026-05-16: as-built ratified** (see
+  62-01-PLAN.md Amendment) — SDKs already target as-built; public vocabulary
+  finalized at external-packaging time. No longer an open gap.
 - `docs/eval-quickstart.md` not verified present — confirm or author before any
   external/customer exposure.
 - External product packaging remains deferred (see

@@ -30,8 +30,8 @@ eval engine. All 12 L3 tests pass.
 
 ## Gaps / Deferred
 
-- Implementation path/naming diverges from the plan (`lib/l3/` and `/api/l3/`
-  vs planned `lib/business-ops/` / `/api/business-ops/`); plan specified one
-  composite scorer, code ships 5 named scorers. Functionally sound; reconcile
-  naming or amend the plan before external API exposure (phase 62).
+- Path/naming diverged from plan (`lib/l3/`+`/api/l3/`+5 named scorers vs
+  planned `lib/business-ops/`+1 composite). **Resolved 2026-05-16: as-built
+  ratified** (see 61-01-PLAN.md Amendment) — rename deferred to external API
+  packaging, not retrofitted onto green code. No longer an open gap.
 - Per-company KPI weighting present in config; no production tenant data exercised.

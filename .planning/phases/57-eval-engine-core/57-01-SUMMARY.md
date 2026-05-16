@@ -32,7 +32,12 @@ populated, so drift-guard/agreement thresholds are not yet meaningfully exercise
 
 ## Gaps / Deferred
 
-- **Golden sets are stubs** (~3 rows vs promised ~50). Drift guard floor (0.85)
-  and agreement criteria cannot be validated until populated. **Top follow-up.**
-- No dogfood W-lift evidence captured.
-- Route/path naming should be cross-checked against phases 60–62 consumers.
+- **Golden set populated to minimal viable (2026-05-16):** `business-ops-50.jsonl`
+  now 16 rows (12 cross-role positive + 4 policy-leak negative). Verified against
+  the real judge — drift agreement ≥0.85 with both classes exercised, so the
+  0.85 floor is now meaningful (regression in either class drops it). Full
+  ~50-row set remains a follow-up; reproducible via `golden-sets/.generate.mjs`.
+- Dogfood W-lift not capturable — shared architectural gap with phases 58/60
+  (`EvalService.runForTrace` clones baseline instead of re-scoring). See
+  58-01-SUMMARY.md.
+- Route/path naming cross-checked: see 61/62 SUMMARYs (as-built ratified).

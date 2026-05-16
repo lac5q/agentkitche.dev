@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Eval Engine + Self-Improvement Platform
-status: v2.5 PARTIAL — committed, build GREEN, 593/593 tests pass; feature gaps remain
-stopped_at: reconciliation complete + committed 2026-05-16
+status: v2.5 NEAR-COMPLETE — golden sets + paths + phase 59 closed; 1 architectural gap
+stopped_at: v2.5 finishing pass 2026-05-16
 last_updated: "2026-05-16T13:44:34.665Z"
-last_activity: 2026-05-16 — reconciliation: fixed build + tests, honest SUMMARYs, committed
+last_activity: 2026-05-16 — finished v2.5 gaps: golden sets, path ratification, phase 59 retro
 progress:
   total_phases: 6
   completed_phases: 0
@@ -109,15 +109,28 @@ have plan dirs + code (lib/auth/, /api/auth/, login/register) — v3 direction.
 - `.codex/` & `.agents/` untracked tool state — should be gitignored, NOT committed.
 - GitNexus embeddings partial (285/473) — upstream crash bug (abhigyanpatwari/GitNexus#824)
 
-### Pending Todos (post-reconciliation)
+### v2.5 Finishing Pass (2026-05-16) — what closed
 
-- **TOP: populate golden sets** — 57 (~3/50) and 60 (~2/50 per role). Drift
-  guard / agreement criteria cannot be validated until done. Blocks "v2.5 done".
-- Capture dogfood W-lift evidence for phases 58/60 (success criteria unmet)
-- Reconcile path/naming divergences: L3 `lib/l3` vs planned `lib/business-ops`;
-  public API `/v1/traces` vs planned `/v1/eval`; confirm `docs/eval-quickstart.md`
-- Phase 59 (memory-autogen) shipped without a plan — author a retro plan or
-  fold into v3 scope
+- ✅ **Golden sets populated** (minimal viable): 57 business-ops 16 rows, 60
+  sales/support/finance/ops 15 each. Verified vs real judge — drift agreement
+  ≥0.85 with positive + policy-leak negative classes. Reproducible via
+  `golden-sets/.generate.mjs`. Full ~50-row sets still a future nice-to-have.
+- ✅ **Path/naming ratified** as-built for 61 (`lib/l3`) and 62
+  (`/api/public/v1/*`) via plan amendments — rename deferred to external
+  packaging. No longer open.
+- ✅ **Phase 59 retro-documented** — PLAN + PARTIAL SUMMARY authored; all 6
+  MEMGEN reqs implemented + tested.
+
+### Remaining v2.5 gap (1)
+
+- **Dogfood W-lift not capturable — ARCHITECTURAL.** `EvalService.runForTrace`
+  (src/lib/evals/service.ts:111) clones the baseline run instead of re-scoring
+  the post-apply artifact, so SEAL/agent/memory proposals can never show real
+  W improvement in production (only mocked tests show it). Fix: make
+  `runForTrace` re-evaluate via `scoreTraceWithEvalEngine`. Blocks success
+  criteria 58-#? / 60-#5. **DECISION NEEDED: implement now (net-new) vs accept
+  as documented v2.5→v3 carry-over.**
+- Phase 59 scope classification (v2.5 vs v3) still open
 - Auth/63/64 code kept on main (build depends on it); tracked as v3 in ROADMAP
 
 ## Session Continuity

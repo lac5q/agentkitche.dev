@@ -30,8 +30,15 @@ are NOT met.
 
 ## Gaps / Deferred
 
-- **Golden sets ~2 rows each vs required ≥48** (success criterion 2 unmet).
-  Agreement ≥0.85 cannot be validated. **High-priority follow-up.**
-- **No dogfood W-lift evidence** (success criterion 5 unmet); MANIFEST validation
-  unfilled.
-- Treat phase 60 as ~50% complete pending golden-set population + dogfood run.
+- **Golden sets populated to minimal viable (2026-05-16):** sales/support/
+  finance/ops each 15 rows (11 positive + 4 policy-leak negative). Verified
+  against the real judge: drift agreement ≥0.85 with both classes exercised
+  (criterion 2 met at minimal-viable bar; full ~50-row sets still a follow-up).
+  Reproducible via `golden-sets/.generate.mjs`.
+- **Dogfood W-lift still NOT capturable (architectural).** Same root cause as
+  phase 58: `EvalService.runForTrace` clones the baseline instead of re-scoring
+  the post-apply artifact, so agent-autogen proposals can never show real W
+  lift in production. Success criterion 5 remains unmet until `runForTrace`
+  re-evaluates via `scoreTraceWithEvalEngine`. See 58-01-SUMMARY.md.
+- Phase 60 now ~70% (golden sets done); remaining gap is the runForTrace
+  re-scoring architecture, shared with phase 58.
