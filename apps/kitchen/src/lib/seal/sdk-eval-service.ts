@@ -16,7 +16,12 @@
 import { loadEvalConfig } from "@/lib/evals/config";
 import { goldenSetPathForTrace, loadGoldenSet } from "@/lib/evals/golden-sets";
 import type { EvalRunResult } from "@/lib/evals/types";
-import { rescorePostApply, type SealRescoreProposalContext } from "./rescore";
+import {
+  buildModeledPostApplyTrace,
+  rescorePostApply,
+  sealRescoreMetadata,
+  type SealRescoreProposalContext,
+} from "./rescore";
 import type { EvalServiceLike } from "./service";
 
 // Minimal HTTP client — avoids importing the full SDK package during the
@@ -83,10 +88,11 @@ export class SdkBackedEvalService implements EvalServiceLike {
       process.env.MEMROOS_PUBLIC_API_URL ??
       "http://localhost:3000"
     ).replace(/\/$/, "");
-    this.apiKey =
-      options.apiKey ??
-      process.env.MEMROOS_INTERNAL_API_KEY ??
-      "memroos-internal-default-key";
+    const apiKey = options.apiKey ?? process.env.MEMROOS_INTERNAL_API_KEY;
+    if (!apiKey && process.env.NODE_ENV === "production") {
+      throw new Error("MEMROOS_INTERNAL_API_KEY is required for production SEAL SDK eval service");
+    }
+    this.apiKey = apiKey ?? "memroos-internal-default-key";
   }
 
   /**
@@ -135,7 +141,7 @@ export class SdkBackedEvalService implements EvalServiceLike {
     const config = loadEvalConfig();
     const goldenSetPath = goldenSetPathForTrace(config, { agentId: baseline.agentId, role: baseline.role });
     const goldenSet = loadGoldenSet(goldenSetPath);
-    return rescorePostApply({
+    const result = rescorePostApply({
       baseline,
       proposalType: proposal.proposalType,
       diff: proposal.diff,
@@ -144,6 +150,22 @@ export class SdkBackedEvalService implements EvalServiceLike {
       goldenSet,
       goldenSetPath,
     });
+    const metadata = sealRescoreMetadata(result);
+    if (metadata?.wLiftModeled !== true) return { ...result, id: baseline.id };
+
+    const trace = buildModeledPostApplyTrace({
+      baseline,
+      proposalType: proposal.proposalType,
+      diff: proposal.diff,
+      forecastWDelta: proposal.forecastWDelta,
+    });
+    const persisted = (await publicApiPost(
+      this.baseUrl,
+      "/api/public/v1/traces",
+      this.apiKey,
+      trace
+    )) as { runId: string };
+    return { ...result, id: persisted.runId };
   }
 
   /**

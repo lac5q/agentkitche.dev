@@ -129,6 +129,10 @@ describe("POST /api/public/v1/traces", () => {
     expect(data.layers).toHaveProperty("l2");
     expect(data.layers).toHaveProperty("l3");
     expect(data.tenantId).toBe("tenant-alpha");
+    const row = testDb
+      .prepare("SELECT tenant_id FROM eval_runs WHERE id = ?")
+      .get(data.runId) as { tenant_id: string } | undefined;
+    expect(row?.tenant_id).toBe("tenant-alpha");
   });
 
   it("returns 200 with W for OpenInference span (round-trip format)", async () => {
@@ -213,10 +217,10 @@ describe("GET /api/public/v1/runs/[runId]", () => {
     const data = await res.json() as { runId: string };
     persistedRunId = data.runId;
 
-    // Stamp the run row with the correct tenant_id so the GET check works.
-    testDb
-      .prepare("UPDATE eval_runs SET tenant_id = ? WHERE id = ?")
-      .run("tenant-alpha", persistedRunId);
+    const row = testDb
+      .prepare("SELECT tenant_id FROM eval_runs WHERE id = ?")
+      .get(persistedRunId) as { tenant_id: string } | undefined;
+    expect(row?.tenant_id).toBe("tenant-alpha");
   });
 
   it("returns 401 with no auth", async () => {
@@ -381,5 +385,27 @@ describe("Rate limiter", () => {
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
     expect(result.retryAfterMs).toBeGreaterThan(0);
+  });
+});
+
+describe("public API key bootstrap", () => {
+  it("does not seed the hard-coded internal API key in production", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousInternalKey = process.env.MEMROOS_INTERNAL_API_KEY;
+    process.env.NODE_ENV = "production";
+    delete process.env.MEMROOS_INTERNAL_API_KEY;
+    const db = new Database(":memory:");
+    initSchema(db);
+    const row = db
+      .prepare("SELECT id FROM tenant_api_keys WHERE key_hash = ?")
+      .get(hashKey("memroos-internal-default-key"));
+    expect(row).toBeUndefined();
+    db.close();
+    process.env.NODE_ENV = previousNodeEnv;
+    if (previousInternalKey === undefined) {
+      delete process.env.MEMROOS_INTERNAL_API_KEY;
+    } else {
+      process.env.MEMROOS_INTERNAL_API_KEY = previousInternalKey;
+    }
   });
 });

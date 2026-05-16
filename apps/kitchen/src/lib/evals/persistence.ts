@@ -2,6 +2,10 @@ import type Database from "better-sqlite3";
 
 import type { EvalRunResult } from "./types";
 
+export interface PersistEvalRunOptions {
+  tenantId?: string;
+}
+
 export function ensureEvalTables(db: Database.Database): void {
   db.exec(
     "CREATE TABLE IF NOT EXISTS eval_runs (" +
@@ -25,7 +29,8 @@ export function ensureEvalTables(db: Database.Database): void {
     "  config_hash              TEXT NOT NULL," +
     "  started_at               TEXT NOT NULL," +
     "  completed_at             TEXT NOT NULL," +
-    "  judge_score_json         TEXT" +
+    "  judge_score_json         TEXT," +
+    "  tenant_id                TEXT NOT NULL DEFAULT 'default-tenant'" +
     ");" +
     "CREATE INDEX IF NOT EXISTS eval_runs_completed" +
     "  ON eval_runs(completed_at DESC);" +
@@ -38,6 +43,7 @@ export function ensureEvalTables(db: Database.Database): void {
     "  human_score   REAL NOT NULL," +
     "  judge_score   REAL NOT NULL," +
     "  agreed        INTEGER NOT NULL," +
+    "  tenant_id     TEXT NOT NULL DEFAULT 'default-tenant'," +
     "  created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))" +
     ");" +
     "CREATE INDEX IF NOT EXISTS eval_run_examples_run" +
@@ -50,13 +56,25 @@ export function ensureEvalTables(db: Database.Database): void {
   } catch {
     // Column already exists — safe to ignore
   }
+  for (const table of ["eval_runs", "eval_run_examples"]) {
+    try {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default-tenant'`);
+    } catch {
+      // Column already exists — safe to ignore
+    }
+  }
 }
 
-export function persistEvalRun(db: Database.Database, run: EvalRunResult): void {
+export function persistEvalRun(
+  db: Database.Database,
+  run: EvalRunResult,
+  options: PersistEvalRunOptions = {}
+): void {
   ensureEvalTables(db);
+  const tenantId = options.tenantId ?? "default-tenant";
   const insertExample = db.prepare(
-    "INSERT INTO eval_run_examples (run_id, example_id, human_score, judge_score, agreed)" +
-    " VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO eval_run_examples (run_id, example_id, human_score, judge_score, agreed, tenant_id)" +
+    " VALUES (?, ?, ?, ?, ?, ?)"
   );
 
   db.transaction(() => {
@@ -65,8 +83,8 @@ export function persistEvalRun(db: Database.Database, run: EvalRunResult): void 
       "  id, trace_id, agent_id, role, composite_w, trusted, drift_agreement, drift_status," +
       "  layer_breakdown_json, scorer_results_json, judge_provider, judge_model, judge_model_family," +
       "  prompt_template_version, prompt_hash, golden_set_path, golden_set_version, config_hash," +
-      "  started_at, completed_at, judge_score_json" +
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "  started_at, completed_at, judge_score_json, tenant_id" +
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ).run(
       run.id,
       run.traceId,
@@ -88,10 +106,11 @@ export function persistEvalRun(db: Database.Database, run: EvalRunResult): void 
       run.configHash,
       run.startedAt,
       run.completedAt,
-      JSON.stringify({ score: run.judge.score, rubricScores: run.judge.rubricScores })
+      JSON.stringify({ score: run.judge.score, rubricScores: run.judge.rubricScores }),
+      tenantId
     );
     for (const example of run.driftGuard.examples) {
-      insertExample.run(run.id, example.id, example.humanScore, example.judgeScore, example.agreed ? 1 : 0);
+      insertExample.run(run.id, example.id, example.humanScore, example.judgeScore, example.agreed ? 1 : 0, tenantId);
     }
   })();
 }

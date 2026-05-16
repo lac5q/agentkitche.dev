@@ -218,10 +218,12 @@ export class SealService {
 
     const entry = registryEntryFor(proposal.proposalType);
     let postRun: EvalRunResult;
+    let applyResult: Record<string, unknown>;
     try {
-      this.db.transaction(() => {
-        entry.applyShadow(proposal.diff);
-      })();
+      applyResult = this.db.transaction(() => entry.applyShadow(proposal.diff, this.db))() as Record<string, unknown>;
+      if (applyResult?.applied === false) {
+        throw new Error(typeof applyResult.reason === "string" ? applyResult.reason : "SEAL shadow apply failed");
+      }
       postRun = this.evalService.rescoreForProposal
         ? await this.evalService.rescoreForProposal({
             traceId: proposal.traceId,
@@ -278,6 +280,11 @@ export class SealService {
       };
     }
 
+    if (entry.rollbackShadow) {
+      this.db.transaction(() => {
+        entry.rollbackShadow?.(proposal.diff, applyResult, this.db);
+      })();
+    }
     this.transitionProposal(proposalId, "rolled_back", { operator: "system", reasoning: "Composite W regressed" }, "rolled_back");
     writeAuditEntry({
       proposalId,

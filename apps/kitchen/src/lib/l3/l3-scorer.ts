@@ -27,11 +27,22 @@ const DEFAULT_WEIGHTS: Record<string, number> = {
  * Read events from the database for a given correlationId.
  * Isolated into a helper for testability.
  */
-export function readEventsForCorrelation(correlationId: string): BusinessOutcomeEvent[] {
+export function readEventsForCorrelation(correlationId: string, tenantId?: string): BusinessOutcomeEvent[] {
   try {
     const db = getDb();
+    const sql = tenantId
+      ? `SELECT id, tenant_id, correlation_id, source_system, adapter, event_type,
+                kpi_key, kpi_value, raw_json, agent_id, polled_at
+         FROM business_outcome_events
+         WHERE correlation_id = ? AND tenant_id = ?
+         ORDER BY polled_at DESC`
+      : `SELECT id, tenant_id, correlation_id, source_system, adapter, event_type,
+                kpi_key, kpi_value, raw_json, agent_id, polled_at
+         FROM business_outcome_events
+         WHERE correlation_id = ?
+         ORDER BY polled_at DESC`;
     const rows = db
-      .prepare<[string], {
+      .prepare<[string, string?], {
         id: number;
         tenant_id: string;
         correlation_id: string;
@@ -43,14 +54,8 @@ export function readEventsForCorrelation(correlationId: string): BusinessOutcome
         raw_json: string;
         agent_id: string | null;
         polled_at: string;
-      }>(
-        `SELECT id, tenant_id, correlation_id, source_system, adapter, event_type,
-                kpi_key, kpi_value, raw_json, agent_id, polled_at
-         FROM business_outcome_events
-         WHERE correlation_id = ?
-         ORDER BY polled_at DESC`
-      )
-      .all(correlationId);
+      }>(sql)
+      .all(correlationId, ...(tenantId ? [tenantId] : []));
 
     return rows.map((r) => ({
       id: r.id,
@@ -151,7 +156,13 @@ export const businessOpsL3Scorer: EvalScorer = {
   layer: "l3",
 
   score(trace: AgentEvalTrace, context: EvalScoringContext): EvalScorerResult {
-    const events = readEventsForCorrelation(trace.traceId);
+    const tenantId =
+      typeof trace.metadata?.tenantId === "string"
+        ? trace.metadata.tenantId
+        : typeof trace.metadata?.tenant_id === "string"
+          ? trace.metadata.tenant_id
+          : undefined;
+    const events = readEventsForCorrelation(trace.traceId, tenantId);
 
     // Null-sentinel: no business-outcome events yet for this correlation ID.
     if (events.length === 0) {
@@ -179,6 +190,7 @@ export const businessOpsL3Scorer: EvalScorer = {
         eventCount: events.length,
         kpis,
         companyId,
+        tenantId,
       },
     };
   },

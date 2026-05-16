@@ -467,8 +467,49 @@ export function initSchema(db: Database.Database): void {
       agent_id        TEXT,
       polled_at       TEXT    NOT NULL,
       created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
-      UNIQUE(correlation_id, adapter, event_type, polled_at)
+      UNIQUE(tenant_id, correlation_id, adapter, event_type, polled_at)
     );
+    CREATE INDEX IF NOT EXISTS boe_correlation
+      ON business_outcome_events(correlation_id);
+    CREATE INDEX IF NOT EXISTS boe_agent
+      ON business_outcome_events(agent_id, polled_at DESC);
+    CREATE INDEX IF NOT EXISTS boe_tenant
+      ON business_outcome_events(tenant_id, polled_at DESC);
+    CREATE INDEX IF NOT EXISTS boe_adapter
+      ON business_outcome_events(adapter, polled_at DESC);
+  `);
+
+  const boeSchema = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'business_outcome_events'")
+    .get() as { sql: string } | undefined;
+  if (boeSchema?.sql.includes("UNIQUE(correlation_id, adapter, event_type, polled_at)")) {
+    db.exec(`
+      CREATE TABLE business_outcome_events_new (
+        id              INTEGER PRIMARY KEY,
+        tenant_id       TEXT    NOT NULL DEFAULT 'default-tenant',
+        correlation_id  TEXT    NOT NULL,
+        source_system   TEXT    NOT NULL CHECK(source_system IN ('crm','helpdesk','finance')),
+        adapter         TEXT    NOT NULL,
+        event_type      TEXT    NOT NULL,
+        kpi_key         TEXT    NOT NULL,
+        kpi_value       REAL    NOT NULL,
+        raw_json        TEXT    NOT NULL,
+        agent_id        TEXT,
+        polled_at       TEXT    NOT NULL,
+        created_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now')),
+        UNIQUE(tenant_id, correlation_id, adapter, event_type, polled_at)
+      );
+      INSERT OR IGNORE INTO business_outcome_events_new
+        (id, tenant_id, correlation_id, source_system, adapter, event_type,
+         kpi_key, kpi_value, raw_json, agent_id, polled_at, created_at)
+      SELECT id, tenant_id, correlation_id, source_system, adapter, event_type,
+             kpi_key, kpi_value, raw_json, agent_id, polled_at, created_at
+      FROM business_outcome_events;
+      DROP TABLE business_outcome_events;
+      ALTER TABLE business_outcome_events_new RENAME TO business_outcome_events;
+    `);
+  }
+  db.exec(`
     CREATE INDEX IF NOT EXISTS boe_correlation
       ON business_outcome_events(correlation_id);
     CREATE INDEX IF NOT EXISTS boe_agent
@@ -551,12 +592,16 @@ export function initSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS tak_hash   ON tenant_api_keys(key_hash);
   `);
 
-  // Seed the default internal API key for dogfood SDK calls.
-  // Key value: "memroos-internal-default-key" — used by MEMROOS_INTERNAL_API_KEY env var.
-  const defaultKeyHash = createHash("sha256").update("memroos-internal-default-key").digest("hex");
-  db.prepare(
-    "INSERT OR IGNORE INTO tenant_api_keys (id, tenant_id, key_hash) VALUES (?, ?, ?)"
-  ).run("tak-default-internal", "default-tenant", defaultKeyHash);
+  const internalApiKey = process.env.MEMROOS_INTERNAL_API_KEY;
+  const shouldSeedDevInternalKey = process.env.NODE_ENV !== "production";
+  if (internalApiKey || shouldSeedDevInternalKey) {
+    const key = internalApiKey ?? "memroos-internal-default-key";
+    const keyId = internalApiKey ? "tak-internal-env" : "tak-default-internal";
+    const defaultKeyHash = createHash("sha256").update(key).digest("hex");
+    db.prepare(
+      "INSERT OR IGNORE INTO tenant_api_keys (id, tenant_id, key_hash) VALUES (?, ?, ?)"
+    ).run(keyId, "default-tenant", defaultKeyHash);
+  }
 
   // Phase 62: additive tenant_id column on eval_runs and eval_run_examples only
   // (seal_proposals and other tables are created later in this function).

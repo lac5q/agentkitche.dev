@@ -1,4 +1,5 @@
 import type { ProposalDraft } from "./types";
+import type Database from "better-sqlite3";
 
 export interface ProposalRegistryEntry {
   type: string;
@@ -12,7 +13,15 @@ export interface ProposalRegistryEntry {
     baselineW: number;
     baselineLayers: ProposalDraft["baselineLayers"];
   }): Omit<ProposalDraft, "proposalType">;
-  applyShadow(diff: Record<string, unknown>): Record<string, unknown>;
+  applyShadow(diff: Record<string, unknown>, db?: Database.Database): Record<string, unknown>;
+  rollbackShadow?(diff: Record<string, unknown>, applyResult: Record<string, unknown>, db?: Database.Database): void;
+}
+
+function resolveDb(db?: Database.Database): Database.Database {
+  if (db) return db;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getDb } = require("@/lib/db") as typeof import("@/lib/db");
+  return getDb();
 }
 
 export const PROPOSAL_TYPES = {
@@ -189,15 +198,15 @@ export const PROPOSAL_TYPES = {
       baselineRunId: runId,
       baselineLayers,
     }),
-    applyShadow: (diff) => {
-      // Import getDb lazily to avoid circular dependencies; getDb() returns the
-      // singleton handle, so this executes inside the transaction wrapper in service.ts.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getDb } = require("@/lib/db") as typeof import("@/lib/db");
-      const db = getDb();
+    applyShadow: (diff, dbHandle) => {
+      const db = resolveDb(dbHandle);
       const agentId = diff["agentId"] as string | undefined;
       const after = diff["after"] as string | null | undefined;
       if (!agentId) return { applied: false, reason: "Missing agentId in diff" };
+
+      const previousRows = db
+        .prepare("SELECT id FROM agent_instructions WHERE agent_id = ? AND is_active = 1")
+        .all(agentId) as Array<{ id: number }>;
 
       // Deactivate previous active instruction rows for this agent
       db.prepare("UPDATE agent_instructions SET is_active = 0 WHERE agent_id = ? AND is_active = 1").run(agentId);
@@ -208,12 +217,27 @@ export const PROPOSAL_TYPES = {
         .get(agentId) as { max_v: number | null } | undefined;
       const nextVersion = (versionRow?.max_v ?? 0) + 1;
 
-      db.prepare(
+      const info = db.prepare(
         "INSERT INTO agent_instructions (agent_id, instructions_text, version, is_active)" +
         " VALUES (?, ?, ?, 1)"
       ).run(agentId, after ?? "", nextVersion);
 
-      return { applied: true, agentId, version: nextVersion };
+      return {
+        applied: true,
+        agentId,
+        version: nextVersion,
+        insertedId: Number(info.lastInsertRowid),
+        previousActiveIds: previousRows.map((row) => row.id),
+      };
+    },
+    rollbackShadow: (_diff, applyResult, dbHandle) => {
+      const db = resolveDb(dbHandle);
+      const insertedId = applyResult["insertedId"] as number | undefined;
+      const previousActiveIds = applyResult["previousActiveIds"] as number[] | undefined;
+      if (insertedId) db.prepare("DELETE FROM agent_instructions WHERE id = ?").run(insertedId);
+      for (const id of previousActiveIds ?? []) {
+        db.prepare("UPDATE agent_instructions SET is_active = 1 WHERE id = ?").run(id);
+      }
     },
   },
 
@@ -249,10 +273,8 @@ export const PROPOSAL_TYPES = {
       baselineRunId: runId,
       baselineLayers,
     }),
-    applyShadow: (diff) => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getDb } = require("@/lib/db") as typeof import("@/lib/db");
-      const db = getDb();
+    applyShadow: (diff, dbHandle) => {
+      const db = resolveDb(dbHandle);
       const agentId = diff["agentId"] as string | undefined;
       const skillId = diff["skillId"] as string | undefined;
       const action = diff["action"] as string | undefined;
@@ -260,12 +282,17 @@ export const PROPOSAL_TYPES = {
 
       if (!agentId || !skillId) return { applied: false, reason: "Missing agentId or skillId in diff" };
 
-      db.prepare(
+      const info = db.prepare(
         "INSERT INTO proposed_skills (agent_id, skill_id, action, metadata, status)" +
         " VALUES (?, ?, ?, ?, 'proposed')"
       ).run(agentId, skillId, action ?? "add", JSON.stringify(metadata ?? {}));
 
-      return { applied: true, agentId, skillId, staged: true };
+      return { applied: true, agentId, skillId, staged: true, insertedId: Number(info.lastInsertRowid) };
+    },
+    rollbackShadow: (_diff, applyResult, dbHandle) => {
+      const insertedId = applyResult["insertedId"] as number | undefined;
+      if (!insertedId) return;
+      resolveDb(dbHandle).prepare("DELETE FROM proposed_skills WHERE id = ?").run(insertedId);
     },
   },
 
@@ -297,16 +324,19 @@ export const PROPOSAL_TYPES = {
       baselineRunId: runId,
       baselineLayers,
     }),
-    applyShadow: (diff) => {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getDb } = require("@/lib/db") as typeof import("@/lib/db");
-      const db = getDb();
+    applyShadow: (diff, dbHandle) => {
+      const db = resolveDb(dbHandle);
       const agentId = diff["agentId"] as string | undefined;
       const toolName = diff["toolName"] as string | null | undefined;
       const contextPattern = (diff["contextPattern"] as string | undefined) ?? "*";
       const newWeight = diff["newWeight"] as number | null | undefined;
 
       if (!agentId) return { applied: false, reason: "Missing agentId in diff" };
+
+      const resolvedToolName = toolName ?? "unknown";
+      const previousRows = db
+        .prepare("SELECT id FROM agent_tool_routing_policies WHERE agent_id = ? AND tool_name = ? AND is_active = 1")
+        .all(agentId, resolvedToolName) as Array<{ id: number }>;
 
       // Deactivate previous active policy for this agent+tool combination
       if (toolName) {
@@ -316,12 +346,29 @@ export const PROPOSAL_TYPES = {
         ).run(agentId, toolName);
       }
 
-      db.prepare(
+      const info = db.prepare(
         "INSERT INTO agent_tool_routing_policies (agent_id, tool_name, context_pattern, preference_weight, is_active)" +
         " VALUES (?, ?, ?, ?, 1)"
-      ).run(agentId, toolName ?? "unknown", contextPattern, newWeight ?? 1.0);
+      ).run(agentId, resolvedToolName, contextPattern, newWeight ?? 1.0);
 
-      return { applied: true, agentId, toolName, contextPattern, newWeight };
+      return {
+        applied: true,
+        agentId,
+        toolName: resolvedToolName,
+        contextPattern,
+        newWeight,
+        insertedId: Number(info.lastInsertRowid),
+        previousActiveIds: previousRows.map((row) => row.id),
+      };
+    },
+    rollbackShadow: (_diff, applyResult, dbHandle) => {
+      const db = resolveDb(dbHandle);
+      const insertedId = applyResult["insertedId"] as number | undefined;
+      const previousActiveIds = applyResult["previousActiveIds"] as number[] | undefined;
+      if (insertedId) db.prepare("DELETE FROM agent_tool_routing_policies WHERE id = ?").run(insertedId);
+      for (const id of previousActiveIds ?? []) {
+        db.prepare("UPDATE agent_tool_routing_policies SET is_active = 1 WHERE id = ?").run(id);
+      }
     },
   },
 

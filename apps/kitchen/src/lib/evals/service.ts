@@ -90,7 +90,13 @@ export function scoreAndMaybePersistEvalTrace(
   const goldenSetPath = goldenSetPathForTrace(config, trace);
   const goldenSet = loadGoldenSet(goldenSetPath);
   const result = scoreTraceWithEvalEngine({ trace, config, goldenSet, goldenSetPath });
-  if (options.persist !== false) persistEvalRun(options.db ?? getDb(), result);
+  const tenantId =
+    typeof trace.metadata?.tenantId === "string"
+      ? trace.metadata.tenantId
+      : typeof trace.metadata?.tenant_id === "string"
+        ? trace.metadata.tenant_id
+        : undefined;
+  if (options.persist !== false) persistEvalRun(options.db ?? getDb(), result, { tenantId });
   return result;
 }
 

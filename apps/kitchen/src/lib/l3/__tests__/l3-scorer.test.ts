@@ -162,6 +162,53 @@ describe("businessOpsL3Scorer — happy path", () => {
     expect(events[0].kpiValue).toBe(0.75);
     expect(events[0].correlationId).toBe("trace-read-test");
   });
+
+  it("filters business outcome events by tenant when trace metadata carries tenantId", () => {
+    insertEvent(testDb, {
+      tenantId: "tenant-alpha",
+      correlationId: "trace-shared",
+      kpiKey: "completion_rate",
+      kpiValue: 1.0,
+      eventType: "deal_advance",
+    });
+    insertEvent(testDb, {
+      tenantId: "tenant-beta",
+      correlationId: "trace-shared",
+      kpiKey: "completion_rate",
+      kpiValue: 0.1,
+      eventType: "deal_advance",
+    });
+
+    const events = readEventsForCorrelation("trace-shared", "tenant-alpha");
+    expect(events).toHaveLength(1);
+    expect(events[0].tenantId).toBe("tenant-alpha");
+
+    const trace: AgentEvalTrace = {
+      traceId: "trace-shared",
+      agentId: "agent-1",
+      agentModelFamily: "openai",
+      input: "Do the thing",
+      output: "Done",
+      metadata: { tenantId: "tenant-alpha" },
+    };
+    const context = {
+      config: buildDefaultEvalConfig(),
+      judge: {
+        score: 0.8,
+        rubricScores: { faithful: 0.8, useful: 0.9, policy: 1.0 },
+        model: "claude-haiku",
+        provider: "anthropic",
+        modelFamily: "anthropic",
+        promptTemplateVersion: "v1",
+        promptHash: "abc",
+        positionBiasMitigation: { swapAugmentation: false, orderAgreement: true },
+      },
+      goldenSet: [],
+    };
+    const result = businessOpsL3Scorer.score(trace, context);
+    expect(result.metadata?.tenantId).toBe("tenant-alpha");
+    expect(result.metadata?.eventCount).toBe(1);
+  });
 });
 
 // ──────────────────────────────────────────────────────────────────────────────

@@ -56,6 +56,10 @@ function signedDelta(seed: string, forecastWDelta: number): number {
   return Number((-forecast + unit * forecast * 2.5).toFixed(4));
 }
 
+function diffHashFor(baseline: EvalRunResult, proposalType: string, diff: unknown, forecastWDelta: number): string {
+  return deterministicHash(`${baseline.traceId}:${proposalType}:${stableStringify(diff)}:${forecastWDelta}`);
+}
+
 function lowModeMemorySignal(targetW: number): number {
   // With the default v2.5 scorer vector, the low-mode trace lands around
   // 0.399 + 0.1625x. This gives the model room for both small regressions
@@ -153,6 +157,23 @@ function buildSyntheticTrace(opts: {
   };
 }
 
+export function buildModeledPostApplyTrace({
+  baseline,
+  proposalType,
+  diff,
+  forecastWDelta,
+}: {
+  baseline: EvalRunResult;
+  proposalType: string;
+  diff: unknown;
+  forecastWDelta: number;
+}): AgentEvalTrace {
+  const diffHash = diffHashFor(baseline, proposalType, diff, forecastWDelta);
+  const delta = signedDelta(diffHash, forecastWDelta);
+  const targetW = Number(clamp(baseline.compositeW + delta).toFixed(4));
+  return buildSyntheticTrace({ baseline, proposalType, diffHash, targetW, delta });
+}
+
 export function sealRescoreMetadata(run: EvalRunResult): Record<string, unknown> | null {
   return (run.scorerResults.find((result) => result.scorerId === RESCORE_SCORER_ID)?.metadata ?? null) as
     | Record<string, unknown>
@@ -168,7 +189,7 @@ export function rescorePostApply({
   goldenSet,
   goldenSetPath,
 }: SealRescoreOptions): EvalRunResult {
-  const diffHash = deterministicHash(`${baseline.traceId}:${proposalType}:${stableStringify(diff)}:${forecastWDelta}`);
+  const diffHash = diffHashFor(baseline, proposalType, diff, forecastWDelta);
 
   if (BEHAVIORAL_PROPOSAL_TYPES.has(proposalType)) {
     return cloneUnmodeledBaseline(baseline, proposalType, diffHash);
@@ -176,7 +197,7 @@ export function rescorePostApply({
 
   const delta = signedDelta(diffHash, forecastWDelta);
   const targetW = Number(clamp(baseline.compositeW + delta).toFixed(4));
-  const trace = buildSyntheticTrace({ baseline, proposalType, diffHash, targetW, delta });
+  const trace = buildModeledPostApplyTrace({ baseline, proposalType, diff, forecastWDelta });
   const result = scoreTraceWithEvalEngine({
     trace,
     config,

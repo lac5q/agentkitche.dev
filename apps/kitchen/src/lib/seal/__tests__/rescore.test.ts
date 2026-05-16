@@ -80,24 +80,41 @@ function rescore(diff: Record<string, unknown>, forecastWDelta = 0.08, proposalT
   });
 }
 
-function findDiff(direction: "positive" | "negative"): Record<string, unknown> {
+function findDiff(direction: "positive" | "negative", proposalType = "salience_update"): Record<string, unknown> {
   for (let i = 0; i < 500; i++) {
-    const diff = { kind: "salience_update", memoryId: `mem-${direction}-${i}`, marker: i };
-    const post = rescore(diff);
+    const diff = { kind: proposalType, memoryId: `mem-${direction}-${i}`, marker: i };
+    const post = rescore(diff, 0.08, proposalType);
     if (direction === "positive" && post.compositeW > baselineRun().compositeW) return diff;
     if (direction === "negative" && post.compositeW < baselineRun().compositeW) return diff;
   }
   throw new Error(`Could not find deterministic ${direction} diff`);
 }
 
-function sealService(db: Database.Database) {
+function findToolRoutingDiff(direction: "negative" | "positive"): Record<string, unknown> {
+  for (let i = 0; i < 500; i++) {
+    const diff = {
+      kind: "tool_routing_update",
+      agentId: "agent-1",
+      toolName: "memory.search",
+      contextPattern: "*",
+      newWeight: 0.2,
+      marker: i,
+    };
+    const post = rescore(diff, 0.08, "tool_routing_update");
+    if (direction === "negative" && post.compositeW < baselineRun().compositeW) return diff;
+    if (direction === "positive" && post.compositeW > baselineRun().compositeW) return diff;
+  }
+  throw new Error(`Could not find deterministic ${direction} tool routing diff`);
+}
+
+function sealService(db: Database.Database, proposalTypes = ["salience_update", "noop_test"]) {
   return new SealService({
     db,
     config: {
       seal: {
         reflectionThreshold: 0.6,
         autoApply: false,
-        proposalTypes: ["salience_update", "noop_test"],
+        proposalTypes,
       },
     },
   });
@@ -178,5 +195,45 @@ describe("SEAL post-apply re-scoring", () => {
 
     expect(post.compositeW).toBe(baselineRun().compositeW);
     expect(marker?.metadata?.reason).toMatch(/behavioral effect not modeled/);
+  });
+
+  it("undoes shadow mutations when post-apply W regresses", async () => {
+    const db = new Database(":memory:");
+    initSchema(db);
+    persistEvalRun(db, baselineRun());
+    db.prepare(
+      "INSERT INTO registered_agents (id, name, role, platform, protocol, status, last_heartbeat_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).run("agent-1", "Agent One", "ops", "codex", "local", "active", new Date().toISOString());
+    db.prepare(
+      "INSERT INTO agent_tool_routing_policies (agent_id, tool_name, context_pattern, preference_weight, is_active)" +
+        " VALUES (?, ?, ?, ?, 1)"
+    ).run("agent-1", "memory.search", "*", 1.0);
+
+    const seal = sealService(db, ["tool_routing_update"]);
+    const draft: ProposalDraft = {
+      traceId: "trace-low",
+      runId: "run-low",
+      agentId: "agent-1",
+      proposalType: "tool_routing_update",
+      diff: findToolRoutingDiff("negative"),
+      rationale: "test proposal",
+      forecastWDelta: 0.08,
+      baselineW: baselineRun().compositeW,
+      baselineRunId: "run-low",
+      baselineLayers: baselineRun().layers,
+    };
+    const proposal = seal.createProposal(draft);
+    await seal.approveProposal(proposal.id, { operator: "test", reasoning: "ok" });
+
+    const result = await applyProposalWithService(seal, proposal.id);
+    const rows = db
+      .prepare(
+        "SELECT preference_weight, is_active FROM agent_tool_routing_policies WHERE agent_id = ? AND tool_name = ? ORDER BY id ASC"
+      )
+      .all("agent-1", "memory.search") as Array<{ preference_weight: number; is_active: number }>;
+
+    expect(result.kept).toBe(false);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual({ preference_weight: 1.0, is_active: 1 });
   });
 });
