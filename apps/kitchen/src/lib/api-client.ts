@@ -1404,3 +1404,104 @@ export function useTriggerAdapterPollMutation() {
     },
   });
 }
+
+// ---- Phase 64: Audit Log + HIL Escalations hooks ----
+
+export interface AuditEntriesFilter {
+  agentId?: string;
+  eventType?: string;
+  actorId?: string;
+  tenantId?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  cursor?: string;
+}
+
+export interface AuditEntriesResponse {
+  entries: import("@/lib/audit/schema").AuditEntry[];
+  nextCursor?: string;
+  total: number;
+}
+
+export interface EscalationsFilter {
+  status?: "open" | "resolved" | "sla_breached" | "all";
+  tenantId?: string;
+  limit?: number;
+}
+
+export interface EscalationWithCountdown extends import("@/lib/audit/schema").HilEscalation {
+  isOverdue: boolean;
+  slaRemainingMs: number;
+}
+
+export interface EscalationsResponse {
+  escalations: EscalationWithCountdown[];
+  timestamp: string;
+}
+
+/** Queries paginated audit entries with filter support. */
+export function useAuditEntries(filter: AuditEntriesFilter = {}) {
+  const params = new URLSearchParams();
+  if (filter.agentId) params.set("agentId", filter.agentId);
+  if (filter.eventType) params.set("eventType", filter.eventType);
+  if (filter.actorId) params.set("actorId", filter.actorId);
+  if (filter.tenantId) params.set("tenantId", filter.tenantId);
+  if (filter.from) params.set("from", filter.from);
+  if (filter.to) params.set("to", filter.to);
+  if (filter.limit) params.set("limit", String(filter.limit));
+  if (filter.cursor) params.set("cursor", filter.cursor);
+  const qs = params.toString();
+  return useQuery({
+    queryKey: ["audit-entries", filter],
+    queryFn: () => fetchJSON<AuditEntriesResponse>(`/api/audit${qs ? `?${qs}` : ""}`),
+  });
+}
+
+/**
+ * Returns a download URL for the audit export endpoint.
+ * Triggers a browser download when assigned to window.location.href.
+ */
+export function useAuditExportUrl(filter: AuditEntriesFilter, format: "ndjson" | "csv"): string {
+  const params = new URLSearchParams({ format });
+  if (filter.agentId) params.set("agentId", filter.agentId);
+  if (filter.eventType) params.set("eventType", filter.eventType);
+  if (filter.actorId) params.set("actorId", filter.actorId);
+  if (filter.tenantId) params.set("tenantId", filter.tenantId);
+  if (filter.from) params.set("from", filter.from);
+  if (filter.to) params.set("to", filter.to);
+  return `/api/audit/export?${params.toString()}`;
+}
+
+/** Queries HIL escalations; auto-refreshes every 30s for SLA countdown freshness. */
+export function useEscalations(filter: EscalationsFilter = {}) {
+  const params = new URLSearchParams();
+  if (filter.status) params.set("status", filter.status);
+  if (filter.tenantId) params.set("tenantId", filter.tenantId);
+  if (filter.limit) params.set("limit", String(filter.limit));
+  const qs = params.toString();
+  return useQuery({
+    queryKey: ["escalations", filter],
+    queryFn: () => fetchJSON<EscalationsResponse>(`/api/escalations${qs ? `?${qs}` : ""}`),
+    refetchInterval: 30_000,
+  });
+}
+
+function resolveEscalationFn(input: { id: string; note?: string }) {
+  return mutateJSON<{ escalation: import("@/lib/audit/schema").HilEscalation; timestamp: string }>(
+    `/api/escalations/${encodeURIComponent(input.id)}/resolve`,
+    { method: "POST", body: JSON.stringify({ note: input.note }) }
+  );
+}
+
+/** Mutation for resolving a HIL escalation. Invalidates escalations query on success. */
+export function useResolveEscalation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resolveEscalationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["escalations"] });
+      queryClient.invalidateQueries({ queryKey: ["audit-entries"] });
+    },
+  });
+}

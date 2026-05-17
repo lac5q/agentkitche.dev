@@ -4,10 +4,12 @@ import { useEffect, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  AlertTriangle,
   BarChart3,
   Bot,
   Brain,
   ClipboardCheck,
+  ClipboardList,
   Database,
   GitBranch,
   Key,
@@ -38,6 +40,8 @@ const NAV_ITEMS = [
   { href: "/evals", label: "Evals", description: "Eval engine and drift guard", icon: ClipboardCheck },
   { href: "/business-ops", label: "Business Ops", description: "L3 outcome signals", icon: TrendingUp },
   { href: "/seal", label: "SEAL", description: "Self-improvement substrate", icon: RefreshCw },
+  { href: "/audit", label: "Audit Log", description: "Immutable decision history", icon: ClipboardList },
+  { href: "/escalations", label: "Escalations", description: "HIL queue with SLA", icon: AlertTriangle },
   { href: "/agent-autogen", label: "Agent Autogen", description: "Agent autogen proposals", icon: Bot },
   { href: "/memory-autogen", label: "Memory Autogen", description: "Memory proposals & policy lab", icon: Layers },
   { href: "/library#governance", label: "Governance", description: "Health and audit", icon: ShieldCheck },
