@@ -45,12 +45,6 @@ business_ops:
   poll_interval_seconds: 300
   correlation_id_field: kitchen_correlation_id
 
-hil:
-  sla_defaults:
-    agent_escalate: 4h
-    seal_approval: 24h
-    eval_below_threshold: 8h
-
 companies:
   default:
     l3_sub_weights:
