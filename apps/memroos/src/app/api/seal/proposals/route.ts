@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { authorizeRegistryWrite, registryWriteUnauthorizedResponse } from "@/lib/operator-auth";
+import { authenticateUser } from "@/lib/auth/session";
 import { SealService } from "@/lib/seal/service";
 import type { ProposalStatus } from "@/lib/seal/types";
 
@@ -12,7 +13,9 @@ function statusFrom(value: string | null): ProposalStatus | undefined {
   return value && STATUSES.includes(value as ProposalStatus) ? (value as ProposalStatus) : undefined;
 }
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const session = await authenticateUser(req);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const url = req.nextUrl ?? new URL(req.url);
   const service = new SealService();
   return Response.json({

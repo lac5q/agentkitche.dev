@@ -4,12 +4,6 @@ function isLoopbackHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
 
-function forwardedHost(request: Request): string | null {
-  const forwardedHostHeader = request.headers.get("x-forwarded-host");
-  const host = forwardedHostHeader?.split(",")[0]?.trim();
-  return host || null;
-}
-
 function hostnameFromHostHeader(value: string): string {
   if (value.startsWith("[")) {
     return value.slice(1, value.indexOf("]"));
@@ -18,14 +12,17 @@ function hostnameFromHostHeader(value: string): string {
 }
 
 function getRequestHostname(request: Request): string | null {
-  const host = forwardedHost(request);
-  if (host) return hostnameFromHostHeader(host);
-
+  // CR-08 fix: do NOT trust x-forwarded-host for loopback detection — an external
+  // attacker can spoof it. Use only request.url (set by Next.js from the actual
+  // socket connection) or the Host header, which the server controls.
   try {
-    return new URL(request.url).hostname;
+    const url = new URL(request.url);
+    if (url.hostname && url.hostname !== "0.0.0.0") return url.hostname;
   } catch {
-    return null;
+    // fall through to Host header
   }
+  const hostHeader = request.headers.get("host");
+  return hostHeader ? hostnameFromHostHeader(hostHeader) : null;
 }
 
 function hasOperatorKey(request: Request, expectedKey: string): boolean {

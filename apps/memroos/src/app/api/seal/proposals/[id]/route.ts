@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 
 import { authorizeRegistryWrite, registryWriteUnauthorizedResponse } from "@/lib/operator-auth";
+import { authenticateUser } from "@/lib/auth/session";
 import { SealService } from "@/lib/seal/service";
 import type { ProposalCommandAction } from "@/lib/seal/types";
 
@@ -12,7 +13,9 @@ function isAction(value: unknown): value is ProposalCommandAction {
   return value === "approve" || value === "reject" || value === "apply";
 }
 
-export async function GET(_req: NextRequest, ctx: Ctx) {
+export async function GET(req: NextRequest, ctx: Ctx) {
+  const session = await authenticateUser(req);
+  if (!session) return Response.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
   const service = new SealService();
   const proposal = service.getProposal(id);

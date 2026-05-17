@@ -13,6 +13,11 @@ vi.mock('@/lib/db', () => ({
   closeDb: () => {},
 }));
 
+// Mock auth — tests exercise data logic, not auth gate
+vi.mock('@/lib/auth/session', () => ({
+  authenticateUser: async () => ({ userId: 'test-user', role: 'admin', email: 'admin@example.com', displayName: 'Admin', tenantId: 'default-tenant' }),
+}));
+
 // Import route handler after mock
 const { GET } = await import('../route');
 

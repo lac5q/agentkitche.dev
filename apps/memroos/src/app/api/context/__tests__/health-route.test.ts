@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/auth/session", () => ({
+  authenticateUser: async () => ({ userId: 'test-user', role: 'admin', email: 'admin@example.com', displayName: 'Admin', tenantId: 'default-tenant' }),
+}));
+
 vi.mock("@/lib/context-sources", () => ({
   loadContextSourceContracts: () => ({
     sources: [{
@@ -26,7 +30,7 @@ vi.mock("@/lib/context-sources", () => ({
 describe("GET /api/context/health", () => {
   it("returns context source health", async () => {
     const { GET } = await import("../health/route");
-    const res = GET();
+    const res = await GET(new Request("http://localhost/api/context/health") as any);
     const body = await res.json();
 
     expect(res.status).toBe(200);

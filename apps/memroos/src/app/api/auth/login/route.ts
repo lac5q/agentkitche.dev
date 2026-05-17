@@ -78,20 +78,14 @@ export async function POST(req: NextRequest) {
   );
 
   const isProd = process.env.NODE_ENV === 'production';
-  const cookieValue = [
-    `${COOKIE_NAME}=${rawToken}`,
-    `HttpOnly`,
-    `SameSite=Lax`,
-    isProd ? `Secure` : '',
-    `Path=/`,
-    `Max-Age=${REFRESH_TTL_DAYS * 86400}`,
-  ]
-    .filter(Boolean)
-    .join('; ');
+  const secureFlag = isProd ? '; Secure' : '';
+
+  const refreshCookie = `${COOKIE_NAME}=${rawToken}; HttpOnly; SameSite=Lax${secureFlag}; Path=/; Max-Age=${REFRESH_TTL_DAYS * 86400}`;
+  // CR-01 fix: set access token as HttpOnly so JS cannot read it (XSS protection)
+  const accessCookie = `access_token=${accessToken}; HttpOnly; SameSite=Lax${secureFlag}; Path=/; Max-Age=900`;
 
   return Response.json(
     {
-      accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -101,7 +95,9 @@ export async function POST(req: NextRequest) {
     },
     {
       status: 200,
-      headers: { 'Set-Cookie': cookieValue },
+      headers: {
+        'Set-Cookie': `${refreshCookie}, ${accessCookie}`,
+      },
     }
   );
 }

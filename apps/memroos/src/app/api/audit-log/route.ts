@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
+import { authenticateUser } from '@/lib/auth/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,8 @@ export const dynamic = 'force-dynamic';
  * SEC-02: Surfaces the audit trail for the dashboard AuditLogPanel.
  */
 export async function GET(req: NextRequest) {
+  const session = await authenticateUser(req);
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const url = req.nextUrl ?? new URL(req.url);
   const rawLimit = url.searchParams.get('limit');
   const parsedLimit = rawLimit !== null ? Number(rawLimit) : 20;

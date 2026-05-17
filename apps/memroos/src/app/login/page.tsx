@@ -25,9 +25,7 @@ export default function LoginPage() {
         setError("Invalid email or password");
         return;
       }
-      const data = (await res.json()) as { accessToken: string };
-      // Store access token in a non-httpOnly cookie for SSR reads by middleware
-      document.cookie = `access_token=${data.accessToken}; SameSite=Lax; Path=/`;
+      // access_token is set as HttpOnly cookie by the server — nothing to do client-side
       router.push("/");
     } catch {
       setError("Login failed. Please try again.");

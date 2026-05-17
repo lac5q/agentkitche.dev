@@ -12,6 +12,10 @@ vi.mock("@/lib/db", () => ({
   closeDb: () => {},
 }));
 
+vi.mock("@/lib/auth/session", () => ({
+  authenticateUser: async () => ({ userId: 'test-user', role: 'admin', email: 'admin@example.com', displayName: 'Admin', tenantId: 'default-tenant' }),
+}));
+
 const proposalsRoute = await import("../proposals/route");
 const proposalRoute = await import("../proposals/[id]/route");
 const auditRoute = await import("../audit/route");

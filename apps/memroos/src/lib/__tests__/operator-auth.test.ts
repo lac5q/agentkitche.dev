@@ -20,10 +20,12 @@ describe("authorizeRegistryWrite", () => {
   });
 
   it("does not treat a public forwarded host as local loopback", () => {
+    // CR-08: x-forwarded-host is ignored; a spoofed "localhost" header cannot
+    // elevate a public-origin request to loopback trust.
     expect(
       authorizeRegistryWrite(
-        new Request("http://localhost/api/agents/register", {
-          headers: { "x-forwarded-host": "memroos.example.com" },
+        new Request("https://memroos.example.com/api/agents/register", {
+          headers: { "x-forwarded-host": "localhost" },
         })
       )
     ).toBe(false);
