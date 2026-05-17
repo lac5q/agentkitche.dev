@@ -1,9 +1,18 @@
+import { createHash } from 'crypto';
 import { verifyAccessToken } from './jwt';
-import type { SessionUser } from './types';
+import type { SessionUser, UserRole } from './types';
+
+// Lazy import to avoid circular dep issues at module load
+let dbModule: typeof import('../db') | null = null;
+async function getDbLazy() {
+  if (!dbModule) dbModule = await import('../db');
+  return dbModule.getDb();
+}
 
 /**
  * Reads Bearer token from Authorization header or access_token cookie.
- * Verifies the JWT and returns a SessionUser, or null if invalid.
+ * Supports both JWT access tokens and per-user API keys.
+ * Returns a SessionUser or null if authentication fails.
  */
 export async function authenticateUser(req: Request): Promise<SessionUser | null> {
   let token: string | null = null;
@@ -25,16 +34,58 @@ export async function authenticateUser(req: Request): Promise<SessionUser | null
 
   if (!token) return null;
 
-  const payload = await verifyAccessToken(token);
-  if (!payload) return null;
+  // 3. Detect token type: JWTs contain two '.' separators
+  const isJwt = token.split('.').length === 3;
 
-  return {
-    userId: payload.sub,
-    role: payload.role,
-    // email and displayName are not in the JWT — callers that need them
-    // must fetch from DB. Provide safe defaults here.
-    email: '',
-    displayName: '',
-    tenantId: 'default-tenant',
-  };
+  if (isJwt) {
+    const payload = await verifyAccessToken(token);
+    if (!payload) return null;
+    return {
+      userId: payload.sub,
+      role: payload.role,
+      email: '',
+      displayName: '',
+      tenantId: 'default-tenant',
+    };
+  }
+
+  // 4. Per-user API key: SHA-256 hash lookup
+  const keyHash = createHash('sha256').update(token).digest('hex');
+  try {
+    const db = await getDbLazy();
+    type ApiKeyRow = { user_id: string; revoked_at: string | null };
+    const apiKey = db
+      .prepare('SELECT user_id, revoked_at FROM user_api_keys WHERE key_hash = ?')
+      .get(keyHash) as ApiKeyRow | undefined;
+
+    if (!apiKey || apiKey.revoked_at) return null;
+
+    type UserRow = { id: string; email: string; display_name: string; tenant_id: string };
+    const user = db
+      .prepare('SELECT id, email, display_name, tenant_id FROM users WHERE id = ?')
+      .get(apiKey.user_id) as UserRow | undefined;
+
+    if (!user) return null;
+
+    type RoleRow = { role: UserRole };
+    const roleRow = db
+      .prepare('SELECT role FROM user_roles WHERE user_id = ? LIMIT 1')
+      .get(user.id) as RoleRow | undefined;
+
+    // Update last_used_at
+    db.prepare('UPDATE user_api_keys SET last_used_at = ? WHERE key_hash = ?').run(
+      new Date().toISOString(),
+      keyHash
+    );
+
+    return {
+      userId: user.id,
+      role: roleRow?.role ?? 'reviewer',
+      email: user.email,
+      displayName: user.display_name,
+      tenantId: user.tenant_id,
+    };
+  } catch {
+    return null;
+  }
 }
