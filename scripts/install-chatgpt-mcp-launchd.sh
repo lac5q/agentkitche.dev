@@ -116,7 +116,7 @@ write_plist() {
   quoted_root="$(shell_quote "$ROOT")"
   quoted_host="$(shell_quote "$HOST")"
   quoted_port="$(shell_quote "$PORT")"
-  local launch_command="set -a; if [ -f ${quoted_token_file} ]; then . ${quoted_token_file}; fi; set +a; exec ${quoted_root}/scripts/memroos-mcp.sh --http --host ${quoted_host} --port ${quoted_port}"
+  local launch_command="set -a; if [ -f ${quoted_token_file} ]; then . ${quoted_token_file}; fi; set +a; exec /bin/bash ${quoted_root}/scripts/memroos-mcp.sh --http --host ${quoted_host} --port ${quoted_port}"
 
   cat > "$PLIST_PATH" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
