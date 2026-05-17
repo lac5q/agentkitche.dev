@@ -73,6 +73,34 @@ export interface MemoryTierHealth {
   lastWrite?: string | null;
 }
 
+export interface ContextSourceHealth {
+  id: string;
+  type: "qmd" | "gmail" | "spark" | "mem0" | "local-folder";
+  status: "ok" | "stale" | "missing" | "degraded" | "disabled";
+  enabled: boolean;
+  lastRun: string | null;
+  ageMinutes: number | null;
+  documentCount: number;
+  qmdCollection: string | null;
+  lastIndexedMarker: string | null;
+  lastError: string | null;
+  repairHint: string;
+  safeAnswerPolicy: "source_required" | "degrade_with_warning" | "optional";
+}
+
+export interface ContextHealthResponse {
+  sources: ContextSourceHealth[];
+  timestamp: string;
+}
+
+export function useContextSourceHealth() {
+  return useQuery({
+    queryKey: ["context", "health"],
+    queryFn: () => fetchJSON<ContextHealthResponse>("/api/context/health"),
+    refetchInterval: 60_000,
+  });
+}
+
 export interface MultiMemorySearchResult {
   id: string;
   tier: "vector" | "graph" | "episodic";

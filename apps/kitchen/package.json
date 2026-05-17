@@ -10,6 +10,7 @@
     "start": "next start",
     "start:all": "bash ../../start.sh",
     "eval:memory": "node scripts/run-memory-evals.mjs",
+    "eval:context-sources": "node ../../scripts/run-context-source-evals.mjs",
     "eval:memory-degradation": "bash ../../scripts/run-memory-degradation-checks.sh",
     "install:memory-resilience": "node ../../scripts/install-memory-resilience.mjs install",
     "apo:worker": "node ../../scripts/apply-agent-lightning-approvals.mjs",

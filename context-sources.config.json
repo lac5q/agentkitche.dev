@@ -1,0 +1,69 @@
+{
+  "sources": [
+    {
+      "id": "qmd",
+      "type": "qmd",
+      "enabled": true,
+      "requiredTools": ["qmd"],
+      "envVars": ["KNOWLEDGE_BASE_PATH"],
+      "sourcePath": "${KNOWLEDGE_BASE_PATH:-./docs}",
+      "ingestCommand": "qmd ingest",
+      "indexCommand": "qmd query health --limit 1",
+      "freshnessThresholdMinutes": 1440,
+      "qmdCollection": "knowledge",
+      "safeAnswerPolicy": "source_required"
+    },
+    {
+      "id": "gmail",
+      "type": "gmail",
+      "enabled": false,
+      "requiredTools": ["python3"],
+      "envVars": ["GMAIL_INGEST_ENABLED"],
+      "sourcePath": "./data/context/gmail",
+      "ingestCommand": "python3 services/ingestion/gmail-runner.py",
+      "indexCommand": "qmd index gmail",
+      "freshnessThresholdMinutes": 180,
+      "qmdCollection": "gmail",
+      "safeAnswerPolicy": "source_required"
+    },
+    {
+      "id": "spark",
+      "type": "spark",
+      "enabled": false,
+      "requiredTools": ["sqlite3", "python3"],
+      "envVars": ["SPARK_TRANSCRIPTS_DB"],
+      "sourcePath": "./data/context/spark",
+      "ingestCommand": "python3 services/ingestion/spark-transcripts.py",
+      "indexCommand": "qmd index spark",
+      "freshnessThresholdMinutes": 360,
+      "qmdCollection": "spark",
+      "safeAnswerPolicy": "source_required"
+    },
+    {
+      "id": "mem0",
+      "type": "mem0",
+      "enabled": true,
+      "requiredTools": ["python3"],
+      "envVars": ["MEM0_URL"],
+      "sourcePath": "./services/memory/logs",
+      "ingestCommand": "services/memory/healthcheck.sh",
+      "indexCommand": "curl -fsS ${MEM0_URL:-http://localhost:3201}/health",
+      "freshnessThresholdMinutes": 15,
+      "qmdCollection": null,
+      "safeAnswerPolicy": "degrade_with_warning"
+    },
+    {
+      "id": "local-folder",
+      "type": "local-folder",
+      "enabled": false,
+      "requiredTools": [],
+      "envVars": ["LOCAL_CONTEXT_PATH"],
+      "sourcePath": "${LOCAL_CONTEXT_PATH:-./docs}",
+      "ingestCommand": null,
+      "indexCommand": "qmd index local-folder",
+      "freshnessThresholdMinutes": 1440,
+      "qmdCollection": "local-folder",
+      "safeAnswerPolicy": "source_required"
+    }
+  ]
+}

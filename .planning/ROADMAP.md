@@ -307,7 +307,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 
 ### Future Milestone Priority
 
-1. Begin v3.0 Phase 63 after v2.5 archive is committed.
+1. Plan the next milestone after v3.1 Phase 69 completion.
 
 ### Later Ideas
 
@@ -321,7 +321,7 @@ Full archive: `.planning/milestones/v1.7-ROADMAP.md`
 - LLM-powered recall scoring upgrade (embedding over BM25)
 - Cross-project recall (similar-task recommendations across repos)
 
-Run `/gsd-discuss-phase 63` or `$gsd-new-milestone` to start the next milestone workflow.
+Run `$gsd-new-milestone` to start the next milestone workflow.
 
 ---
 
@@ -329,13 +329,13 @@ Run `/gsd-discuss-phase 63` or `$gsd-new-milestone` to start the next milestone 
 
 Compliance infrastructure done right once, with bank transaction reconciliation as the reference vertical. CoVe ships as a callable reliability module across all agent runtimes. Security boundary hardening closes the May 2026 review gaps before the platform is treated as production-ready.
 
-- [ ] **Phase 63**: Rename + Team Auth — Kitchen → Memoroos rename, RBAC (admin/operator/reviewer), multi-user JWT auth, team invitation
-- [ ] **Phase 64**: Immutable Audit + HIL Escalation — append-only audit log, every agent/eval/seal decision logged, escalation queue with SLA, CSV/JSON export
-- [ ] **Phase 65**: Finance Reconciliation Vertical — bank transaction adapter, reconciliation golden sets, finance UI terminology, FIN-01..03
-- [ ] **Phase 66**: Self-hosted Hardening + Compliance Posture — full Docker compose, data residency mode, local judge model support (Ollama/vLLM), admin controls
-- [ ] **Phase 67**: CoVe Integration — Chain-of-Verification as callable agent runtime module + registered eval scorer, works on any LLM endpoint, COVE-01..03
-- [ ] **Phase 68**: Security Boundary Hardening — operator-only onboarding invites, route-local dispatch auth, strict capability defaults, prompt-injection scanner coverage, CSP/security headers, auth throttling, A2A private-network defaults, SECBOUND-01..08
-- [ ] **Phase 69**: Context Source Contracts + Runtime Resilience — declarative source contracts, context health UI/API, stale-source safe-answer gates, generated runtime service installers, and degradation eval/UAT coverage, CTX-01..08
+- [x] **Phase 63**: Rename + Team Auth — Kitchen → Memoroos rename, RBAC (admin/operator/reviewer), multi-user JWT auth, team invitation
+- [x] **Phase 64**: Immutable Audit + HIL Escalation — append-only audit log, every agent/eval/seal decision logged, escalation queue with SLA, CSV/JSON export
+- [x] **Phase 65**: Finance Reconciliation Vertical — bank transaction adapter, reconciliation golden sets, finance UI terminology, FIN-01..03
+- [x] **Phase 66**: Self-hosted Hardening + Compliance Posture — full Docker compose, data residency mode, local judge model support (Ollama/vLLM), admin controls
+- [x] **Phase 67**: CoVe Integration — Chain-of-Verification as callable agent runtime module + registered eval scorer, works on any LLM endpoint, COVE-01..03
+- [x] **Phase 68**: Security Boundary Hardening — operator-only onboarding invites, route-local dispatch auth, strict capability defaults, prompt-injection scanner coverage, CSP/security headers, auth throttling, A2A private-network defaults, SECBOUND-01..08
+- [x] **Phase 69**: Context Source Contracts + Runtime Resilience — declarative source contracts, context health UI/API, stale-source safe-answer gates, generated runtime service installers, and degradation eval/UAT coverage, CTX-01..08
 
 ### Phase 63: Rename + Team Auth
 **Goal**: Kitchen is renamed to Memoroos throughout, and the platform supports multiple authenticated users with role-based access (admin/operator/reviewer).

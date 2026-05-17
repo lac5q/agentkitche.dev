@@ -11,6 +11,7 @@ import { SecurityOperationsPanel } from "@/components/security/security-operatio
 import { CacheHealthPanel } from "@/components/performance/cache-health-panel";
 import { LibraryAnalyticsPanel } from "@/components/library/analytics-panel";
 import { CollectionTrendsPanel } from "@/components/library/collection-trends-panel";
+import { ContextSourcesPanel } from "@/components/library/context-sources-panel";
 import { InfoTip } from "@/components/ui/info-tip";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -97,6 +98,9 @@ export default function LibraryPage() {
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
           <MemoryIntelligencePanel />
+        </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <ContextSourcesPanel />
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
           <SecurityOperationsPanel />
