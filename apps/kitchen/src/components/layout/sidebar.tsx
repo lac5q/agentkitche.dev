@@ -47,6 +47,7 @@ const NAV_ITEMS = [
   { href: "/library#governance", label: "Governance", description: "Health and audit", icon: ShieldCheck },
   { href: "/team", label: "Team", description: "Users and invitations", icon: Users },
   { href: "/settings/api-keys", label: "API Keys", description: "Per-user API keys", icon: Key },
+  { href: "/settings/compliance", label: "Compliance", description: "Self-hosted controls", icon: ShieldCheck },
 ];
 
 function scrollToHashTarget(hash: string, attempt = 0) {

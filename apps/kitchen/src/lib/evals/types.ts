@@ -6,6 +6,7 @@ export interface EvalJudgeConfig {
   model: string;
   modelFamily: string;
   promptTemplateVersion: string;
+  localEndpoint?: string;
 }
 
 export interface EvalGoldenSetConfig {
@@ -81,6 +82,16 @@ export interface FinanceReconciliationConfig {
   goldenSet: string;
 }
 
+/** Phase 66: self-hosted compliance posture controls. */
+export interface ComplianceConfig {
+  dataResidency: {
+    enabled: boolean;
+    allowedLocalHosts: string[];
+  };
+  auditRetentionDays: number;
+  enabledAdapters: string[];
+}
+
 export interface EvalConfig {
   judgeModel: EvalJudgeConfig;
   goldenSets: EvalGoldenSetConfig;
@@ -105,6 +116,8 @@ export interface EvalConfig {
   businessOps: BusinessOpsConfig;
   /** Phase 65: Finance reconciliation vertical configuration. */
   finance: FinanceReconciliationConfig;
+  /** Phase 66: self-hosted compliance posture. */
+  compliance: ComplianceConfig;
 }
 
 export interface AgentEvalTrace {

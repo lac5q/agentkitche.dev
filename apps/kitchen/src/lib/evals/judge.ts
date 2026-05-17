@@ -1,5 +1,6 @@
 import crypto from "crypto";
 
+import { assertJudgeResidency } from "@/lib/compliance/data-residency";
 import type { AgentEvalTrace, EvalConfig, EvalJudgeResult } from "./types";
 
 function normalized(value: string): string {
@@ -27,6 +28,7 @@ function policyScore(trace: AgentEvalTrace): number {
 }
 
 export function judgeTrace(trace: AgentEvalTrace, config: EvalConfig): EvalJudgeResult {
+  assertJudgeResidency(config);
   const faithful = factCoverage(trace);
   const useful = usefulScore(trace);
   const policy = policyScore(trace);

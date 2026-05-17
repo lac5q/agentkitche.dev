@@ -15,6 +15,7 @@ export function buildDefaultEvalConfig(): EvalConfig {
       model: "claude-haiku-4-5-20251001",
       modelFamily: "anthropic",
       promptTemplateVersion: "v1",
+      localEndpoint: undefined,
     },
     goldenSets: {
       default: "./golden-sets/business-ops-50.jsonl",
@@ -76,6 +77,14 @@ export function buildDefaultEvalConfig(): EvalConfig {
       reconciliationLabel: "reconciliation",
       exceptionLabel: "exception",
       goldenSet: "./golden-sets/finance-reconciliation.jsonl",
+    },
+    compliance: {
+      dataResidency: {
+        enabled: false,
+        allowedLocalHosts: ["localhost", "127.0.0.1", "::1", "host.docker.internal", "ollama", "vllm"],
+      },
+      auditRetentionDays: 365,
+      enabledAdapters: ["hubspot", "intercom", "quickbooks", "bank_reconciliation"],
     },
   };
 }
@@ -254,6 +263,7 @@ export function parseEvalConfigYaml(yaml: string): EvalConfig {
       model: scalar(values.get("judge_model.model"), defaults.judgeModel.model),
       modelFamily: scalar(values.get("judge_model.model_family"), defaults.judgeModel.modelFamily),
       promptTemplateVersion: scalar(values.get("judge_model.prompt_template_version"), defaults.judgeModel.promptTemplateVersion),
+      localEndpoint: scalar(values.get("judge_model.local_endpoint"), defaults.judgeModel.localEndpoint ?? ""),
     },
     goldenSets: {
       default: scalar(values.get("golden_sets.default"), defaults.goldenSets.default),
@@ -321,6 +331,24 @@ export function parseEvalConfigYaml(yaml: string): EvalConfig {
       exceptionLabel: scalar(values.get("finance.exception_label"), defaults.finance.exceptionLabel),
       goldenSet: scalar(values.get("finance.golden_set"), defaults.finance.goldenSet),
     },
+    compliance: {
+      dataResidency: {
+        enabled: bool(
+          values.get("compliance.data_residency_enabled"),
+          defaults.compliance.dataResidency.enabled
+        ),
+        allowedLocalHosts: parseList(values.get("compliance.allowed_local_hosts")).length
+          ? parseList(values.get("compliance.allowed_local_hosts"))
+          : defaults.compliance.dataResidency.allowedLocalHosts,
+      },
+      auditRetentionDays: numberValue(
+        values.get("compliance.audit_retention_days"),
+        defaults.compliance.auditRetentionDays
+      ),
+      enabledAdapters: parseList(values.get("compliance.adapters_enabled")).length
+        ? parseList(values.get("compliance.adapters_enabled"))
+        : defaults.compliance.enabledAdapters,
+    },
   };
 
   // Validate company sub-weights on load (throws with actionable message on violation)
@@ -341,6 +369,7 @@ export function formatEvalConfigYaml(config: EvalConfig): string {
     `  model: ${config.judgeModel.model}`,
     `  model_family: ${config.judgeModel.modelFamily}`,
     `  prompt_template_version: ${config.judgeModel.promptTemplateVersion}`,
+    ...(config.judgeModel.localEndpoint ? [`  local_endpoint: ${config.judgeModel.localEndpoint}`] : []),
     "",
     "golden_sets:",
     `  default: ${config.goldenSets.default}`,
@@ -393,6 +422,12 @@ export function formatEvalConfigYaml(config: EvalConfig): string {
     `  reconciliation_label: ${config.finance?.reconciliationLabel ?? "reconciliation"}`,
     `  exception_label: ${config.finance?.exceptionLabel ?? "exception"}`,
     `  golden_set: ${config.finance?.goldenSet ?? "./golden-sets/finance-reconciliation.jsonl"}`,
+    "",
+    "compliance:",
+    `  data_residency_enabled: ${config.compliance?.dataResidency.enabled ?? false}`,
+    `  audit_retention_days: ${config.compliance?.auditRetentionDays ?? 365}`,
+    `  allowed_local_hosts: [${(config.compliance?.dataResidency.allowedLocalHosts ?? ["localhost", "127.0.0.1", "::1", "host.docker.internal", "ollama", "vllm"]).join(", ")}]`,
+    `  adapters_enabled: [${(config.compliance?.enabledAdapters ?? ["hubspot", "intercom", "quickbooks", "bank_reconciliation"]).join(", ")}]`,
     "",
     "companies:",
     ...(Object.entries(config.companies ?? {}).length > 0

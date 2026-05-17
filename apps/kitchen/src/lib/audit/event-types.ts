@@ -58,6 +58,8 @@ export const AUDIT_EVENT_TYPES = {
   // Admin / system
   /** Annotation added to a prior entry (metadata_json.ref_entry_id). */
   AUDIT_ANNOTATION: "audit.annotation",
+  /** Admin changed compliance posture controls. */
+  ADMIN_COMPLIANCE_UPDATED: "admin.compliance_updated",
 } as const;
 
 /** Union type of all valid audit event type string values. */
@@ -70,6 +72,7 @@ export const ENTITY_TYPES = {
   EVAL_RUN: "eval_run",
   HIL_ESCALATION: "hil_escalation",
   FINANCE_RECONCILIATION: "finance_reconciliation",
+  COMPLIANCE_CONTROL: "compliance_control",
 } as const;
 
 export type EntityType = (typeof ENTITY_TYPES)[keyof typeof ENTITY_TYPES];

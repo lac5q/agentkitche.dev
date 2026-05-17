@@ -52,6 +52,12 @@ finance:
   exception_label: exception
   golden_set: ./golden-sets/finance-reconciliation.jsonl
 
+compliance:
+  data_residency_enabled: true
+  audit_retention_days: 730
+  allowed_local_hosts: [localhost, 127.0.0.1, ::1, host.docker.internal, ollama, vllm]
+  adapters_enabled: [quickbooks, bank_reconciliation]
+
 companies:
   default:
     l3_sub_weights:
