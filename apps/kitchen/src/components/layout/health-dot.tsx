@@ -7,10 +7,12 @@ interface HealthDotProps {
   service: string;
   status: "up" | "degraded" | "down";
   latencyMs: number | null;
+  detail?: string;
 }
 
-export function HealthDot({ service, status, latencyMs }: HealthDotProps) {
+export function HealthDot({ service, status, latencyMs, detail }: HealthDotProps) {
   const color = STATUS_COLORS[status];
+  const statusText = `${service}: ${status}${latencyMs !== null ? ` (${latencyMs}ms)` : ""}`;
 
   return (
     <TooltipProvider>
@@ -23,7 +25,8 @@ export function HealthDot({ service, status, latencyMs }: HealthDotProps) {
           <span className="hidden text-xs text-slate-500 sm:inline">{service}</span>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{service}: {status}{latencyMs !== null ? ` (${latencyMs}ms)` : ""}</p>
+          <p>{statusText}</p>
+          {detail && <p className="max-w-64 text-xs text-slate-300">{detail}</p>}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

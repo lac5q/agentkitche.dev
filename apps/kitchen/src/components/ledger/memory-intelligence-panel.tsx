@@ -194,13 +194,18 @@ export function MemoryIntelligencePanel() {
                             ? "bg-emerald-500/15 text-emerald-400"
                             : tier.status === "not_configured"
                               ? "bg-amber-500/15 text-amber-400"
-                              : "bg-rose-500/15 text-rose-400"
+                              : tier.status === "degraded"
+                                ? "bg-amber-500/15 text-amber-400"
+                                : "bg-rose-500/15 text-rose-400"
                         }`}
                       >
                         {tier.status}
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">{tier.backend}</p>
+                    {tier.detail && (
+                      <p className="mt-1 text-xs text-amber-300">{tier.detail}</p>
+                    )}
                     {typeof tier.count === "number" && (
                       <p className="mt-1 text-xs text-slate-400">{tier.count.toLocaleString()} writes</p>
                     )}

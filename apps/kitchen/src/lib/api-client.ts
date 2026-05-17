@@ -67,7 +67,7 @@ export interface ResolveOrchestrationHilInput {
 export interface MemoryTierHealth {
   tier: "vector" | "graph" | "episodic";
   backend: string;
-  status: "up" | "down" | "not_configured";
+  status: "up" | "degraded" | "down" | "not_configured";
   detail?: string;
   count?: number | null;
   lastWrite?: string | null;

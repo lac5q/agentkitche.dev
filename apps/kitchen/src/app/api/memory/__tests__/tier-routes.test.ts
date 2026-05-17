@@ -73,6 +73,20 @@ describe("memory tier routes", () => {
     expect(body.tiers.map((tier: { tier: string }) => tier.tier)).toEqual(["vector", "graph", "episodic"]);
   });
 
+  it("reports vector memory as degraded when mem0 has queued saves", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      Response.json({ status: "degraded", vector_store: "connected", queue: { queued: 4 } })
+    );
+    const { GET } = await loadHealthRoute();
+
+    const response = await GET(new Request("http://localhost/api/memory/health"));
+    const body = await response.json();
+    const vector = body.tiers.find((tier: { tier: string }) => tier.tier === "vector");
+
+    expect(vector.status).toBe("degraded");
+    expect(vector.detail).toContain("4 queued memory saves");
+  });
+
   it("requires operator authorization for non-local memory reads", async () => {
     process.env.KITCHEN_OPERATOR_API_KEY = "operator-secret";
     const searchRoute = await loadSearchRoute();

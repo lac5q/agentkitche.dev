@@ -79,4 +79,26 @@ describe("MemoryIntelligencePanel", () => {
     expect(screen.getByText("11/12 passing")).toBeTruthy();
     expect(screen.getAllByText("vector").length).toBeGreaterThan(1);
   });
+
+  it("surfaces degraded memory tier details", () => {
+    mockUseMemoryTierHealth.mockReturnValue({
+      data: {
+        tiers: [
+          {
+            tier: "vector",
+            backend: "mem0-qdrant",
+            status: "degraded",
+            detail: "3 queued memory saves",
+          },
+        ],
+        timestamp: "2026-05-05T00:00:00.000Z",
+      },
+      isLoading: false,
+    } as ReturnType<typeof useMemoryTierHealth>);
+
+    render(<MemoryIntelligencePanel />, { wrapper });
+
+    expect(screen.getByText("degraded")).toBeTruthy();
+    expect(screen.getByText("3 queued memory saves")).toBeTruthy();
+  });
 });

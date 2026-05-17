@@ -265,6 +265,13 @@ npm install
 ./setup.sh
 ```
 
+On macOS, `setup.sh` also installs the Memory Resilience monitors by default:
+
+- `com.memroos.memory-healthcheck`: every 5 minutes, checks mem0, QMD, queued writes, Gmail context freshness, and embedding round-trip health.
+- `com.memroos.memory-degradation-evals`: daily at 9:15 AM, runs the degradation regression suite.
+
+Set `INSTALL_MEMORY_RESILIENCE=0` before `./setup.sh` to skip launchd monitor installation, or run `npm run install:memory-resilience` later.
+
 Open MemroOS:
 
 ```text
@@ -501,6 +508,7 @@ npm run lint
 npm run build
 npm run profiles:check
 npm run first-run:check
+npm run eval:memory-degradation
 ```
 
 ## Project Structure

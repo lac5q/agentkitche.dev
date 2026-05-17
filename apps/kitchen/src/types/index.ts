@@ -59,6 +59,7 @@ export interface HealthStatus {
   status: "up" | "degraded" | "down";
   latencyMs: number | null;
   lastCheck: string;
+  detail?: string;
 }
 
 export interface FlowNode {

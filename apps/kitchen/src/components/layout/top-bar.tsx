@@ -43,6 +43,7 @@ export function TopBar({ services, onMenuClick }: TopBarProps) {
             service={svc.service}
             status={svc.status}
             latencyMs={svc.latencyMs}
+            detail={svc.detail}
           />
         ))}
       </div>

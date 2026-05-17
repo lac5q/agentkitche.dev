@@ -78,18 +78,27 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 
+def resolve_env_config(config: dict) -> dict:
+    """Replace config keys ending in `_env` with values from that environment variable."""
+    resolved = dict(config)
+    for key, env_name in list(config.items()):
+        if not key.endswith("_env"):
+            continue
+        value_key = key[:-4]
+        resolved.pop(key, None)
+        env_value = os.environ.get(str(env_name), "")
+        if env_value:
+            resolved[value_key] = env_value
+    return resolved
+
+
 def build_mem0_config(cfg: dict) -> dict:
     """Convert YAML config to the dict format mem0 Memory() expects."""
     mem0_cfg: dict = {}
 
     vc = cfg.get("vector_store", {})
     if vc:
-        vc_config = dict(vc.get("config", {}))
-        key_env = vc_config.pop("api_key_env", None)
-        if key_env:
-            api_key = os.environ.get(key_env, "")
-            if api_key:
-                vc_config["api_key"] = api_key
+        vc_config = resolve_env_config(vc.get("config", {}))
         mem0_cfg["vector_store"] = {
             "provider": vc["provider"],
             "config": vc_config,
@@ -97,26 +106,20 @@ def build_mem0_config(cfg: dict) -> dict:
 
     llm = cfg.get("llm", {})
     if llm:
-        llm_config = dict(llm.get("config", {}))
-        key_env = llm_config.pop("api_key_env", None)
-        if key_env:
-            api_key = os.environ.get(key_env, "")
-            if api_key:
-                llm_config["api_key"] = api_key
+        llm_config = resolve_env_config(llm.get("config", {}))
         mem0_cfg["llm"] = {"provider": llm["provider"], "config": llm_config}
 
     embedder = cfg.get("embedder", {})
     if embedder:
-        emb_config = dict(embedder.get("config", {}))
-        key_env = emb_config.pop("api_key_env", None)
-        if key_env:
-            api_key = os.environ.get(key_env, "")
-            if api_key:
-                emb_config["api_key"] = api_key
+        emb_config = resolve_env_config(embedder.get("config", {}))
         mem0_cfg["embedder"] = {
             "provider": embedder["provider"],
             "config": emb_config,
         }
+
+    for key in ("custom_fact_extraction_prompt", "custom_update_memory_prompt"):
+        if cfg.get(key):
+            mem0_cfg[key] = cfg[key]
 
     return mem0_cfg
 
@@ -339,6 +342,7 @@ class HealthResponse(BaseModel):
     vector_store: str
     disk: Optional[dict] = None
     sqlite: Optional[dict] = None
+    queue: Optional[dict] = None
 
 
 class FailureEntry(BaseModel):
@@ -506,7 +510,7 @@ def delete_memory(memory_id: str):
 
 @app.get("/health", response_model=HealthResponse)
 def health():
-    """Health check — verifies vector store connectivity, disk space, and SQLite."""
+    """Health check — verifies vector store, disk, SQLite, and queued writes."""
     cfg = load_config()
     vector_provider = cfg.get("vector_store", {}).get("provider", "unknown")
     vector_cfg = cfg.get("vector_store", {}).get("config", {})
@@ -542,6 +546,12 @@ def health():
 
     disk_status = check_disk_space()
     sqlite_status = check_sqlite_db()
+    try:
+        from mem0_queue import Mem0Queue
+
+        queue_status = Mem0Queue(db_path=str(QUEUE_DB_PATH), start_replay=False).get_queue_status()
+    except Exception as exc:
+        queue_status = {"status": "error", "error": str(exc), "queued": None}
 
     # Log warnings for concerning states
     if disk_status.get("critical"):
@@ -552,12 +562,19 @@ def health():
     if sqlite_status.get("status") != "healthy":
         log_failure("sqlite_unhealthy", sqlite_status)
 
-    is_ok = (vector_status == "connected" or vector_status == "unknown") and not disk_status.get("critical")
+    queued_count = queue_status.get("queued")
+    queue_ok = queued_count in (0, None) and queue_status.get("status") != "error"
+    is_ok = (
+        (vector_status == "connected" or vector_status == "unknown")
+        and not disk_status.get("critical")
+        and queue_ok
+    )
     return HealthResponse(
         status="ok" if is_ok else "degraded",
         vector_store=vector_status,
         disk=disk_status,
-        sqlite=sqlite_status
+        sqlite=sqlite_status,
+        queue=queue_status,
     )
 
 
@@ -661,6 +678,7 @@ from contextlib import asynccontextmanager
 import asyncio
 
 _health_check_task = None
+_queue_replay_task = None
 _failure_file = LOG_DIR / "failures.log"
 
 
@@ -703,16 +721,35 @@ async def _qdrant_health_checker():
             consecutive_healthy = 0
 
 
+async def _queue_replay_worker():
+    """Replay failed memory saves once the backend has recovered."""
+    from mem0_queue import Mem0Queue
+
+    queue = Mem0Queue(db_path=str(QUEUE_DB_PATH), start_replay=False)
+    while True:
+        await asyncio.sleep(10)
+        try:
+            status = queue.get_queue_status()
+            if status.get("queued", 0):
+                logger.info("Replaying up to 100 queued mem0 requests")
+                await asyncio.to_thread(queue._replay_queued)
+        except Exception as exc:
+            logger.warning(f"Mem0 queue replay failed: {exc}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _health_check_task
+    global _health_check_task, _queue_replay_task
     _health_check_task = asyncio.create_task(_qdrant_health_checker())
-    logger.info("Mem0 server started — Qdrant health checker running in background")
+    _queue_replay_task = asyncio.create_task(_queue_replay_worker())
+    logger.info("Mem0 server started — Qdrant health checker and queue replay running in background")
     yield
-    if _health_check_task:
-        _health_check_task.cancel()
+    for task in (_health_check_task, _queue_replay_task):
+        if not task:
+            continue
+        task.cancel()
         try:
-            await _health_check_task
+            await task
         except asyncio.CancelledError:
             pass
     logger.info("Mem0 server shutting down")

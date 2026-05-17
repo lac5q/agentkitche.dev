@@ -5,6 +5,7 @@ PROFILE="${KITCHEN_A2A_PROFILE:-local-dev}"
 START_SERVICES="${START_SERVICES:-1}"
 ENV_FILE="${ENV_FILE:-.env}"
 ENV_CREATED=0
+INSTALL_MEMORY_RESILIENCE_OVERRIDE="${INSTALL_MEMORY_RESILIENCE:-}"
 
 if [[ "${1:-}" == "--wizard" ]]; then
   node scripts/first-run-wizard.mjs
@@ -82,6 +83,18 @@ validate_optional_capabilities() {
   node scripts/optional-capabilities.mjs
 }
 
+install_memory_resilience() {
+  if [[ "${INSTALL_MEMORY_RESILIENCE:-1}" == "0" ]]; then
+    echo "INSTALL_MEMORY_RESILIENCE=0, skipping memory resilience monitor install."
+    return
+  fi
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "Memory resilience launchd jobs are macOS-only; skipping."
+    return
+  fi
+  node scripts/install-memory-resilience.mjs install
+}
+
 start_services() {
   if [[ "$START_SERVICES" == "0" ]]; then
     echo "START_SERVICES=0, skipping docker compose up."
@@ -102,10 +115,14 @@ main() {
     echo "Tip: run ./setup.sh --wizard for guided first-run configuration."
   fi
   load_env
+  if [[ -n "$INSTALL_MEMORY_RESILIENCE_OVERRIDE" ]]; then
+    INSTALL_MEMORY_RESILIENCE="$INSTALL_MEMORY_RESILIENCE_OVERRIDE"
+  fi
   PROFILE="${KITCHEN_A2A_PROFILE:-$PROFILE}"
   validate_profile
   validate_optional_capabilities
   validate_qdrant
+  install_memory_resilience
   start_services
 
   echo "MemroOS setup complete for profile: $PROFILE"

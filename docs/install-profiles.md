@@ -78,6 +78,21 @@ npm run first-run:check
 
 `setup.sh` validates required tools, copies `.env.example` when needed, validates the selected profile, checks Qdrant unless `SKIP_QDRANT_CHECK=1`, and starts Docker Compose unless `START_SERVICES=0`.
 
+On macOS, setup installs two launchd-backed Memory Resilience jobs unless `INSTALL_MEMORY_RESILIENCE=0` is set:
+
+- `com.memroos.memory-healthcheck` runs every 5 minutes and alerts when memory infrastructure degrades.
+- `com.memroos.memory-degradation-evals` runs daily at 9:15 AM and verifies the degradation scenarios stay covered by tests.
+
+Manage them directly with:
+
+```bash
+npm run install:memory-resilience
+node scripts/install-memory-resilience.mjs status
+node scripts/install-memory-resilience.mjs uninstall
+```
+
+The healthcheck reads `services/memory/.env` when present. Configure `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` or `DISCORD_KNOWLEDGE_WEBHOOK` for remote notifications; otherwise macOS local notifications are used.
+
 ## Optional Progressive Capabilities
 
 Kitchen can also check bundled-but-optional capabilities during setup:

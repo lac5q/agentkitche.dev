@@ -1,8 +1,21 @@
 # Embedding Migration Status Report
 
-**Date**: 2026-05-09  
-**Status**: ✅ COMPLETE  
-**Cost**: $0.29/hr (batch mode) vs $90-120/mo (Gemini)
+**Date**: 2026-05-16  
+**Status**: COMPLETE - mem0 uses local Ollama for LLM + embeddings  
+**Cost**: Local CPU/GPU only vs Gemini quota/billing
+
+## 2026-05-16 Update
+
+mem0 has been moved off Gemini and the old Vast/Jina path:
+
+- LLM: `ollama` with `qwen2.5:3b`
+- Embedder: `ollama` with `nomic-embed-text`
+- Vector dimensions: 768
+- Qdrant collection: `agent_memory_local`
+- Replay queue: server startup now drains queued saves after backend recovery
+- Required local models:
+  - `ollama pull qwen2.5:3b`
+  - `ollama pull nomic-embed-text`
 
 ---
 
@@ -11,10 +24,11 @@
 ### Active Services
 | Service | Status | Cost | Notes |
 |---|---|---|---|
-| Vast.ai Instance | **Destroyed** | $0 | Instance destroyed 2026-05-09 |
-| mem0 | Healthy | Local | Connected to Vast.ai (when running) |
-| QMD Index | 3,879 files | Local | 1,532 docs removed |
-| SSH Tunnel | **Inactive** | Free | Destroyed with instance |
+| Ollama | Active locally | Local | Serves mem0 LLM and embeddings |
+| mem0 | Healthy | Local | Uses `agent_memory_local` in Qdrant |
+| QMD Index | Local | Local | Uses qmd local model config |
+| Vast.ai Instance | Destroyed | $0 | Historical migration path, no longer active |
+| SSH Tunnel | Inactive | Free | Not needed for local Ollama |
 
 ### Security Fixes (2026-05-09)
 - ✅ **GitHub Secret Scanning Alert #1**: Resolved
@@ -23,7 +37,7 @@
   - Replaced with environment variables: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `QDRANT_API_KEY`
   - **NOTE**: Tokens need to be rotated (were exposed in git history)
 
-### Vast.ai Instance
+### Historical Vast.ai Instance
 - **ID**: 36385878
 - **Status**: **DESTROYED** (2026-05-09)
 - **GPU**: RTX 4090
@@ -31,8 +45,8 @@
 - **Auto-destroy**: Enabled in batch script (60s after embedding)
 
 ### Serverless Status
-- **Vast.ai Serverless**: ❌ **NOT USED** (auth issues during testing)
-- **Current approach**: Regular instances with batch script
+- **Vast.ai Serverless**: **NOT USED** (auth issues during testing)
+- **Current approach**: Local Ollama for mem0
 - **Serverless script exists**: `services/memory/vast-serverless-embed.py` (not functional)
 
 ### Cleanup Completed
@@ -51,7 +65,14 @@
 | Gemini embeddings2 | $90-120/month |
 | Total | **$90-120/month** |
 
-### After Migration
+### 2026-05-16 Local mem0 State
+| Component | Cost |
+|---|---|
+| Ollama LLM + embeddings | Local machine |
+| Qdrant Cloud | Existing vector store |
+| **Total incremental model cost** | **$0** |
+
+### Historical Vast.ai Migration
 | Component | Cost |
 |---|---|
 | Vast.ai (batch mode) | $0.29/hr |
@@ -81,9 +102,9 @@
 - `docs/embedding-migration-decision.md` - Decision record
 
 ### Modified Files
-- `services/memory/mem0-config.yaml` - Updated to use Vast.ai endpoint
-- `.env.example` - Added VAST_EMBEDDING_URL and JINA_API_KEY
-- `docker-compose.yml` - Added embedding environment variables
+- `services/memory/mem0-config.yaml` - Updated to use local Ollama
+- `.env.example` - Added OLLAMA_BASE_URL
+- `docker-compose.yml` - Added Ollama base URL
 - `collections.config.json` - Removed agent-configs collection
 
 ---

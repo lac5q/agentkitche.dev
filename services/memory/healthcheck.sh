@@ -11,6 +11,15 @@ set -uo pipefail
 MEM0_URL="http://localhost:3201"
 QMD_URL="http://localhost:9472"
 KNOWLEDGE_DIR="$HOME/github/knowledge"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MEM0_ENV_FILE="${MEM0_ENV_FILE:-$SCRIPT_DIR/.env}"
+if [ -f "$MEM0_ENV_FILE" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$MEM0_ENV_FILE"
+  set +a
+fi
+MEM0_LOG_DIR="${MEM0_LOG_DIR:-$SCRIPT_DIR/logs}"
 ALERT_STATE_DIR="/tmp/knowledge-healthcheck"
 COOLDOWN_SECONDS=1800  # 30 min between repeat alerts for same issue
 LOG_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -38,6 +47,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 log() { echo "[$LOG_TS] $1" | tee -a "$LOG_FILE"; }
 
 send_telegram() {
+  if [ -z "$TG_TOKEN" ] || [ -z "$TG_CHAT_ID" ]; then return 1; fi
   curl -s --max-time 10 \
     "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
     -d chat_id="$TG_CHAT_ID" \
@@ -46,7 +56,7 @@ send_telegram() {
 }
 
 send_discord() {
-  if [ -z "$DISCORD_WEBHOOK_URL" ]; then return 0; fi
+  if [ -z "$DISCORD_WEBHOOK_URL" ]; then return 1; fi
   local msg
   msg=$(echo "$1" | sed 's/\*\([^*]*\)\*/**\1**/g')
   curl -s --max-time 10 -X POST "$DISCORD_WEBHOOK_URL" \
@@ -55,7 +65,26 @@ send_discord() {
     > /dev/null 2>&1
 }
 
-notify() { send_telegram "$1"; send_discord "$1"; }
+send_macos_notification() {
+  local title="$1"
+  local message="$2"
+  local body
+  body=$(echo "$message" | sed 's/[*`]//g' | head -6 | tr '\n' ' ')
+  /usr/bin/osascript \
+    -e "display notification $(printf '%s' "$body" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))') with title $(printf '%s' "$title" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" \
+    >/dev/null 2>&1 || true
+}
+
+notify() {
+  local title="$1"
+  local message="$2"
+  local sent=0
+  if send_telegram "$message"; then sent=1; fi
+  if send_discord "$message"; then sent=1; fi
+  if [ "$sent" -eq 0 ]; then
+    send_macos_notification "$title" "$message"
+  fi
+}
 
 should_alert() {
   local state_file="${ALERT_STATE_DIR}/${1}.last"
@@ -74,7 +103,7 @@ alert() {
   local message="$2"
   if should_alert "$alert_id"; then
     log "ALERT: $message"
-    notify "🚨 *Knowledge Stack Alert*
+    notify "Memroos Memory Alert" "🚨 *Knowledge Stack Alert*
 $message
 
 _$(date '+%Y-%m-%d %H:%M:%S')_"
@@ -87,7 +116,7 @@ recover() {
   local state_file="${ALERT_STATE_DIR}/${1}.last"
   if [ -f "$state_file" ]; then
     log "RECOVERED: $2"
-    notify "✅ *Knowledge Stack Recovered*
+    notify "Memroos Memory Recovered" "✅ *Knowledge Stack Recovered*
 $2
 
 _$(date '+%Y-%m-%d %H:%M:%S')_"
@@ -151,28 +180,63 @@ MEM0_HEALTH=$(curl -s --max-time 6 "$MEM0_URL/health" 2>/dev/null)
 MEM0_STATUS=$(json_field "$MEM0_HEALTH" "status")
 if [ "$MEM0_STATUS" = "ok" ]; then
   QDRANT_STATUS=$(json_field "$MEM0_HEALTH" "vector_store")
+  QUEUED_MEMORIES=$(echo "$MEM0_HEALTH" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print((d.get('queue') or {}).get('queued', 0) or 0)" 2>/dev/null || echo "unknown")
   log "Mem0: OK (vector_store: $QDRANT_STATUS)"
   recover "mem0_down" "Mem0 is back online"
   recover "mem0_degraded" "Mem0 is no longer degraded"
   if [ "$QDRANT_STATUS" != "connected" ]; then
     alert "qdrant_via_mem0" "Mem0 up but *Qdrant not connected* (status: $QDRANT_STATUS)
 - Semantic memory writes will fail
-- \`tail -50 $KNOWLEDGE_DIR/logs/mem0-server.log\`"
+- \`tail -50 $MEM0_LOG_DIR/mem0-server.log\`"
   else
     recover "qdrant_via_mem0" "Qdrant reconnected via Mem0"
   fi
+  if [ "$QUEUED_MEMORIES" != "unknown" ] && [ "$QUEUED_MEMORIES" -gt 0 ] 2>/dev/null; then
+    alert "mem0_queue_backlog" "Mem0 has *${QUEUED_MEMORIES} queued memory saves*
+- Writes are preserved but not searchable yet
+- \`sqlite3 $MEM0_LOG_DIR/queue.db 'select count(*) from queued_requests;'\`"
+  else
+    recover "mem0_queue_backlog" "Mem0 memory queue drained"
+  fi
 elif [ "$MEM0_STATUS" = "degraded" ]; then
+  QUEUED_MEMORIES=$(echo "$MEM0_HEALTH" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print((d.get('queue') or {}).get('queued', 'unknown'))" 2>/dev/null || echo "unknown")
   alert "mem0_degraded" "Mem0 is *DEGRADED*
-- \`tail -50 $KNOWLEDGE_DIR/logs/mem0-server.log\`"
+- Queued memory saves: ${QUEUED_MEMORIES}
+- \`tail -50 $MEM0_LOG_DIR/mem0-server.log\`"
 else
   alert "mem0_down" "Mem0 is *DOWN* at \`$MEM0_URL\`
 - Restart: \`launchctl kickstart -k gui/\$(id -u)/com.mem0.server\`"
 fi
 
 # ── Check 1.5: Mem0 failures ─────────────────────────────────────────────────
-FAILURE_LOG="$KNOWLEDGE_DIR/logs/failures.log"
+FAILURE_LOG="$MEM0_LOG_DIR/failures.log"
 if [ -f "$FAILURE_LOG" ]; then
-  RECENT_FAILURES=$(tail -10 "$FAILURE_LOG" 2>/dev/null | grep -c "error" 2>/dev/null || true)
+  RECENT_FAILURES=$(python3 - "$FAILURE_LOG" <<'PY' 2>/dev/null || echo "0"
+import datetime as dt
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+now = dt.datetime.now(dt.UTC)
+count = 0
+for line in path.read_text(errors="replace").splitlines()[-200:]:
+    if " | ERROR | " not in line:
+        continue
+    try:
+        payload = json.loads(line.split(" | ERROR | ", 1)[1])
+        timestamp = payload.get("timestamp", "")
+        when = dt.datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except Exception:
+        continue
+    traceback = str(payload.get("traceback", ""))
+    if "/tests/" in traceback:
+        continue
+    if (now - when).total_seconds() <= 3600:
+        count += 1
+print(count)
+PY
+)
   RECENT_FAILURES="${RECENT_FAILURES:-0}"
   if [ "${RECENT_FAILURES}" -gt 5 ] 2>/dev/null; then
     alert "mem0_failures" "Mem0 has *${RECENT_FAILURES} recent failures*
@@ -184,18 +248,24 @@ fi
 
 # ── Check 2: Qdrant cloud (direct) ───────────────────────────────────────────
 log "Checking Qdrant cloud (direct)..."
-QDRANT_CLOUD="https://f969d77f-3cf6-4557-92cb-67f7cac0f44a.us-west-1-0.aws.cloud.qdrant.io:6333"
+QDRANT_CLOUD="${QDRANT_URL:-https://f969d77f-3cf6-4557-92cb-67f7cac0f44a.us-west-1-0.aws.cloud.qdrant.io:6333}"
 QDRANT_APIKEY="${QDRANT_API_KEY:-}"
-QDRANT_RESP=$(curl -s --max-time 10 -H "api-key: $QDRANT_APIKEY" "$QDRANT_CLOUD/collections" 2>/dev/null)
-QDRANT_OK=$(json_field "$QDRANT_RESP" "status")
-if [ "$QDRANT_OK" = "ok" ]; then
-  COLL_COUNT=$(echo "$QDRANT_RESP" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(len(d.get('result',{}).get('collections',[])))" 2>/dev/null || echo "?")
-  log "Qdrant cloud: OK ($COLL_COUNT collections)"
-  recover "qdrant_cloud_down" "Qdrant cloud is back online"
+if [ -z "$QDRANT_APIKEY" ]; then
+  log "Qdrant cloud: skipped direct check (QDRANT_API_KEY unset)"
 else
-  alert "qdrant_cloud_down" "Qdrant cloud *unreachable*
+  QDRANT_RESP=$(curl -s --max-time 10 -H "api-key: $QDRANT_APIKEY" "$QDRANT_CLOUD/collections" 2>/dev/null)
+  QDRANT_OK=$(json_field "$QDRANT_RESP" "status")
+  if [ "$QDRANT_OK" = "ok" ]; then
+    COLL_COUNT=$(echo "$QDRANT_RESP" | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print(len(d.get('result',{}).get('collections',[])))" 2>/dev/null || echo "?")
+    log "Qdrant cloud: OK ($COLL_COUNT collections)"
+    recover "qdrant_cloud_down" "Qdrant cloud is back online"
+  elif [ "${QDRANT_STATUS:-unknown}" = "connected" ]; then
+    log "Qdrant cloud direct check failed, but Mem0 reports vector_store connected"
+  else
+    alert "qdrant_cloud_down" "Qdrant cloud *unreachable*
 - Mem0 vector memory non-functional
 - Check Qdrant Cloud dashboard for outage"
+  fi
 fi
 
 # ── Check 2.5: QMD ───────────────────────────────────────────────────────────
@@ -208,6 +278,49 @@ if [ "$QMD_STATUS" = "ok" ] || [ "$QMD_STATUS" = "healthy" ] || [ "$QMD_STATUS" 
 else
   alert "qmd_down" "QMD is *DOWN* at \`$QMD_URL\`
 - Status: $QMD_STATUS"
+fi
+
+# ── Check 2.6: Email context ingestion freshness ─────────────────────────────
+log "Checking Gmail context ingestion..."
+EMAIL_LAST_RUN=$(python3 - "$KNOWLEDGE_DIR/ingestion-state.json" <<'PY' 2>/dev/null || echo "missing"
+import datetime as dt
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+if not path.exists():
+    print("missing")
+    raise SystemExit
+state = json.loads(path.read_text())
+last_run = (state.get("gmail") or {}).get("last_run")
+if not last_run:
+    print("missing")
+    raise SystemExit
+when = dt.datetime.fromisoformat(last_run.replace("Z", "+00:00"))
+age_hours = (dt.datetime.now(dt.UTC) - when).total_seconds() / 3600
+print(f"{age_hours:.2f}|{last_run}")
+PY
+)
+if [ "$EMAIL_LAST_RUN" = "missing" ]; then
+  alert "email_ingestion_missing" "Gmail context ingestion state is *missing*
+- Check: \`$KNOWLEDGE_DIR/personal-ingestion-email.sh\`"
+else
+  EMAIL_AGE_HOURS="${EMAIL_LAST_RUN%%|*}"
+  EMAIL_LAST_RUN_ISO="${EMAIL_LAST_RUN#*|}"
+  if python3 - "$EMAIL_AGE_HOURS" <<'PY' >/dev/null 2>&1
+import sys
+raise SystemExit(0 if float(sys.argv[1]) > 8 else 1)
+PY
+  then
+    alert "email_ingestion_stale" "Gmail context ingestion is *STALE*
+- Last run: ${EMAIL_LAST_RUN_ISO}
+- Run: \`$KNOWLEDGE_DIR/personal-ingestion-email.sh\`"
+  else
+    log "Gmail context ingestion: OK (last run ${EMAIL_LAST_RUN_ISO})"
+    recover "email_ingestion_missing" "Gmail context ingestion state restored"
+    recover "email_ingestion_stale" "Gmail context ingestion is fresh"
+  fi
 fi
 
 # ── Check 3: Embeddings (Mem0 add round-trip) ────────────────────────────────
@@ -225,6 +338,8 @@ except:
 # success shapes: {\"memory_id\": ...} or {\"message\": \"Memory added\"} or list
 if isinstance(d, list):
     print('ok')
+elif d.get('status') == 'queued':
+    print('error:memory save queued; backend write path is not completing')
 elif d.get('status') == 'ok' or d.get('memory_id') or d.get('message') or d.get('id') or d.get('result') is not None:
     print('ok')
 elif d.get('detail') or d.get('error'):
@@ -238,9 +353,14 @@ if [ "$EMBED_OK" = "ok" ]; then
 elif echo "$EMBED_OK" | grep -q "^error:"; then
   alert "embeddings_fail" "Embedding pipeline *FAILING*
 - Error: ${EMBED_OK#error:}
-- Check Gemini API key in \`$KNOWLEDGE_DIR/mem0-config.yaml\`"
+- Check Ollama is running and local models are pulled: \`qwen2.5:3b\`, \`nomic-embed-text\`"
 else
   log "Embeddings: unexpected response ($EMBED_OK) — not alerting"
+fi
+
+if [ "${MEMORY_HEALTHCHECK_ONLY:-0}" = "1" ]; then
+  log "--- memory healthcheck complete ---"
+  exit 0
 fi
 
 # ── Check 4: Tailscale ───────────────────────────────────────────────────────

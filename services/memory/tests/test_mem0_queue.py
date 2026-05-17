@@ -1,4 +1,5 @@
 import importlib.util
+import asyncio
 import sqlite3
 import sys
 import types
@@ -141,6 +142,23 @@ def test_queue_request_preserves_retryable_http_failures(monkeypatch, tmp_path):
     assert queued_count(db_path) == 1
 
 
+def test_replay_request_uses_local_llm_timeout(monkeypatch, tmp_path):
+    db_path = tmp_path / "queue.db"
+    queue = mem0_queue.Mem0Queue(db_path=str(db_path), start_replay=False)
+    seen = {}
+
+    def fake_post(*args, **kwargs):
+        seen["timeout"] = kwargs["timeout"]
+        return httpx.Response(200, json={"status": "ok"})
+
+    monkeypatch.setattr(mem0_queue.httpx, "post", fake_post)
+
+    assert queue._replay_request(
+        {"endpoint": "/memory/add", "method": "POST", "payload": '{"text":"slow local llm"}', "id": 1}
+    )
+    assert seen["timeout"] == mem0_queue.REPLAY_TIMEOUT_SECONDS
+
+
 def test_queue_dedupes_identical_payloads(tmp_path):
     db_path = tmp_path / "queue.db"
     queue = mem0_queue.Mem0Queue(db_path=str(db_path), start_replay=False)
@@ -162,6 +180,7 @@ def test_mem0_server_queues_retryable_provider_exception(monkeypatch, tmp_path):
         headers = {}
 
     monkeypatch.setattr(module, "QUEUE_DB_PATH", tmp_path / "queue.db")
+    monkeypatch.setattr(module, "_failure_file", tmp_path / "failures.log")
     monkeypatch.setattr(module, "get_memory", lambda: FailingMemory())
 
     response = module.add_memory(
@@ -185,6 +204,7 @@ def test_mem0_server_replay_header_does_not_duplicate_queue(monkeypatch, tmp_pat
         headers = {"x-mem0-queue-replay": "1"}
 
     monkeypatch.setattr(module, "QUEUE_DB_PATH", tmp_path / "queue.db")
+    monkeypatch.setattr(module, "_failure_file", tmp_path / "failures.log")
     monkeypatch.setattr(module, "get_memory", lambda: FailingMemory())
 
     with pytest.raises(module.HTTPException):
@@ -194,3 +214,98 @@ def test_mem0_server_replay_header_does_not_duplicate_queue(monkeypatch, tmp_pat
         )
 
     assert not (tmp_path / "queue.db").exists()
+
+
+def test_build_mem0_config_resolves_provider_env_values(monkeypatch):
+    module = load_mem0_server(monkeypatch, "mem0_server_config_under_test")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama.test:11434")
+
+    config = module.build_mem0_config(
+        {
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {"collection_name": "agent_memory_local"},
+            },
+            "llm": {
+                "provider": "ollama",
+                "config": {
+                    "model": "qwen2.5:3b",
+                    "ollama_base_url_env": "OLLAMA_BASE_URL",
+                },
+            },
+            "embedder": {
+                "provider": "ollama",
+                "config": {
+                    "model": "nomic-embed-text",
+                    "embedding_dims": 768,
+                    "ollama_base_url_env": "OLLAMA_BASE_URL",
+                },
+            },
+            "custom_fact_extraction_prompt": "Return JSON with facts as flat strings only.",
+        }
+    )
+
+    assert config["llm"]["config"]["ollama_base_url"] == "http://ollama.test:11434"
+    assert config["embedder"]["config"]["ollama_base_url"] == "http://ollama.test:11434"
+    assert "ollama_base_url_env" not in config["llm"]["config"]
+    assert "ollama_base_url_env" not in config["embedder"]["config"]
+    assert config["custom_fact_extraction_prompt"] == "Return JSON with facts as flat strings only."
+
+
+def test_health_degrades_when_memory_queue_has_pending_saves(monkeypatch, tmp_path):
+    module = load_mem0_server(monkeypatch, "mem0_server_health_under_test")
+
+    monkeypatch.setattr(module, "QDRANT_AVAILABLE", False)
+    monkeypatch.setattr(module, "QUEUE_DB_PATH", tmp_path / "queue.db")
+    monkeypatch.setattr(module, "check_disk_space", lambda: {"critical": False})
+    monkeypatch.setattr(module, "check_sqlite_db", lambda: {"status": "healthy"})
+    monkeypatch.setattr(
+        module,
+        "load_config",
+        lambda: {
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {"collection_name": "agent_memory_local"},
+            }
+        },
+    )
+
+    module._queue_failed_memory_add(
+        module.AddMemoryRequest(text="queued but not visible", agent_id="shared")
+    )
+
+    health = module.health()
+
+    assert health.status == "degraded"
+    assert health.queue["queued"] == 1
+
+
+def test_lifespan_starts_queue_replay_worker(monkeypatch):
+    module = load_mem0_server(monkeypatch, "mem0_server_lifespan_under_test")
+    created = []
+
+    class FakeTask:
+        def cancel(self):
+            pass
+
+        def __await__(self):
+            async def done():
+                return None
+
+            return done().__await__()
+
+    def fake_create_task(coro):
+        created.append(coro.__name__)
+        coro.close()
+        return FakeTask()
+
+    monkeypatch.setattr(module.asyncio, "create_task", fake_create_task)
+
+    async def run_lifespan():
+        async with module.lifespan(module.app):
+            pass
+
+    asyncio.run(run_lifespan())
+
+    assert "_qdrant_health_checker" in created
+    assert "_queue_replay_worker" in created

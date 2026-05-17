@@ -4,7 +4,7 @@ import type { MemoryTier } from "./tiers";
 export interface MemoryTierHealth {
   tier: MemoryTier;
   backend: string;
-  status: "up" | "down" | "not_configured";
+  status: "up" | "degraded" | "down" | "not_configured";
   detail?: string;
   count?: number | null;
   lastWrite?: string | null;
@@ -68,7 +68,27 @@ export async function queryGraphMemory(query: string, limit: number) {
 export async function checkVectorHealth(): Promise<MemoryTierHealth> {
   try {
     const response = await fetch(`${MEM0_URL}/health`, { signal: timeoutSignal(3000) });
-    return { tier: "vector", backend: "mem0-qdrant", status: response.ok ? "up" : "down" };
+    if (!response.ok) {
+      return { tier: "vector", backend: "mem0-qdrant", status: "down", detail: `HTTP ${response.status}` };
+    }
+
+    const body = await response.json().catch(() => ({}));
+    const details: string[] = [];
+    const queued = typeof body.queue?.queued === "number" ? body.queue.queued : 0;
+    const vectorStore = typeof body.vector_store === "string" ? body.vector_store : "unknown";
+
+    if (body.status === "degraded") details.push("mem0 reports degraded");
+    if (queued > 0) details.push(`${queued} queued memory saves`);
+    if (vectorStore !== "connected" && vectorStore !== "unknown") {
+      details.push(`vector store ${vectorStore}`);
+    }
+
+    return {
+      tier: "vector",
+      backend: "mem0-qdrant",
+      status: details.length > 0 ? "degraded" : "up",
+      detail: details.length > 0 ? details.join("; ") : undefined,
+    };
   } catch (error) {
     return { tier: "vector", backend: "mem0-qdrant", status: "down", detail: error instanceof Error ? error.message : undefined };
   }

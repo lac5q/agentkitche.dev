@@ -15,6 +15,7 @@ from pathlib import Path
 DB_PATH = str(Path(__file__).resolve().parent / "logs" / "queue.db")
 MEM0_URL = "http://localhost:3201"
 REPLAY_INTERVAL = 10  # seconds
+REPLAY_TIMEOUT_SECONDS = 180
 MAX_RETRIES = 3
 RETRYABLE_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
 RETRYABLE_ERROR_MARKERS = (
@@ -133,11 +134,11 @@ class Mem0Queue:
                 response = httpx.post(
                     url,
                     json=payload,
-                    timeout=30,
+                    timeout=REPLAY_TIMEOUT_SECONDS,
                     headers={"X-Mem0-Queue-Replay": "1"},
                 )
             elif req['method'] == 'GET':
-                response = httpx.get(url, params=payload, timeout=30)
+                response = httpx.get(url, params=payload, timeout=REPLAY_TIMEOUT_SECONDS)
             else:
                 return False
 
