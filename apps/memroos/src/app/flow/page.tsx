@@ -7,6 +7,9 @@ import { ActivityFeed } from "@/components/flow/activity-feed";
 import { NodeDetailPanel } from "@/components/flow/node-detail-panel";
 import { OrchestrationHilPanel } from "@/components/orchestration/orchestration-hil-panel";
 import { VoicePanel } from "@/components/voice/VoicePanel";
+import { TopologyCanvas } from "@/components/workflow/topology-canvas";
+import { NodeDetailRail } from "@/components/workflow/node-detail-rail";
+import { NOC, NOC_FONT_BODY, NOC_FONT_MONO } from "@/lib/noc-theme";
 
 interface SelectedNode {
   id: string;
@@ -26,6 +29,8 @@ export default function FlowPage() {
   const { data: paperclipFleet, isLoading: paperclipLoading } = usePaperclipFleet();
   const [selectedNode, setSelectedNode] = useState<SelectedNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [showFlow, setShowFlow] = useState(false);
+  const [topoSelectedId, setTopoSelectedId] = useState<string | null>("memroos");
 
   const services = healthData?.services || [];
   const agentCount = agentsData?.agents.length || 0;
@@ -60,64 +65,101 @@ export default function FlowPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-amber-500">Workflow Map</h1>
-        <p className="text-sm text-slate-400">Live topology for agents, memory, knowledge, tools, and dispatch paths</p>
+      {/* Page header — NOC style */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 18 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: NOC.terra, textTransform: "uppercase", fontFamily: NOC_FONT_BODY }}>
+            Workflow Map
+          </div>
+          <h1 style={{ margin: "4px 0 2px", fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em", color: NOC.ink, fontFamily: NOC_FONT_BODY }}>
+            How work actually flows
+          </h1>
+          <p style={{ fontSize: 13.5, color: NOC.muted, fontFamily: NOC_FONT_BODY }}>
+            Sources arrive, MemroOS assembles memory + skills into a context pack, agents act, outcomes loop back as new memory. Edge thickness = live throughput.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowFlow((v) => !v)}
+          style={{
+            background: showFlow ? NOC.paper : NOC.ink,
+            color: showFlow ? NOC.ink : NOC.cream,
+            border: `1px solid ${showFlow ? NOC.ruleStrong : NOC.ink}`,
+            padding: "6px 14px",
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            fontFamily: NOC_FONT_BODY,
+            cursor: "pointer",
+          }}
+        >
+          {showFlow ? "Topology view" : "Open in Flow"}
+        </button>
       </div>
 
-      <div className="relative">
-        <ReactFlowCanvas
-          services={services}
-          agentCount={agentCount}
-          activeCount={activeCount}
-          memoryCount={memoryCount}
-          knowledgeCount={knowledgeCount}
-          skillCount={skillCount}
-          coverageGapsCount={coverageGapsCount}
-          toolCapabilityCount={toolCapabilityCount}
-          toolWorkspaceCount={toolWorkspaceCount}
-          topFailureAgent={topFailureAgent}
-          nodeActivity={nodeActivity}
-          highlightedNode={hoveredNode || selectedNode?.id}
-          registeredAgents={registeredAgents}
-          localActiveCount={localActiveCount}
-          localTotalCount={localTotalCount}
-          onNodeClick={handleNodeClick}
-        />
-        <NodeDetailPanel
-          nodeId={selectedNode?.id || null}
-          nodeLabel={selectedNode?.label || ""}
-          nodeIcon={selectedNode?.icon || ""}
-          nodeStats={selectedNode?.stats || {}}
-          events={events}
-          onClose={() => setSelectedNode(null)}
-          paperclipFleet={paperclipFleet ?? null}
-          paperclipLoading={paperclipLoading}
-          registeredAgents={registeredAgents}
-        />
-      </div>
+      {/* Primary view: topology (default) or ReactFlow (toggle) */}
+      {!showFlow ? (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 14 }}>
+          <TopologyCanvas selectedId={topoSelectedId} onSelect={setTopoSelectedId} />
+          <NodeDetailRail nodeId={topoSelectedId} />
+        </div>
+      ) : (
+        <div className="relative">
+          <ReactFlowCanvas
+            services={services}
+            agentCount={agentCount}
+            activeCount={activeCount}
+            memoryCount={memoryCount}
+            knowledgeCount={knowledgeCount}
+            skillCount={skillCount}
+            coverageGapsCount={coverageGapsCount}
+            toolCapabilityCount={toolCapabilityCount}
+            toolWorkspaceCount={toolWorkspaceCount}
+            topFailureAgent={topFailureAgent}
+            nodeActivity={nodeActivity}
+            highlightedNode={hoveredNode || selectedNode?.id}
+            registeredAgents={registeredAgents}
+            localActiveCount={localActiveCount}
+            localTotalCount={localTotalCount}
+            onNodeClick={handleNodeClick}
+          />
+          <NodeDetailPanel
+            nodeId={selectedNode?.id || null}
+            nodeLabel={selectedNode?.label || ""}
+            nodeIcon={selectedNode?.icon || ""}
+            nodeStats={selectedNode?.stats || {}}
+            events={events}
+            onClose={() => setSelectedNode(null)}
+            paperclipFleet={paperclipFleet ?? null}
+            paperclipLoading={paperclipLoading}
+            registeredAgents={registeredAgents}
+          />
+        </div>
+      )}
 
       <VoicePanel />
 
       <OrchestrationHilPanel />
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/30 px-4 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium text-slate-500">Live Activity</p>
-          <div className="flex items-center gap-1.5">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-slate-600">polling every 15s</span>
+      <div style={{ background: NOC.paper, border: `1px solid ${NOC.rule}`, borderRadius: 8, padding: "12px 16px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: NOC.muted, fontFamily: NOC_FONT_MONO, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            Live Activity
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: NOC.success }} />
+            <span style={{ fontSize: 11, color: NOC.soft, fontFamily: NOC_FONT_MONO }}>polling every 15s</span>
           </div>
         </div>
         <ActivityFeed events={events} onNodeHover={setHoveredNode} highlightedNode={hoveredNode} />
       </div>
 
-      <div className="flex gap-6 text-xs text-slate-500">
-        <div className="flex items-center gap-1.5"><div className="h-2 w-6 rounded-full bg-amber-500" /> Request</div>
-        <div className="flex items-center gap-1.5"><div className="h-2 w-6 rounded-full bg-emerald-500" /> Knowledge</div>
-        <div className="flex items-center gap-1.5"><div className="h-2 w-6 rounded-full bg-sky-500" /> Memory</div>
-        <div className="flex items-center gap-1.5"><div className="h-2 w-6 rounded-full bg-purple-500" /> APO</div>
-        <div className="flex items-center gap-1.5"><div className="h-2 w-6 rounded-full bg-cyan-500" /> Tools</div>
+      <div style={{ display: "flex", gap: 24, fontSize: 11.5, color: NOC.soft, fontFamily: NOC_FONT_MONO }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ height: 8, width: 24, borderRadius: 4, background: NOC.cold }} /> Source feeds</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ height: 8, width: 24, borderRadius: 4, background: NOC.ink }} /> Context assembly</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ height: 8, width: 24, borderRadius: 4, background: NOC.terra }} /> Pack delivery</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ height: 8, width: 24, borderRadius: 4, background: NOC.success }} /> Outcomes</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ height: 8, width: 24, borderRadius: 4, background: NOC.info }} /> Memory loop</div>
       </div>
     </div>
   );
