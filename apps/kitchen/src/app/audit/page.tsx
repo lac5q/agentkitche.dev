@@ -52,37 +52,45 @@ export default function AuditPage() {
   const [allEntries, setAllEntries] = useState<AuditEntry[]>([]);
   const [agentInput, setAgentInput] = useState("");
   const [actorInput, setActorInput] = useState("");
-  const [selectedEventType, setSelectedEventType] = useState<string[]>([]);
+  const [selectedEventType, setSelectedEventType] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
   const queryFilter: AuditEntriesFilter = {
     ...filter,
     cursor,
-    agentId: agentInput || undefined,
-    actorId: actorInput || undefined,
-    eventType: selectedEventType.length === 1 ? selectedEventType[0] : undefined,
-    from: fromDate || undefined,
-    to: toDate || undefined,
   };
 
-  const { data, isLoading, isError } = useAuditEntries(queryFilter);
+  const { data, isLoading, isError, isFetching } = useAuditEntries(queryFilter);
   const ndjsonUrl = useAuditExportUrl(filter, "ndjson");
   const csvUrl = useAuditExportUrl(filter, "csv");
 
   const applyFilter = useCallback(() => {
+    setFilter({
+      limit: 50,
+      agentId: agentInput.trim() || undefined,
+      actorId: actorInput.trim() || undefined,
+      eventType: selectedEventType || undefined,
+      from: fromDate || undefined,
+      to: toDate || undefined,
+    });
     setAllEntries([]);
     setCursor(undefined);
-  }, []);
+  }, [actorInput, agentInput, fromDate, selectedEventType, toDate]);
 
   const loadMore = useCallback(() => {
     if (data?.nextCursor) {
-      setAllEntries((prev) => [...prev, ...(data.entries ?? [])]);
+      setAllEntries((prev) => {
+        const next = [...prev, ...(data.entries ?? [])];
+        return Array.from(new Map(next.map((entry) => [entry.id, entry])).values());
+      });
       setCursor(data.nextCursor);
     }
   }, [data]);
 
-  const displayed = cursor ? allEntries : (data?.entries ?? []);
+  const displayed = cursor && isFetching
+    ? allEntries
+    : [...allEntries, ...(data?.entries ?? [])];
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 p-6">
@@ -118,21 +126,16 @@ export default function AuditPage() {
 
           <div>
             <label className="block text-xs text-[#4a4a45] mb-1">Event Type</label>
-            <select
-              className="w-full rounded border border-[#c9c9c2] px-2 py-1 text-sm"
-              multiple
-              value={selectedEventType}
-              onChange={(e) =>
-                setSelectedEventType(
-                  Array.from(e.target.selectedOptions).map((o) => o.value)
-                )
-              }
-              size={6}
-            >
-              {ALL_EVENT_TYPES.map((et) => (
-                <option key={et} value={et}>{et}</option>
-              ))}
-            </select>
+              <select
+                className="w-full rounded border border-[#c9c9c2] px-2 py-1 text-sm"
+                value={selectedEventType}
+                onChange={(e) => setSelectedEventType(e.target.value)}
+              >
+                <option value="">All event types</option>
+                {ALL_EVENT_TYPES.map((et) => (
+                  <option key={et} value={et}>{et}</option>
+                ))}
+              </select>
           </div>
 
           <div>

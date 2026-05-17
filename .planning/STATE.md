@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Eval Engine + Self-Improvement Platform
-status: verifying
-stopped_at: STATE.md corrected; awaiting user decision on commit strategy
-last_updated: "2026-05-17T02:03:50.720Z"
+status: complete
+stopped_at: Phase 64 verified; continuation patch ready to commit
+last_updated: "2026-05-17T19:15:00.000Z"
 last_activity: 2026-05-17
 progress:
   total_phases: 57
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
 ## Current Position
 
-Phase: 64 (Immutable Audit + HIL Escalation) — EXECUTING
+Phase: 64 (Immutable Audit + HIL Escalation) — COMPLETE
 Plan: 1 of 1
-Status: Phase complete — ready for verification
+Status: Phase verified — ready for next milestone action
 Last activity: 2026-05-17
 
 ## Roadmap Summary (v2.0)
@@ -145,10 +145,10 @@ have plan dirs + code (lib/auth/, /api/auth/, login/register) — v3 direction.
 
 ## Session Continuity
 
-Last session: 2026-05-17T02:03:50.713Z
-Stopped at: STATE.md corrected; awaiting user decision on commit strategy
+Last session: 2026-05-17T19:15:00.000Z
+Stopped at: Phase 64 verified; continuation patch saved
 Resume file: None
-Next action: complete/archive the v2.5 milestone or begin Phase 63 for v3.0.
+Next action: decide whether to continue v3.0 with Phase 65 or run any manual UAT on Phase 64 UI.
 
 ## Deferred Items
 

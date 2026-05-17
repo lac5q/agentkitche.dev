@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Database from "better-sqlite3";
 import { initSchema } from "@/lib/db-schema";
 import { writeAuditEntry, openEscalation, resolveEscalation } from "@/lib/audit/write";
-import { queryAuditEntries, streamAuditEntries, queryEscalations } from "@/lib/audit/query";
+import { queryAuditEntries, streamAuditEntries } from "@/lib/audit/query";
 import { checkSlaBreaches } from "@/lib/audit/sla";
 
 function makeDb(): Database.Database {

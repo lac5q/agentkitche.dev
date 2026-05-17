@@ -88,6 +88,11 @@ actor_id:         p50=0.0ms  p95=0.1ms  p99=0.1ms  ✅
 npx tsc --noEmit → no errors in audit/* or escalations/* paths
 ```
 
+Post-resume verification on 2026-05-17 also passed `npm run typecheck`,
+`npm run lint` (4 existing unrelated warnings), `npm run build` (known
+Turbopack NFT warnings), focused audit tests (27/27), and a clean full
+`npx vitest run` (108 files, 642 tests). See `64-VERIFICATION.md`.
+
 ## Deviations from Plan
 
 ### Auto-fixed Issues
