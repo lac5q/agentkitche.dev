@@ -1,4 +1,4 @@
-# Project: Agent Kitchen
+# Project: Memoroos
 
 *Last updated: 2026-05-17 — v2.5 archived; v3 compliance platform queued*
 

@@ -8,7 +8,7 @@ created: 2026-05-04
 
 ## Goal
 
-Transform Agent Kitchen from a personal tool into a production-ready open-source hub — universal agent memory, skills, and orchestration in a box, deployable by any developer, compatible with any agent framework.
+Transform Memoroos from a personal tool into a production-ready open-source hub — universal agent memory, skills, and orchestration in a box, deployable by any developer, compatible with any agent framework.
 
 ## Core Insight: A2A-Native
 
