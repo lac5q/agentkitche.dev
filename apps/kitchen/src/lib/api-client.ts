@@ -1430,7 +1430,21 @@ export interface EscalationsFilter {
   limit?: number;
 }
 
-export interface EscalationWithCountdown extends import("@/lib/audit/schema").HilEscalation {
+export interface EscalationWithCountdown {
+  id: string;
+  tenant_id: string;
+  entity_type: string;
+  entity_id: string;
+  escalation_type: "agent_escalate" | "seal_approval" | "eval_below_threshold";
+  sla_seconds: number;
+  sla_deadline: string;
+  status: "open" | "resolved" | "sla_breached";
+  assigned_to?: string | null;
+  opened_by: string;
+  resolved_by?: string | null;
+  resolution_note?: string | null;
+  resolved_at?: string | null;
+  created_at: string;
   isOverdue: boolean;
   slaRemainingMs: number;
 }

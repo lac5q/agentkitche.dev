@@ -157,7 +157,7 @@ describe("audit: streamAuditEntries (export)", () => {
       );
     }
     const iterator = streamAuditEntries({}, db);
-    const rows = [];
+    const rows: import("@/lib/audit/schema").AuditEntry[] = [];
     for (const row of iterator) rows.push(row);
     expect(rows.length).toBe(5);
     // Verify each row is JSON-serializable (NDJSON export requirement)
