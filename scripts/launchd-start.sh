@@ -9,6 +9,14 @@ PORT="${PORT:-3002}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$REPO_DIR/logs"
 mkdir -p "$LOG_DIR"
+NODE_BIN="${KITCHEN_NODE_BIN:-}"
+if [ -z "$NODE_BIN" ]; then
+  if [ -x /opt/homebrew/opt/node@22/bin/node ]; then
+    NODE_BIN=/opt/homebrew/opt/node@22/bin/node
+  else
+    NODE_BIN=/opt/homebrew/bin/node
+  fi
+fi
 
 # Preflight 1: stale scheduler lock.
 # instrumentation.ts uses an O_EXCL lockfile to ensure only one kitchen process
@@ -45,4 +53,4 @@ printf '[%s] preflight: clean — exec next start on port %s\n' \
   "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$PORT" >> "$LOG_DIR/launchd.log"
 
 cd "$REPO_DIR"
-exec /opt/homebrew/bin/node "$REPO_DIR/node_modules/next/dist/bin/next" start "$REPO_DIR/apps/kitchen" --port "$PORT"
+exec "$NODE_BIN" "$REPO_DIR/node_modules/next/dist/bin/next" start "$REPO_DIR/apps/kitchen" --port "$PORT"
