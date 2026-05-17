@@ -86,6 +86,12 @@ export function buildDefaultEvalConfig(): EvalConfig {
       auditRetentionDays: 365,
       enabledAdapters: ["hubspot", "intercom", "quickbooks", "bank_reconciliation"],
     },
+    cove: {
+      enabled: false,
+      maxVerificationQuestions: 4,
+      parallelVerification: true,
+      judgeEndpoint: undefined,
+    },
   };
 }
 
@@ -349,6 +355,18 @@ export function parseEvalConfigYaml(yaml: string): EvalConfig {
         ? parseList(values.get("compliance.adapters_enabled"))
         : defaults.compliance.enabledAdapters,
     },
+    cove: {
+      enabled: bool(values.get("cove.enabled"), defaults.cove.enabled),
+      maxVerificationQuestions: Math.max(
+        1,
+        Math.min(
+          12,
+          numberValue(values.get("cove.max_verification_questions"), defaults.cove.maxVerificationQuestions)
+        )
+      ),
+      parallelVerification: bool(values.get("cove.parallel_verification"), defaults.cove.parallelVerification),
+      judgeEndpoint: scalar(values.get("cove.judge_endpoint"), defaults.cove.judgeEndpoint ?? ""),
+    },
   };
 
   // Validate company sub-weights on load (throws with actionable message on violation)
@@ -428,6 +446,12 @@ export function formatEvalConfigYaml(config: EvalConfig): string {
     `  audit_retention_days: ${config.compliance?.auditRetentionDays ?? 365}`,
     `  allowed_local_hosts: [${(config.compliance?.dataResidency.allowedLocalHosts ?? ["localhost", "127.0.0.1", "::1", "host.docker.internal", "ollama", "vllm"]).join(", ")}]`,
     `  adapters_enabled: [${(config.compliance?.enabledAdapters ?? ["hubspot", "intercom", "quickbooks", "bank_reconciliation"]).join(", ")}]`,
+    "",
+    "cove:",
+    `  enabled: ${config.cove?.enabled ?? false}`,
+    `  max_verification_questions: ${config.cove?.maxVerificationQuestions ?? 4}`,
+    `  parallel_verification: ${config.cove?.parallelVerification ?? true}`,
+    ...(config.cove?.judgeEndpoint ? [`  judge_endpoint: ${config.cove.judgeEndpoint}`] : []),
     "",
     "companies:",
     ...(Object.entries(config.companies ?? {}).length > 0

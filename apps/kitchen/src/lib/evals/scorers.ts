@@ -1,4 +1,5 @@
 import { businessOpsL3Scorer } from "@/lib/l3/l3-scorer";
+import { coveHallucinationDeltaScorer } from "@/lib/cove";
 import { trajectoryMultiStepScorer } from "./trajectory-scorer";
 import type { AgentEvalTrace, EvalScorer, EvalScorerResult, EvalScoringContext } from "./types";
 
@@ -109,6 +110,8 @@ export function createBuiltInScorers(): EvalScorer[] {
         return result(this, average([precision, mrr]), "Memory recall quality from precision and MRR.", trace.memory);
       },
     },
+    // Phase 67: optional CoVe scorer. It is only used when config includes its ID.
+    coveHallucinationDeltaScorer,
     // Phase 60: trajectory multi-step L2 scorer (safe to add — falls back for single-turn traces)
     trajectoryMultiStepScorer,
     {

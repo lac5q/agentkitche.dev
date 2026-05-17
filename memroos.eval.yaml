@@ -53,10 +53,16 @@ finance:
   golden_set: ./golden-sets/finance-reconciliation.jsonl
 
 compliance:
-  data_residency_enabled: true
-  audit_retention_days: 730
+  data_residency_enabled: false
+  audit_retention_days: 365
   allowed_local_hosts: [localhost, 127.0.0.1, ::1, host.docker.internal, ollama, vllm]
-  adapters_enabled: [quickbooks, bank_reconciliation]
+  adapters_enabled: [hubspot, intercom, quickbooks, bank_reconciliation]
+
+cove:
+  enabled: false
+  max_verification_questions: 4
+  parallel_verification: true
+  # judge_endpoint: http://localhost:11434/v1
 
 companies:
   default:

@@ -92,6 +92,14 @@ export interface ComplianceConfig {
   enabledAdapters: string[];
 }
 
+/** Phase 67: Chain-of-Verification runtime and scorer config. */
+export interface CoveEvalConfig {
+  enabled: boolean;
+  maxVerificationQuestions: number;
+  parallelVerification: boolean;
+  judgeEndpoint?: string;
+}
+
 export interface EvalConfig {
   judgeModel: EvalJudgeConfig;
   goldenSets: EvalGoldenSetConfig;
@@ -118,6 +126,8 @@ export interface EvalConfig {
   finance: FinanceReconciliationConfig;
   /** Phase 66: self-hosted compliance posture. */
   compliance: ComplianceConfig;
+  /** Phase 67: Chain-of-Verification config. */
+  cove: CoveEvalConfig;
 }
 
 export interface AgentEvalTrace {

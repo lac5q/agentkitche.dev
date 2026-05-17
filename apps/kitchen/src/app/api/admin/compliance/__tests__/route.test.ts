@@ -1,11 +1,15 @@
 // @vitest-environment node
 import Database from "better-sqlite3";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import fs from "fs";
+import path from "path";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { initSchema } from "@/lib/db-schema";
 
 let testDb: Database.Database;
 let sessionRole: "admin" | "operator" | "reviewer" | null = "admin";
+const evalConfigPath = path.resolve(process.cwd(), "../../memroos.eval.yaml");
+let originalEvalConfig = "";
 
 vi.mock("@/lib/db", () => ({
   getDb: () => testDb,
@@ -31,12 +35,17 @@ function makeDb(): Database.Database {
   return db;
 }
 
+beforeAll(() => {
+  originalEvalConfig = fs.readFileSync(evalConfigPath, "utf8");
+});
+
 beforeEach(() => {
   testDb = makeDb();
   sessionRole = "admin";
 });
 
 afterEach(() => {
+  fs.writeFileSync(evalConfigPath, originalEvalConfig);
   testDb.close();
   vi.resetModules();
 });
