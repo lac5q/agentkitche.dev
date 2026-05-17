@@ -1,6 +1,6 @@
 # Project: Memroos
 
-*Last updated: 2026-05-17 — v2.5 archived; v3 compliance platform queued*
+*Last updated: 2026-05-17 — v3.1 shipped; v4.0 Orchestration Depth + Intelligence Uplift starting*
 
 ---
 
@@ -12,31 +12,39 @@ See `.planning/GOAL.md` for the full development goal and workflow loop.
 
 ---
 
-## Current State: v2.5 Eval Engine + Self-Improvement Platform — SHIPPED 2026-05-17
+## Current Milestone: v4.0 Orchestration Depth + Intelligence Uplift
 
-**What shipped:** A single 3-layer composite eval signal (`W` = L1 capability + L2 LLM-as-judge + L3 business outcome) now drives the Tier 1 autogen learning substrate. The milestone shipped scorer registry, pinned judge, drift guard, eval persistence, SEAL proposals, deterministic modeled post-apply W re-scoring, memory/agent proposal families, L3 outcome adapters, and a tenant-isolated public eval API with TS/Python SDKs.
+**Goal:** Deepen the orchestration runtime with smarter HIL semantics, multi-hop resilience, and LLM-powered recall; add voice meeting participation and memory/recall pluggability; close the behavioral W-lift gap in SEAL.
 
-**Delivered features:**
-- Eval Engine Core — scorer registry, composite W scalar, pinned cross-family LLM judge with drift guard, golden-set framework, `memroos.eval.yaml` config + UI panel
-- SEAL Self-Improvement Substrate — reflection → typed proposals → operator approval → apply → rerun-evals → keep-if-W-improved → rollback/audit (polymorphic over mutation surface)
-- Memory Autogen Learnings — 5 memory proposal types (rewrite / query_hint / salience / tier_route / eval_case_addition) + Karpathy-style fixed-harness memory policy lab
-- Agent Autogen Learnings — agent_instruction_patch / skill_addition / tool_routing_update proposal types, per-role golden sets (sales/support/finance/ops), trajectory evals
-- Business-Ops Outcome Layer (L3) — post-hoc trace metrics (completion / escalation / TTR / approval / cost) + CRM, helpdesk, finance adapters + per-company KPI weighting
-- Public Eval API + SDK — framework-agnostic HTTP surface, OpenInference trace support, TS/Python SDKs, dogfooded by phases 59/60
+**Target features:**
+- HIL edit-and-continue — modify task state mid-graph before resuming
+- HIL timeout + escalation policies — SLA-driven auto-escalation
+- Multi-hop retry + rollback compensation — durable failure recovery across multi-agent chains
+- Memory backend pluggability — swap/add backends beyond mem0 + Qdrant + Neo4j
+- Voice meeting bot — Pipecat as active meeting participant
+- Flow trigger button — `qmd update` from the UI
+- Library freshness indicator — QMD index recency vs file mtime in UI
+- LLM-powered recall scoring — embedding-based upgrade over BM25
+- Cross-project recall — similar-task recommendations across repos
+- True behavioral W-lift — SEAL instruction/skill proposals with real agent re-execution eval
 
-**Tier 1 caveat:** The v2.5 W-lift proof is modeled and deterministic, not empirical agent re-execution. True behavioral lift for `agent_instruction_patch` and `skill_addition` remains v3 scope.
+---
 
-> Locked decision record: `.planning/notes/eval-engine-3-layer-composite.md`. External product packaging deferred — see `.planning/seeds/eval-engine-as-product.md`.
+## Previous Milestone: v3.1 Context Reliability + Runtime Resilience — SHIPPED 2026-05-17
 
-## Next Milestone Goals: v3.0 Compliance Platform + Finance Vertical
+**What shipped:** Phase 69 — declarative context source contracts, context health UI/API, stale-source safe-answer gates, generated runtime service installers (LaunchAgent), degradation eval/UAT coverage. 8 critical security findings fixed (HttpOnly cookies, missing auth guards on 5 routes, TOCTOU race in first-user bootstrap, x-forwarded-host spoofing). 680 tests passing.
 
-- Phase 63: Rename + Team Auth
-- Phase 64: Immutable Audit + HIL Escalation
-- Phase 65: Finance Reconciliation Vertical
-- Phase 66: Self-hosted Hardening + Compliance Posture
-- Phase 67: CoVe Integration
-- Phase 68: Security Boundary Hardening
-- Phase 69: Context Source Contracts + Runtime Resilience
+---
+
+## Previous Milestone: v3.0 Compliance Platform + Finance Vertical — SHIPPED 2026-05-17
+
+**What shipped:** Phases 63-69 — Rename+Team Auth (RBAC, JWT, invite system), Immutable Audit+HIL Escalation, Finance Reconciliation, Self-hosted Hardening+Docker, CoVe Integration, Security Boundary Hardening, Context Source Contracts.
+
+---
+
+## Previous Milestone: v2.5 Eval Engine + Self-Improvement Platform — SHIPPED 2026-05-17
+
+**What shipped:** Composite W, SEAL substrate, memory/agent autogen proposal families, L3 outcome adapters, public eval API + SDK. Tier 1 modeled W-lift shipped; true behavioral W-lift deferred to v4.0.
 
 ---
 
@@ -123,21 +131,18 @@ Any agent framework plugs into Memroos — and every agent, knowledge system, an
 - ✓ SQLite audit_log table + AuditLogPanel — v1.5 (SEC-02/03, DASH-03)
 - ✓ Usage analytics (6 metrics, 3 windows) on Ledger/Library/Cookbooks — v1.5 (ANA-01/02/03/04)
 
-### Active (v2.0)
+### Active (v4.0)
 
-- [ ] A2A Hub: `/.well-known/agent.json` agent card + A2A task API
-- [ ] A2A Hub: agent discovery and delegation
-- [ ] Google ADK agent registration via A2A, surfaced in Flow
-- [ ] Universal REST API: `/api/heartbeat`, `/api/skills/report`, `/api/memory/add`, `/api/tool-attention/record`
-- [ ] Dynamic agent roster (remove all hardcoding)
-- [ ] Unified memory: mem0 graph layer activated with Neo4j backend
-- [ ] Unified memory: `/api/memory/*` API covering vector + graph + episodic tiers
-- [ ] Operating profiles: default local install plus customizable `single-host`, `private-network`, `cloud-https`, and `custom` topologies
-- [ ] Env-driven config: `.env.example` covering all ports, paths, keys, URLs, backends, and profile-specific values
-- [ ] Docker full-stack: Memroos + Knowledge MCP + mem0 + Neo4j (Qdrant stays cloud)
-- [ ] Developer setup: `setup.sh`, prereq detection, first-run wizard
-- [ ] Documentation: README rewrite, architecture diagram, per-framework integration guides
-- [ ] OSS polish: MIT license, CONTRIBUTING.md, security policy, issue templates, public CI
+- [ ] HIL edit-and-continue — operator edits task payload fields mid-graph before resume (HIL-01..03)
+- [ ] HIL timeout + escalation policies — SLA countdown, auto-escalate on timeout (HIL-04..06)
+- [ ] Multi-hop retry compensation and rollback — per-hop retry budget, coordinated rollback (ORCH-08..10)
+- [ ] Memory backend pluggability — adapter interface for swapping vector/graph/episodic backends (MEM-06..08)
+- [ ] Voice meeting bot — Pipecat meeting participant, real-time transcript, Memroos highlights panel (VOICE-06..08)
+- [ ] Flow trigger button — `qmd update` pipeline kickoff from UI (UI-05)
+- [ ] Library freshness indicator — QMD index recency vs file mtime display (UI-06)
+- [ ] LLM-powered recall scoring — embedding-based semantic ranking upgrade (RECALL-01..02)
+- [ ] Cross-project recall — similar-task recommendations across multiple local repos (RECALL-03..04)
+- [ ] True behavioral W-lift — SEAL instruction/skill proposals with real agent re-execution + eval (SEAL-04..06)
 
 ### Recent Milestones
 
@@ -147,31 +152,21 @@ Any agent framework plugs into Memroos — and every agent, knowledge system, an
 - [x] **v2.3 Agent Runtime Enhancements (Phases 50-52)** — Agent-side middleware, memory client v2, local observability dashboard
 - [x] **v2.4 Performance + Caching (Phases 53-54)** — Response caching, query performance, cold-start elimination, regression budgets
 
-### Next Milestones
+### Deferred (v5.0+ candidates)
 
-- [ ] Define the next product milestone after the completed v2.0-v2.4 roadmap.
-
-### Deferred (v2.5+ candidates)
-
-- [ ] Flow trigger button — kick off `qmd update` pipeline from Memroos UI
-- [ ] Library freshness — show QMD index recency timestamp vs file mtime
-- [ ] LLM-powered recall scoring — semantic/embedding upgrade to BM25 lexical recall
-- [ ] Cross-project recall — similar-task recommendations across multiple local repos
-- [ ] Voice meeting bot — Pipecat meeting participant writing transcripts to SQLite with Memroos highlights panel
 - [ ] ClaudeClaw-inspired Chat tab — dedicated command/chat workspace for CLIs, Paperclip project agents, runtime subagents, and Memroos system identities, separate from Flow
 - [ ] Memory search surface — unified search across SQLite recall, mem0/vector memory, Neo4j graph memory, and knowledge files with filters for agent, project, source, date, and tier
 - [ ] Schedules and routines console — visible recurring jobs, cron health, standing delegations, maintenance routines, and approval-required automations
 - [ ] Hivemind Obsidian view — graph/canvas exploration of agents, memories, tasks, proposals, skills, backlinks, and relationships inspired by Obsidian/ClaudeClaw
 - [ ] Paperclip design-system completion — migrate drawers, sheets, modals, detail panels, empty states, and error states off the older dark dashboard shell
 - [ ] Flow canvas redesign — migrate React Flow topology, minimap, controls, node cards, edge styling, group boxes, and node detail panels into the new Paperclip-style visual system while preserving graph readability
-- [ ] Memory pluggability beyond mem0+Qdrant+Neo4j (v3.0 concern)
 
 ### Out of Scope
 
 - Mobile app — web-first, desktop dashboard
 - Multi-user auth — single-user local tool (for now; OSS users run their own instance)
 - GitNexus embeddings — blocked by node-llama-cpp macOS arm64 bug (abhigyanpatwari/GitNexus#824)
-- Memory backend pluggability — mem0 + Qdrant Cloud + Neo4j is the fixed stack; swappability is v3.0
+- Memory backend pluggability — in scope for v4.0 (moved from out-of-scope)
 - Local Qdrant in Docker — Qdrant stays cloud; env-configured via `QDRANT_URL` + `QDRANT_API_KEY`
 
 ---
