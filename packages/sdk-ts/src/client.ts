@@ -1,5 +1,5 @@
 /**
- * @memoroos/eval-sdk — MemroosClient
+ * @memroos/eval-sdk — MemroosClient
  *
  * Wraps the MemroOS Public Eval API with typed request/response models.
  * Requires Node >= 18 (global fetch).

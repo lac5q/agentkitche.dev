@@ -1,11 +1,11 @@
 /**
- * @memoroos/eval-sdk
+ * @memroos/eval-sdk
  *
  * Public Eval API client for MemroOS.
  *
  * @example
  * ```typescript
- * import { MemroosClient } from "@memoroos/eval-sdk";
+ * import { MemroosClient } from "@memroos/eval-sdk";
  *
  * const client = new MemroosClient({
  *   baseUrl: "https://your-memroos-instance.com",

@@ -6,7 +6,7 @@ MemroOS is a thin, durable broker and observability layer for agent systems. It 
 
 ```mermaid
 flowchart TB
-  Operator["Operator"] --> UI["Kitchen UI"]
+  Operator["Operator"] --> UI["Memroos UI"]
   UI --> API["Next.js API Routes"]
   API --> Registry["Canonical Registry SQLite"]
   API --> A2A["A2A Broker"]
@@ -20,7 +20,7 @@ flowchart TB
   Memory --> Mem0["mem0"]
   Mem0 --> Qdrant["Qdrant Cloud"]
   Mem0 --> Neo4j["Neo4j"]
-  Memory --> Episodic["Kitchen SQLite"]
+  Memory --> Episodic["Memroos SQLite"]
   OrchestrationProxy --> LangGraph["LangGraph Service"]
   LangGraph --> Checkpoints["SqliteSaver Checkpoints"]
   LangGraph --> HIL["Human-in-the-loop Queue"]
@@ -28,7 +28,7 @@ flowchart TB
 
 ## Core Components
 
-### Kitchen UI
+### Memroos UI
 
 The UI is the operator surface: registry, Flow, memory intelligence, dispatch, ledger, library, notebooks, cookbooks, and APO. It should stay useful even when optional services are degraded.
 
@@ -52,11 +52,11 @@ The A2A broker exposes:
 - `/tasks/{id}:cancel`
 - `/tasks/{id}:subscribe`
 
-Kitchen keeps the broker durable and boring: authenticate, validate, store task state, expose SSE updates, and delegate outward when needed. More intelligent routing belongs in the orchestration service.
+Memroos keeps the broker durable and boring: authenticate, validate, store task state, expose SSE updates, and delegate outward when needed. More intelligent routing belongs in the orchestration service.
 
 ### REST Shim
 
-The REST shim lets non-A2A frameworks integrate quickly. Agents can report heartbeats, memory writes, and skill usage with a bearer key issued by Kitchen.
+The REST shim lets non-A2A frameworks integrate quickly. Agents can report heartbeats, memory writes, and skill usage with a bearer key issued by Memroos.
 
 ### Memory Router
 
@@ -64,25 +64,25 @@ Memory has three tiers:
 
 - Vector: semantic recall through mem0 backed by Qdrant Cloud.
 - Graph: relationship queries through mem0 backed by Neo4j.
-- Episodic: operational memory and audit rows in Kitchen SQLite.
+- Episodic: operational memory and audit rows in Memroos SQLite.
 
 ### LangGraph Orchestration Service
 
-Kitchen delegates multi-step routed tasks to the Python orchestration service. The service owns LangGraph graphs, checkpointing, retry metadata, and human approval state. Kitchen remains the UI/proxy boundary.
+Memroos delegates multi-step routed tasks to the Python orchestration service. The service owns LangGraph graphs, checkpointing, retry metadata, and human approval state. Memroos remains the UI/proxy boundary.
 
 ## Deployment Boundaries
 
 Recommended startup deployment:
 
-- Kitchen runs on one host.
+- Memroos runs on one host.
 - Agents run on one or more machines.
 - Machines communicate over Tailscale or a trusted LAN.
-- `KITCHEN_OPERATOR_API_KEY` protects operator writes.
+- `MEMROOS_OPERATOR_API_KEY` protects operator writes.
 - Agents use per-agent bearer keys for runtime writes.
 
 Cloud deployment:
 
-- Put Kitchen behind HTTPS.
+- Put Memroos behind HTTPS.
 - Require operator key.
 - Use real secrets management.
 - Restrict A2A card ingestion to approved card URLs and networks.
@@ -91,14 +91,14 @@ Cloud deployment:
 
 | Store | Owner | Purpose |
 | --- | --- | --- |
-| SQLite `data/conversations.db` | Kitchen | Registry, A2A tasks, reports, audit, episodic memory |
+| SQLite `data/conversations.db` | Memroos | Registry, A2A tasks, reports, audit, episodic memory |
 | Qdrant Cloud | mem0 | Vector memory |
-| Neo4j | mem0 / Kitchen graph routes | Graph memory |
+| Neo4j | mem0 / Memroos graph routes | Graph memory |
 | Orchestration SQLite | LangGraph service | Checkpoints and HIL state |
 
 ## Design Choices
 
-- **Thin broker over smart monolith:** Kitchen coordinates and observes; it does not replace agent frameworks.
+- **Thin broker over smart monolith:** Memroos coordinates and observes; it does not replace agent frameworks.
 - **A2A first, REST compatible:** Prefer standards where they exist, keep a pragmatic shim for frameworks still catching up.
 - **Private network first:** Multi-machine startup deployments should start on Tailscale/LAN before public exposure.
 - **Explicit registration:** Agents become canonical only after registry registration or A2A card ingestion.

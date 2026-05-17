@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS meta (
 **What:** JSONL entries have no `agent_id` field. Derive it from the directory name under `~/.claude/projects/`.
 
 **Rule (locked recommendation):**
-- Directory name is a URL-encoded path, e.g., `-Users-jdoe-github-agent-kitchen`
-- Extract the last path component after splitting on `-` then rejoining with `/`: `agent-kitchen`
+- Directory name is a URL-encoded path, e.g., `-Users-jdoe-github-memroos`
+- Extract the last path component after splitting on `-` then rejoining with `/`: `memroos`
 - If the decoded path maps to a known project (compare against `CLAUDE_MEMORY_PATH` base), set `agent_id` to the project folder name; otherwise use `"claude-code"`
 - For Paperclip sessions (directories containing `paperclip`), set `agent_id = "paperclip"`
 
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS meta (
 function deriveAgentId(projectDirName: string): string {
   // e.g. "-Users-jdoe--paperclip-instances-..." → "paperclip"
   if (projectDirName.includes('paperclip')) return 'paperclip';
-  // e.g. "-Users-jdoe-github-agent-kitchen" → "agent-kitchen"
+  // e.g. "-Users-jdoe-github-memroos" → "memroos"
   const decoded = projectDirName.replace(/^-/, '/').replace(/-/g, '/');
   const parts = decoded.split('/').filter(Boolean);
   return parts[parts.length - 1] ?? 'claude-code';
@@ -537,7 +537,7 @@ Note: Test file for `constants.ts` likely already passes via existing import pat
 - `node_modules/next/dist/docs/01-app/02-guides/upgrading/version-15.md` — confirms `experimental.serverComponentsExternalPackages` → `serverExternalPackages`
 - npm registry: `npm view better-sqlite3 version` → 12.9.0 (2026-04-16)
 - npm registry: `npm view better-sqlite3 engines` → node `20.x || 22.x || 23.x || 24.x || 25.x` (compatible with v25.8.2)
-- Observed JSONL schema: actual file walk of `~/.claude/projects/-Users-jdoe-github-agent-kitchen/`
+- Observed JSONL schema: actual file walk of `~/.claude/projects/-Users-jdoe-github-memroos/`
 - Observed directory structure: `data/state_store.db` is a directory; `data/` is gitignored via `.gitignore`
 
 ### Secondary (MEDIUM confidence)

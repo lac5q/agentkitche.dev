@@ -15,7 +15,7 @@ Make agent security mode and security capability readiness visible through the r
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/app/api/security/capabilities/__tests__/route.test.ts` passed.
+- `npm --prefix apps/memroos run test -- src/app/api/security/capabilities/__tests__/route.test.ts` passed.
 - Full `npm test -- --run` passed.
 - Playwright browser check confirmed `/agents` renders `Security Modes`.
 

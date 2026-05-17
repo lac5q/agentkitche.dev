@@ -1,6 +1,6 @@
 # Context Source Contracts
 
-Memoroos treats context lanes as product-owned sources, not invisible local
+Memroos treats context lanes as product-owned sources, not invisible local
 machine state. `context-sources.config.json` declares each source, required
 tools/env, source path, freshness threshold, qmd collection, repair command, and
 safe-answer policy.
@@ -29,5 +29,5 @@ node scripts/install-runtime-services.mjs status
 node scripts/install-runtime-services.mjs uninstall
 ```
 
-Generated launchd jobs read `.env` through `MEMOROOS_ENV_FILE`; secrets are not
+Generated launchd jobs read `.env` through `MEMROOS_ENV_FILE`; secrets are not
 embedded in committed plist templates.

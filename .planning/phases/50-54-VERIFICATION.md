@@ -19,5 +19,5 @@ Verified 2026-05-11.
 ## Security
 
 - Middleware logs redact secrets while preserving original values for tool execution.
-- Cache purge is local to the Kitchen process.
+- Cache purge is local to the Memroos process.
 - Observability dashboard reads local logs only and does not call external services.

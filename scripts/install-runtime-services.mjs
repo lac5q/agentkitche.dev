@@ -47,7 +47,7 @@ ${argsXml}
     <string>${xmlEscape(job.stderr)}</string>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>MEMOROOS_ENV_FILE</key>
+        <key>MEMROOS_ENV_FILE</key>
         <string>${xmlEscape(envFile)}</string>
         <key>PATH</key>
         <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>

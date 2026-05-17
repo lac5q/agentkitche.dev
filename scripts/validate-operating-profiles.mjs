@@ -30,7 +30,7 @@ for (const snippet of forbiddenComposeSnippets) {
   }
 }
 
-const requiredServices = ['kitchen:', 'mem0:', 'neo4j:', 'orchestration:', 'voice:', 'knowledge-mcp:'];
+const requiredServices = ['memroos:', 'mem0:', 'neo4j:', 'orchestration:', 'voice:', 'knowledge-mcp:'];
 for (const service of requiredServices) {
   if (!composeText.includes(`  ${service}`)) {
     throw new Error(`docker-compose.yml missing service: ${service}`);

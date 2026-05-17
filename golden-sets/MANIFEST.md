@@ -85,7 +85,7 @@ Drift guard agreement is computed by running each example through the eval judge
 
 ```bash
 # To run the drift guard validation manually:
-cd apps/kitchen && npx vitest run src/lib/evals/__tests__/
+cd apps/memroos && npx vitest run src/lib/evals/__tests__/
 ```
 
 ---

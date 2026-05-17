@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": "apps/kitchen/.next"
+  "outputDirectory": "apps/memroos/.next"
 }

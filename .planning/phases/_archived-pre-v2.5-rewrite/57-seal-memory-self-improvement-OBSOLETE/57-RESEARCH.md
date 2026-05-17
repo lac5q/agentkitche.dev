@@ -54,7 +54,7 @@ Why it wins now:
 
 ### Option 2: Single-File Memory Autoresearch Sandbox
 
-Create a tiny sandbox where an agent may edit only one file, such as `apps/kitchen/src/lib/memory-policy-lab.ts`, then run fixed recall evals against fixture data. The harness accepts or rejects the edit by scalar score.
+Create a tiny sandbox where an agent may edit only one file, such as `apps/memroos/src/lib/memory-policy-lab.ts`, then run fixed recall evals against fixture data. The harness accepts or rejects the edit by scalar score.
 
 Recommendation: **Implement after Option 1 as the Karpathy-style GSD feature.**
 

@@ -1,20 +1,20 @@
 # Polyglot Agent Dispatch — Design Spec
 
 **Date:** 2026-04-19
-**Repo:** `agent-kitchen`
+**Repo:** `memroos`
 **Author:** Luis Calderon (design), Claude (drafting)
-**Supersedes:** none (extends Hive coordination in `2026-04-08-agent-kitchen-design.md`)
+**Supersedes:** none (extends Hive coordination in `2026-04-08-memroos-design.md`)
 
 ---
 
 ## 0. Executive Summary
 
-The Kitchen already ships a working Hive bus (`hive_actions` append-only log + `hive_delegations` mutable task queue) backed by SQLite, a GET/POST `/api/hive` route, and an `agents.config.json` registry of 5 agents across 3 distinct runtimes (Claude Code, OpenClaw/Gwen, Hermes/Alba). This spec adds a **provider-agnostic dispatch layer** on top of the existing Hive so the Kitchen can push tasks to heterogeneous agent runtimes without embedding any vendor SDK.
+The Memroos already ships a working Hive bus (`hive_actions` append-only log + `hive_delegations` mutable task queue) backed by SQLite, a GET/POST `/api/hive` route, and an `agents.config.json` registry of 5 agents across 3 distinct runtimes (Claude Code, OpenClaw/Gwen, Hermes/Alba). This spec adds a **provider-agnostic dispatch layer** on top of the existing Hive so the Memroos can push tasks to heterogeneous agent runtimes without embedding any vendor SDK.
 
 **Design pillars:**
 
 1. **Zero LLM tokens in the orchestration path.** Routing, adapter selection, lineage tracing, and status transitions are deterministic TypeScript. Tokens are spent only inside the agent runtimes when they actually work the task.
-2. **Hive-as-queue.** `hive_delegations` IS the authoritative task queue. The Kitchen writes a row; agents poll `/api/hive?type=delegation&to_agent=X&status=pending`. No Redis, no BullMQ, no separate broker.
+2. **Hive-as-queue.** `hive_delegations` IS the authoritative task queue. The Memroos writes a row; agents poll `/api/hive?type=delegation&to_agent=X&status=pending`. No Redis, no BullMQ, no separate broker.
 3. **Adapter pattern at the edges.** `AgentAdapter` isolates per-runtime push mechanics (HTTP post, file drop, hive-only) so adding a new runtime is one file.
 4. **A2A compatibility layer.** Adopt Google's A2A (`@a2a-js/sdk`) field names — `task_id`, `context_id`, Agent Card — as the external contract over the existing Hive schema, without changing internal tables beyond two additive columns.
 5. **Lineage on the existing audit log.** `hive_actions.artifacts` already stores JSON; we require a `task_id` field to stitch checkpoints/results into a chain with no new table.
@@ -112,7 +112,7 @@ New file: `src/lib/dispatch/types.ts`
 import type { AgentPlatform } from "@/types";
 
 /**
- * DispatchTask is the provider-agnostic payload the Kitchen hands to an adapter.
+ * DispatchTask is the provider-agnostic payload the Memroos hands to an adapter.
  * It is derived from — not equal to — a hive_delegations row. Adapters translate
  * it into whatever on-wire format their target runtime expects.
  */
@@ -121,7 +121,7 @@ export interface DispatchTask {
   task_id: string;
   /** A2A context identifier. Groups related tasks. Equal to hive_delegations.context_id. */
   context_id: string;
-  /** Originating agent id (may be "kitchen" for human-initiated dispatches). */
+  /** Originating agent id (may be "memroos" for human-initiated dispatches). */
   from_agent: string;
   /** Target agent id from agents.config.json. */
   to_agent: string;
@@ -210,7 +210,7 @@ export const openclawAdapter: AgentAdapter = {
       dispatched_at: task.dispatched_at,
       hive_endpoint:
         process.env.HIVE_PUBLIC_URL ??
-        "https://kitchen.example.com/api/hive",
+        "https://memroos.example.com/api/hive",
     };
     const file = path.join(QUEUE_DIR, `${task.task_id}.json`);
     try {
@@ -318,7 +318,7 @@ New file: `src/app/api/dispatch/route.ts`.
 interface DispatchRequest {
   /** Target agent id. Must exist in agents.config.json. */
   to_agent: string;
-  /** Originating agent id. Defaults to "kitchen" if omitted. */
+  /** Originating agent id. Defaults to "memroos" if omitted. */
   from_agent?: string;
   /** Plain-text task description. Required. Scanned by scanContent(). */
   task_summary: string;
@@ -464,7 +464,7 @@ Response (unchanged shape):
     {
       "id": 42,
       "task_id": "7b7f...",
-      "from_agent": "kitchen",
+      "from_agent": "memroos",
       "to_agent": "sophia",
       "task_summary": "Draft blog post on ...",
       "priority": 5,
@@ -491,7 +491,7 @@ Content-Type: application/json
 {
   "type": "delegation",
   "task_id": "7b7f-...",
-  "from_agent": "kitchen",
+  "from_agent": "memroos",
   "to_agent": "sophia",
   "task_summary": "<same as before>",
   "priority": 5,
@@ -552,7 +552,7 @@ POST /api/hive
 {
   "type": "delegation",
   "task_id": "7b7f-...",
-  "from_agent": "kitchen",
+  "from_agent": "memroos",
   "to_agent": "sophia",
   "task_summary": "<unchanged>",
   "status": "completed",
@@ -604,7 +604,7 @@ Loops until it finds one task, prints it to stdout, and exits 0. The *caller* de
 
 | Var             | Default                                            |
 |-----------------|----------------------------------------------------|
-| `HIVE_URL`      | `https://kitchen.example.com/api/hive`     |
+| `HIVE_URL`      | `https://memroos.example.com/api/hive`     |
 | `HIVE_TIMEOUT`  | `5` (curl `--max-time`)                            |
 
 **Reference implementation (MUST match spec; line count ~40):**
@@ -628,7 +628,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-HIVE_URL="${HIVE_URL:-https://kitchen.example.com/api/hive}"
+HIVE_URL="${HIVE_URL:-https://memroos.example.com/api/hive}"
 HIVE_TIMEOUT="${HIVE_TIMEOUT:-5}"
 URL="${HIVE_URL}?type=delegation&to_agent=${AGENT_ID}&status=${STATUS}&limit=${LIMIT}"
 
@@ -680,7 +680,7 @@ interface AgentCard {
   description: string;             // from "role"
   version: "1";                    // schema version
   /** Where an external A2A client sends tasks. */
-  url: string;                     // e.g., "https://kitchen.example.com/api/dispatch"
+  url: string;                     // e.g., "https://memroos.example.com/api/dispatch"
   /** Capabilities. */
   capabilities: {
     streaming: false;              // Plan 01; enable when SSE lands
@@ -699,9 +699,9 @@ interface AgentCard {
     inputModes: ["text"];
     outputModes: ["text"];
   }>;
-  /** Non-standard, agent-kitchen extension. */
+  /** Non-standard, memroos extension. */
   extensions: {
-    kitchen: {
+    memroos: {
       id: string;                                   // agent id
       platform: "claude"|"codex"|"qwen"|"gemini"|"opencode";
       location: "local"|"tailscale"|"cloudflare";
@@ -722,7 +722,7 @@ interface AgentCard {
 const agent = getRemoteAgents().find(a => a.id === params.id);
 if (!agent) return 404;
 const health = await pollRemoteAgent(agent);    // existing helper
-const base = process.env.KITCHEN_PUBLIC_URL ?? "https://kitchen.example.com";
+const base = process.env.MEMROOS_PUBLIC_URL ?? "https://memroos.example.com";
 return Response.json({
   name: agent.name,
   description: agent.role,
@@ -732,7 +732,7 @@ return Response.json({
   authentication: { schemes: ["none"] },
   skills: deriveSkills(agent),         // see §5.3
   extensions: {
-    kitchen: {
+    memroos: {
       id: agent.id,
       platform: agent.platform,
       location: agent.location,
@@ -925,7 +925,7 @@ This spec maps to exactly two GSD plans. Each plan is atomic, independently veri
 - All Plan 01 tests still green.
 - New UI renders on a local dev build; Luis can dispatch a task to `sophia` end-to-end in browser.
 - Lineage drawer correctly shows `trigger → checkpoint* → stop` sequence.
-- `GET /api/agents/sophia/card` validates against the inline `AgentCard` type; `extensions.kitchen.reachable` matches the live `/health` probe.
+- `GET /api/agents/sophia/card` validates against the inline `AgentCard` type; `extensions.memroos.reachable` matches the live `/health` probe.
 
 ### 7.3 Dependencies
 

@@ -82,7 +82,7 @@ POST /api/dispatch/cancel:
          AND (task_id = ? OR context_id = ?);
      Collect affected task_ids from a preceding SELECT for the response.
   3. If 0 rows matched: return 404 NOT_FOUND.
-  4. Write hive_action: agent_id='kitchen', action_type='stop',
+  4. Write hive_action: agent_id='memroos', action_type='stop',
        summary='Task canceled: ' || reason,
        artifacts=json_object('task_id', task_id, 'context_id', context_id, 'reason', reason).
   5. Return 200 { ok:true, canceled: N, task_ids: [...] }.
@@ -104,7 +104,7 @@ POST /api/dispatch/cancel:
     }
 
     const db = getDb();
-    const reason = body.reason ?? "canceled by kitchen";
+    const reason = body.reason ?? "canceled by memroos";
     const canceledAt = new Date().toISOString();
 
     // Find cancellable rows first
@@ -131,7 +131,7 @@ POST /api/dispatch/cancel:
       for (const row of rows) {
         db.prepare(`
           INSERT INTO hive_actions (agent_id, action_type, summary, artifacts)
-          VALUES ('kitchen', 'stop', ?, ?)
+          VALUES ('memroos', 'stop', ?, ?)
         `).run(
           `Task canceled: ${reason}`,
           JSON.stringify({ task_id: row.task_id, context_id: body.context_id ?? null, reason })
@@ -304,15 +304,15 @@ Each card already shows `reachable` from the A2A card. Polish the display:
 
   ```tsx
   <span className={`inline-block h-2 w-2 rounded-full ${
-    card.extensions.kitchen.reachable === true
+    card.extensions.memroos.reachable === true
       ? "bg-emerald-400"
-      : card.extensions.kitchen.reachable === false
+      : card.extensions.memroos.reachable === false
       ? "bg-rose-400"
       : "bg-slate-500"  // null = unknown
   }`} title={
-    card.extensions.kitchen.reachable === true
-      ? `Online · ${card.extensions.kitchen.latencyMs}ms`
-      : card.extensions.kitchen.reachable === false
+    card.extensions.memroos.reachable === true
+      ? `Online · ${card.extensions.memroos.latencyMs}ms`
+      : card.extensions.memroos.reachable === false
       ? "Unreachable"
       : "Status unknown"
   } />

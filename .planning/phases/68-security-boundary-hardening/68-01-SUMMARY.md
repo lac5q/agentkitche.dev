@@ -37,17 +37,17 @@ outside local/private profiles.
 
 ## Verification
 
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/__tests__/content-scanner.test.ts src/lib/__tests__/security-policy.test.ts src/lib/a2a/__tests__/agent-card.test.ts src/app/api/dispatch/__tests__/route.test.ts src/app/api/onboarding/__tests__/route.test.ts --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/__tests__/content-scanner.test.ts src/lib/__tests__/security-policy.test.ts src/lib/a2a/__tests__/agent-card.test.ts src/app/api/dispatch/__tests__/route.test.ts src/app/api/onboarding/__tests__/route.test.ts --run`
   - 5 files, 55 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/auth/__tests__/rate-limit.test.ts --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/auth/__tests__/rate-limit.test.ts --run`
   - 1 file, 2 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run typecheck`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run typecheck`
   - passed
 
 ## Notes
 
 - Local-dev compatibility remains available by default for undeclared legacy
   agents. Non-local profiles deny by default unless
-  `KITCHEN_ALLOW_LEGACY_UNDECLARED_CAPABILITIES=true` is explicitly set.
+  `MEMROOS_ALLOW_LEGACY_UNDECLARED_CAPABILITIES=true` is explicitly set.
 - CSP currently includes development allowances for inline/eval and localhost
   connections because this app still runs Next dev/local tooling paths.

@@ -4,14 +4,7 @@
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/memoroos}/scripts/agentkitchen-mcp.sh\""
-      ]
-    },
-    "agentkitchen": {
-      "command": "/bin/bash",
-      "args": [
-        "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/memoroos}/scripts/agentkitchen-mcp.sh\""
+        "exec \"${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh\""
       ]
     },
     "gitnexus": {

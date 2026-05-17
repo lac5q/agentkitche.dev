@@ -6,10 +6,10 @@
 <domain>
 ## Phase Boundary
 
-Phase 35 makes Kitchen an A2A-native hub for a real startup-style multi-agent network. Agents may run on different laptops, cloud VMs, containers, or private-network hosts. Kitchen should expose its own A2A agent card, accept A2A task lifecycle calls, ingest/register external A2A agents through the Phase 34 canonical registry, delegate tasks to registered A2A agents, stream task progress, and prove Google ADK compatibility with a real runnable fixture.
+Phase 35 makes Memroos an A2A-native hub for a real startup-style multi-agent network. Agents may run on different laptops, cloud VMs, containers, or private-network hosts. Memroos should expose its own A2A agent card, accept A2A task lifecycle calls, ingest/register external A2A agents through the Phase 34 canonical registry, delegate tasks to registered A2A agents, stream task progress, and prove Google ADK compatibility with a real runnable fixture.
 
 This phase owns:
-- Kitchen's public A2A agent card at `/.well-known/agent.json`.
+- Memroos's public A2A agent card at `/.well-known/agent.json`.
 - Spec-compatible A2A 1.0 JSON-RPC task/message routes and SSE streaming behavior.
 - A2A agent-card ingestion/discovery that writes through the Phase 34 `registerAgent()` canonical registry service with `protocol: "a2a"`.
 - Durable A2A task state sufficient for cross-machine clients to reconnect or poll via task lookup.
@@ -31,24 +31,24 @@ This phase does not own:
 ### Spec Compatibility
 - **D-01:** Follow the official A2A 1.0 specification as the canonical contract, even where the roadmap wording is stale.
 - **D-02:** Treat `message/send`, `message/stream`, `tasks/get`, `tasks/cancel`, and task listing support as the A2A method family to research and plan against.
-- **D-03:** Do not make `tasks/send` the canonical Kitchen method just because the roadmap says it. If compatibility aliases are cheap and safe, the planner may include them as deprecated/compatibility-only, but spec-native names must be primary.
+- **D-03:** Do not make `tasks/send` the canonical Memroos method just because the roadmap says it. If compatibility aliases are cheap and safe, the planner may include them as deprecated/compatibility-only, but spec-native names must be primary.
 - **D-04:** Generated or hand-written A2A types should be traceable to the current spec/proto/schema, not invented from memory.
 
 ### Multi-Machine Startup Deployment
 - **D-05:** Phase 35 should be production-shaped for a startup with agents on multiple machines, not a localhost-only demo.
 - **D-06:** Support both private-network and HTTPS-reachable agents, with private network/Tailscale/LAN examples as the recommended safe default.
 - **D-07:** Registered A2A agents need a reachable agent-card URL, base A2A endpoint URL, declared capabilities/skills, protocol/version metadata, liveness state, and auth metadata.
-- **D-08:** Do not assume shared filesystem access between Kitchen and agents. All integration paths must work over HTTP/A2A.
+- **D-08:** Do not assume shared filesystem access between Memroos and agents. All integration paths must work over HTTP/A2A.
 
 ### Registration And Discovery
 - **D-09:** A2A registration should be agent-card ingestion into the canonical registry, not a separate A2A registry model.
-- **D-10:** Kitchen should fetch or receive an A2A agent card URL, validate it, normalize capabilities/skills, and call the Phase 34 `registerAgent()` service with `protocol: "a2a"`.
-- **D-11:** If Kitchen adds a helper endpoint for registration, that endpoint is an adapter around agent-card ingestion. It must not become a custom protocol that competes with A2A discovery.
+- **D-10:** Memroos should fetch or receive an A2A agent card URL, validate it, normalize capabilities/skills, and call the Phase 34 `registerAgent()` service with `protocol: "a2a"`.
+- **D-11:** If Memroos adds a helper endpoint for registration, that endpoint is an adapter around agent-card ingestion. It must not become a custom protocol that competes with A2A discovery.
 - **D-12:** Registration validation should check reachability, required card fields, endpoint URL, protocol/version compatibility, declared auth scheme, capabilities/skills, duplicate identity, and remote liveness/heartbeat behavior.
 
 ### Task Ownership And Delegation
-- **D-13:** Kitchen should be a durable thin A2A broker in Phase 35: enforce auth, persist task state, expose A2A methods, and delegate to registered A2A agents.
-- **D-14:** Kitchen should not become the full orchestration brain yet. Capability routing can be simple and testable; LangGraph owns routing policy, retry policy, and HIL in Phase 36.
+- **D-13:** Memroos should be a durable thin A2A broker in Phase 35: enforce auth, persist task state, expose A2A methods, and delegate to registered A2A agents.
+- **D-14:** Memroos should not become the full orchestration brain yet. Capability routing can be simple and testable; LangGraph owns routing policy, retry policy, and HIL in Phase 36.
 - **D-15:** Task state must be durable enough for multi-machine clients and agents to disconnect/reconnect and still use task lookup for current/final state.
 - **D-16:** Delegation should preserve trace/correlation IDs and task lineage fields where practical so Phase 36 can build on them.
 
@@ -61,26 +61,26 @@ This phase does not own:
 ### Security Model
 - **D-21:** Use the Phase 34 bearer/API-key foundation for A2A machine-to-machine security in Phase 35.
 - **D-22:** Store only hashed keys, support revocation, bind requests to authenticated agent identity, and reject body-provided identity spoofing.
-- **D-23:** A2A endpoints must reject unauthenticated and unauthorized calls, and the Kitchen agent card must declare the security scheme it actually enforces.
+- **D-23:** A2A endpoints must reject unauthenticated and unauthorized calls, and the Memroos agent card must declare the security scheme it actually enforces.
 - **D-24:** Add audit/security records for task calls and authorization failures where existing audit patterns support it.
 - **D-25:** Avoid overcomplicating with OAuth/OIDC in Phase 35, but keep interfaces extensible so stronger enterprise auth can be added later.
 
 ### Google ADK Proof
 - **D-26:** Google ADK support needs executable proof, not docs-only compatibility.
-- **D-27:** Include a small local or LAN/Tailscale-reachable ADK-style A2A fixture/sample that exposes an agent card, registers with Kitchen, accepts a basic A2A task, and appears in Flow with declared capabilities.
-- **D-28:** The proof should validate the ADK path without requiring all developers to run a production ADK service during normal Kitchen startup.
+- **D-27:** Include a small local or LAN/Tailscale-reachable ADK-style A2A fixture/sample that exposes an agent card, registers with Memroos, accepts a basic A2A task, and appears in Flow with declared capabilities.
+- **D-28:** The proof should validate the ADK path without requiring all developers to run a production ADK service during normal Memroos startup.
 
 ### Operating Profiles And Config
-- **D-29:** Kitchen should ship with a blessed default operating profile, but Phase 35 must not bake localhost-only assumptions into A2A cards, endpoints, registration, delegation, or ADK fixtures.
+- **D-29:** Memroos should ship with a blessed default operating profile, but Phase 35 must not bake localhost-only assumptions into A2A cards, endpoints, registration, delegation, or ADK fixtures.
 - **D-30:** A2A public base URL, advertised agent-card URLs, A2A endpoint URLs, allowed remote-card network policy, and ADK fixture host/port must be config-derived or have clear config seams.
 - **D-31:** The recommended startup/team profile is private network/Tailscale/LAN with real bearer/API-key auth; HTTPS-reachable deployment remains supported through configuration.
 - **D-32:** Later install/setup phases own the polished profile selector, Docker templates, and first-run wizard, but Phase 35 must leave them usable seams instead of hardcoded values.
 - **D-33:** Supported profile vocabulary for planning is `local-dev`, `single-host`, `private-network`, `cloud-https`, and `custom`.
 
 ### the agent's Discretion
-- The planner may decide exact route file layout, table names, type module boundaries, and test breakdown after researching the current A2A spec and existing Kitchen route/database patterns.
+- The planner may decide exact route file layout, table names, type module boundaries, and test breakdown after researching the current A2A spec and existing Memroos route/database patterns.
 - The planner may choose whether compatibility aliases for stale `tasks/send` naming are worth including, as long as spec-native A2A methods are primary and tests prove the official names.
-- The planner may decide whether A2A task tables live in the main Kitchen SQLite DB or a clearly isolated namespace within it. Phase 36's LangGraph checkpoint DB remains separate per prior decision.
+- The planner may decide whether A2A task tables live in the main Memroos SQLite DB or a clearly isolated namespace within it. Phase 36's LangGraph checkpoint DB remains separate per prior decision.
 </decisions>
 
 <canonical_refs>
@@ -106,26 +106,26 @@ This phase does not own:
 - `.planning/phases/34-universal-rest-api-canonical-agent-registry/34-VERIFICATION.md` - Proof that canonical registry and REST security are complete.
 
 ### Existing Code Integration Points
-- `apps/kitchen/src/lib/agent-registry.ts` - Canonical registry service; A2A registration must write through this service.
-- `apps/kitchen/src/lib/db-schema.ts` - Additive SQLite schema pattern for new task/discovery tables if needed.
-- `apps/kitchen/src/types/index.ts` - Shared registry and agent DTO types to extend or avoid duplicating.
-- `apps/kitchen/src/lib/dispatch/build-agent-card.ts` - Existing non-spec-complete agent card builder; likely needs replacement or evolution for Kitchen's own A2A card.
-- `apps/kitchen/src/app/api/agents/cards/route.ts` and `apps/kitchen/src/app/api/agents/[id]/card/route.ts` - Existing card read surfaces.
-- `apps/kitchen/src/app/api/dispatch/route.ts` - Existing dispatch route and audit/security scanner pattern.
-- `apps/kitchen/src/lib/dispatch/*` - Existing adapter pattern for delegating work to agents.
-- `apps/kitchen/src/app/agents/page.tsx` and `apps/kitchen/src/components/agents/*` - Registry UI that should display A2A agents after registration.
-- `apps/kitchen/src/app/flow/page.tsx` and `apps/kitchen/src/components/flow/react-flow-canvas.tsx` - Flow surfaces that should show registered ADK/A2A agents.
+- `apps/memroos/src/lib/agent-registry.ts` - Canonical registry service; A2A registration must write through this service.
+- `apps/memroos/src/lib/db-schema.ts` - Additive SQLite schema pattern for new task/discovery tables if needed.
+- `apps/memroos/src/types/index.ts` - Shared registry and agent DTO types to extend or avoid duplicating.
+- `apps/memroos/src/lib/dispatch/build-agent-card.ts` - Existing non-spec-complete agent card builder; likely needs replacement or evolution for Memroos's own A2A card.
+- `apps/memroos/src/app/api/agents/cards/route.ts` and `apps/memroos/src/app/api/agents/[id]/card/route.ts` - Existing card read surfaces.
+- `apps/memroos/src/app/api/dispatch/route.ts` - Existing dispatch route and audit/security scanner pattern.
+- `apps/memroos/src/lib/dispatch/*` - Existing adapter pattern for delegating work to agents.
+- `apps/memroos/src/app/agents/page.tsx` and `apps/memroos/src/components/agents/*` - Registry UI that should display A2A agents after registration.
+- `apps/memroos/src/app/flow/page.tsx` and `apps/memroos/src/components/flow/react-flow-canvas.tsx` - Flow surfaces that should show registered ADK/A2A agents.
 </canonical_refs>
 
 <code_context>
 ## Existing Code Insights
 
 ### Reusable Assets
-- `registerAgent()` in `apps/kitchen/src/lib/agent-registry.ts`: canonical mutation boundary for A2A registration.
+- `registerAgent()` in `apps/memroos/src/lib/agent-registry.ts`: canonical mutation boundary for A2A registration.
 - `authenticateAgentHeaders()` and API-key tables: secure foundation for A2A bearer/API-key enforcement.
 - `recordHeartbeat()` and `pollRemoteAgent()`: liveness patterns that can inform A2A remote health checks.
 - `writeAuditLog()` and `scanContent()` in dispatch route: existing security/audit patterns for task submission.
-- Dispatch adapter interfaces in `apps/kitchen/src/lib/dispatch/types.ts`: useful model for delegating tasks without embedding every remote protocol directly in route handlers.
+- Dispatch adapter interfaces in `apps/memroos/src/lib/dispatch/types.ts`: useful model for delegating tasks without embedding every remote protocol directly in route handlers.
 - Registry UI and Flow registry roster from Phase 34: A2A agents should appear automatically when stored as registered agents with `protocol: "a2a"`.
 
 ### Established Patterns
@@ -136,7 +136,7 @@ This phase does not own:
 - Project security posture forbids `execSync`/`exec`; use HTTP and safe Node/Python process handling only where absolutely needed.
 
 ### Integration Points
-- `/.well-known/agent.json` should be added as a public well-known route for Kitchen's own A2A card.
+- `/.well-known/agent.json` should be added as a public well-known route for Memroos's own A2A card.
 - A2A JSON-RPC routes should connect to durable task state and registry-backed identity.
 - A2A discovery/registration should connect agent cards to `registered_agents` and `agent_capabilities`.
 - Delegation should bridge A2A task objects to existing/future dispatch adapters while preserving trace IDs.
@@ -148,7 +148,7 @@ This phase does not own:
 
 - Prefer private-network/Tailscale/LAN examples for startup internal use, while accepting properly secured HTTPS URLs for agents hosted elsewhere.
 - Treat OpenClaw/Hermes-style operability as the product posture: one recommended install path, plus documented overrides for operators with different machines, ports, service URLs, and security/network constraints.
-- Phase 35 should define or consume config names for Kitchen's public base URL, A2A well-known path, A2A endpoint base, ADK fixture URL, remote-card fetch policy, and outbound delegation timeout/auth behavior.
+- Phase 35 should define or consume config names for Memroos's public base URL, A2A well-known path, A2A endpoint base, ADK fixture URL, remote-card fetch policy, and outbound delegation timeout/auth behavior.
 - Treat the roadmap's `tasks/send` label as a stale compatibility concern; research must verify current A2A 1.0 method mapping before planning.
 - Agent cards should declare the same security scheme the implementation enforces; do not publish `authentication: none` for protected task endpoints.
 - A2A registration should store original agent-card metadata in registry metadata for debugging and future docs.

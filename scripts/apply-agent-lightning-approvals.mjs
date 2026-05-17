@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const DEFAULT_URL = process.env.KITCHEN_URL || "http://localhost:3002";
+const DEFAULT_URL = process.env.MEMROOS_URL || "http://localhost:3002";
 const DEFAULT_EXECUTOR = process.env.APO_APPROVAL_CLI || "qwen";
 
 function parseArgs(argv) {
@@ -42,18 +42,18 @@ function printHelp() {
   console.log(`Agent Lightning approval worker
 
 Usage:
-  npm --prefix apps/kitchen run apo:worker -- [options]
+  npm --prefix apps/memroos run apo:worker -- [options]
 
 Options:
   --executor <cli>   CLI assigned to implementation work. Default: ${DEFAULT_EXECUTOR}
   --proposal <id>    Apply one approved proposal instead of the whole queue.
   --limit <n>        Process at most n queued proposals.
-  --url <url>        Kitchen base URL. Default: ${DEFAULT_URL}
+  --url <url>        Memroos base URL. Default: ${DEFAULT_URL}
   --dry-run          Print the request without applying queued work.
   --help             Show this help.
 
 Environment:
-  KITCHEN_OPERATOR_API_KEY is sent as the bearer token when present.
+  MEMROOS_OPERATOR_API_KEY is sent as the bearer token when present.
   APO_APPROVAL_CLI sets the default executor CLI, e.g. qwen, codex, claude.
 `);
 }
@@ -76,8 +76,8 @@ async function main() {
   }
 
   const headers = { "content-type": "application/json" };
-  if (process.env.KITCHEN_OPERATOR_API_KEY) {
-    headers.authorization = `Bearer ${process.env.KITCHEN_OPERATOR_API_KEY}`;
+  if (process.env.MEMROOS_OPERATOR_API_KEY) {
+    headers.authorization = `Bearer ${process.env.MEMROOS_OPERATOR_API_KEY}`;
   }
   // Force Host header to localhost for registry write authorization check
   if (args.url.includes("localhost")) {

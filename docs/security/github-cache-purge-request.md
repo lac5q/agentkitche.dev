@@ -1,7 +1,7 @@
 # GitHub Support Request: Purge Cached Views for Rewritten Personal Email Commits
 
 Repository: https://github.com/lac5q/memroos
-Former repository URL: https://github.com/lac5q/agent-kitchen
+Former repository URL: https://github.com/lac5q/memroos
 Owner: lac5q
 Date prepared: 2026-05-05
 

@@ -21,7 +21,7 @@ Replace the broken scattered voice/chat/dispatch experience with one short, usab
 
 - Dispatch now works for local registered agents; verification queued a diagnostic task for `heartbeat-agent`.
 - Anthropic live chat still returns provider `429 usage limit exceeded (2056)`, so the app now surfaces this as an operator-readable chat failure instead of raw JSON.
-- Qwen/Gemini/OpenCode-routed chat reports blocked when `KITCHEN_ENABLE_OPENCODE` is not enabled.
+- Qwen/Gemini/OpenCode-routed chat reports blocked when `MEMROOS_ENABLE_OPENCODE` is not enabled.
 - Voice diagnostics report TTS configured when `ELEVENLABS_API_KEY` exists; browser speech recognition remains a browser capability checked by the UI.
 
 ## Verification

@@ -40,7 +40,7 @@ MemroOS is the operating layer that gives agents a memory plane:
 - **Dispatch:** send work to local, REST, or A2A agents with source-backed context.
 - **Improve:** promote repeated successful workflows into durable skills and playbooks.
 
-The repository began as `agentkitchen.dev`; some internal package names, paths, and environment variables still use `kitchen` for compatibility. The public product and positioning are now MemroOS.
+The repository began as `memroos.dev`; some internal package names, paths, and environment variables still use `memroos` for compatibility. The public product and positioning are now MemroOS.
 
 ## Video Demo
 
@@ -281,13 +281,13 @@ http://localhost:3000
 For a local production-style server:
 
 ```bash
-npm --prefix apps/kitchen run build
-KITCHEN_PUBLIC_BASE_URL=http://localhost:3002 \
-KITCHEN_A2A_ENDPOINT_BASE_URL=http://localhost:3002 \
-npm --prefix apps/kitchen run start -- --port 3002
+npm --prefix apps/memroos run build
+MEMROOS_PUBLIC_BASE_URL=http://localhost:3002 \
+MEMROOS_A2A_ENDPOINT_BASE_URL=http://localhost:3002 \
+npm --prefix apps/memroos run start -- --port 3002
 ```
 
-The environment variable prefix is still `KITCHEN_*` for compatibility with existing installs.
+The environment variable prefix is still `MEMROOS_*` for compatibility with existing installs.
 
 ## Recommended Deployment
 
@@ -321,7 +321,7 @@ MemroOS has one canonical registry. The `/agents` page shows the DB-backed roste
 ```bash
 curl -X POST http://localhost:3000/api/agents/register \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "id": "worker-1",
     "name": "Worker 1",
@@ -340,7 +340,7 @@ curl -X POST http://localhost:3000/api/agents/register \
 ```bash
 curl -X POST http://localhost:3000/api/a2a/agents/register \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "cardUrl": "http://agent.tailnet:8000/.well-known/agent-card.json",
     "source": "a2a"
@@ -356,7 +356,7 @@ For agents that can run shell commands, create a short-lived invite and hand the
 ```bash
 curl -X POST http://localhost:3000/api/onboarding/invite \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "agentId": "maria",
     "name": "Maria",
@@ -382,7 +382,7 @@ ChatGPT uses remote MCP over HTTP. Start the MCP facade and expose it through a 
 
 ```bash
 cd /path/to/memroos
-KITCHEN_MCP_PUBLIC_BASE_URL=https://memroos.example npm run install:mcp:chatgpt
+MEMROOS_MCP_PUBLIC_BASE_URL=https://memroos.example npm run install:mcp:chatgpt
 ```
 
 The connector URL is:
@@ -410,14 +410,14 @@ Add or merge this server entry:
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/memroos}/scripts/agentkitchen-mcp.sh\""
+        "exec \"${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh\""
       ]
     }
   }
 }
 ```
 
-Fully quit and reopen Claude Desktop after saving the file. If your local clone is somewhere else, either set `AGENT_KITCHEN_ROOT` or replace `$HOME/github/memroos` with the absolute path to this repo.
+Fully quit and reopen Claude Desktop after saving the file. If your local clone is somewhere else, either set `MEMROOS_ROOT` or replace `$HOME/github/memroos` with the absolute path to this repo.
 
 ## Protocol Strategy
 
@@ -468,7 +468,7 @@ MemroOS treats specialized systems as optional progressive capabilities. They ca
 Enable the current optional bundle with:
 
 ```env
-KITCHEN_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
+MEMROOS_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
 ```
 
 Current bundled capabilities:
@@ -480,7 +480,7 @@ Current bundled capabilities:
 
 MemroOS is built for private-network production first.
 
-- Registry writes require `KITCHEN_OPERATOR_API_KEY` outside local loopback.
+- Registry writes require `MEMROOS_OPERATOR_API_KEY` outside local loopback.
 - Agent write/reporting endpoints require per-agent bearer credentials minted by the registry.
 - Memory read endpoints require operator authorization because they can expose sensitive context.
 - Prefer Tailscale or a private LAN for multi-machine startup deployments.
@@ -515,7 +515,7 @@ npm run eval:memory-degradation
 
 ```text
 memroos/
-├── apps/kitchen/              # Next.js UI and API routes
+├── apps/memroos/              # Next.js UI and API routes
 ├── services/orchestration/    # Python LangGraph orchestration service
 ├── services/memory/           # mem0 service wrapper
 ├── services/knowledge-mcp/    # Knowledge/tool-attention MCP facade
@@ -570,4 +570,4 @@ If MemroOS helps you stop making every agent start from zero, please star the re
 
 MemroOS is distributed under the [PolyForm Small Business License 1.0.0](LICENSE). Small businesses that meet the license thresholds may use it under those terms. Larger commercial use requires a separate commercial license. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).
 
-Agent Kitchen versions up to the `agent-kitchen-mit-final` tag were distributed under the MIT License. Those earlier MIT rights remain governed by those earlier terms. The current license applies to MemroOS copies and contributions after the license-change commit.
+Memroos versions up to the `memroos-mit-final` tag were distributed under the MIT License. Those earlier MIT rights remain governed by those earlier terms. The current license applies to MemroOS copies and contributions after the license-change commit.

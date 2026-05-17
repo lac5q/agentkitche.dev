@@ -7,8 +7,8 @@ on:
     branches: [main, master]
 
 jobs:
-  kitchen:
-    name: Kitchen tests and build
+  memroos:
+    name: Memroos tests and build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,10 +30,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run Kitchen tests
+      - name: Run Memroos tests
         run: npm test -- --run
 
-      - name: Build Kitchen
+      - name: Build Memroos
         run: npm run build
 
       - name: Docker compose smoke

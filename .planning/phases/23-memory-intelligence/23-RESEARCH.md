@@ -92,7 +92,7 @@ src/
 │   ├── memory-consolidate/route.ts      # NEW -- manual trigger endpoint
 │   └── recall/route.ts                  # MODIFY -- add access_count increment
 └── components/
-    ├── kitchen/
+    ├── memroos/
     │   └── agent-peers-panel.tsx        # NEW -- MEM-04 live peer panel
     └── ledger/
         └── memory-intelligence-panel.tsx # NEW -- MEM-03 health stats
@@ -696,7 +696,7 @@ vi.mock('@anthropic-ai/sdk', () => ({
 - `src/lib/db-schema.ts` (codebase read) -- exact existing schema used as reference for new table design
 - `src/app/api/hive/route.ts` (codebase read) -- `hive_actions` table columns verified for MEM-04 query design
 - `src/lib/api-client.ts` (codebase read) -- `useQuery` polling pattern, fetchJSON helper, POLL_INTERVALS verified
-- `src/components/kitchen/hive-feed.tsx` (codebase read) -- component template for AgentPeersPanel
+- `src/components/memroos/hive-feed.tsx` (codebase read) -- component template for AgentPeersPanel
 - `src/components/ledger/sqlite-health-panel.tsx` (codebase read) -- panel template for MemoryIntelligencePanel
 - npm registry [VERIFIED] -- `@anthropic-ai/sdk` 0.90.0, `node-cron` 4.2.1, confirmed as of 2026-04-18
 - `package.json` (codebase read) -- confirmed no `@anthropic-ai/sdk`; better-sqlite3 ^12.9.0; Next.js 16.2.2; vitest ^4.1.3

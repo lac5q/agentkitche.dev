@@ -93,35 +93,35 @@ def _normalize_transport(value: str) -> str:
     }
     transport = aliases.get(transport, transport)
     if transport not in {"stdio", "sse", "streamable-http"}:
-        raise ValueError("KITCHEN_MCP_TRANSPORT must be one of: stdio, sse, streamable-http")
+        raise ValueError("MEMROOS_MCP_TRANSPORT must be one of: stdio, sse, streamable-http")
     return transport
 
 
 def _server_transport() -> str:
-    return _normalize_transport(os.environ.get("KITCHEN_MCP_TRANSPORT", "stdio"))
+    return _normalize_transport(os.environ.get("MEMROOS_MCP_TRANSPORT", "stdio"))
 
 
 def _server_options() -> dict:
     """Return FastMCP options controlled by env for local or remote clients."""
     return {
-        "host": os.environ.get("KITCHEN_MCP_HOST", "127.0.0.1"),
-        "port": _env_int("KITCHEN_MCP_PORT", 8765),
-        "streamable_http_path": os.environ.get("KITCHEN_MCP_STREAMABLE_HTTP_PATH", "/mcp"),
-        "sse_path": os.environ.get("KITCHEN_MCP_SSE_PATH", "/sse"),
-        "message_path": os.environ.get("KITCHEN_MCP_MESSAGE_PATH", "/messages/"),
-        "stateless_http": _env_bool("KITCHEN_MCP_STATELESS_HTTP", False),
+        "host": os.environ.get("MEMROOS_MCP_HOST", "127.0.0.1"),
+        "port": _env_int("MEMROOS_MCP_PORT", 8765),
+        "streamable_http_path": os.environ.get("MEMROOS_MCP_STREAMABLE_HTTP_PATH", "/mcp"),
+        "sse_path": os.environ.get("MEMROOS_MCP_SSE_PATH", "/sse"),
+        "message_path": os.environ.get("MEMROOS_MCP_MESSAGE_PATH", "/messages/"),
+        "stateless_http": _env_bool("MEMROOS_MCP_STATELESS_HTTP", False),
     }
 
 
 def _auth_provider():
-    token = os.environ.get("KITCHEN_MCP_BEARER_TOKEN", "").strip()
+    token = os.environ.get("MEMROOS_MCP_BEARER_TOKEN", "").strip()
     if not token:
         return None
     if DebugTokenVerifier is None:
-        raise RuntimeError("KITCHEN_MCP_BEARER_TOKEN requires FastMCP auth support")
+        raise RuntimeError("MEMROOS_MCP_BEARER_TOKEN requires FastMCP auth support")
     return DebugTokenVerifier(
         validate=lambda candidate: secrets.compare_digest(candidate, token),
-        client_id="agentkitchen-mcp-client",
+        client_id="memroos-mcp-client",
     )
 
 
@@ -161,7 +161,7 @@ def _mem0_url() -> str:
 
 
 def _public_base_url() -> str:
-    return os.environ.get("KITCHEN_MCP_PUBLIC_BASE_URL", "https://agentkitchen.local").rstrip("/")
+    return os.environ.get("MEMROOS_MCP_PUBLIC_BASE_URL", "https://memroos.local").rstrip("/")
 
 
 def _split_chatgpt_id(document_id: str) -> tuple[str, Optional[int]]:
@@ -268,7 +268,7 @@ def fetch(id: str) -> dict:
         "url": _chatgpt_url(path, line),
         "metadata": {
             "path": path,
-            "source": "agentkitchen",
+            "source": "memroos",
             "truncated": bool(document.get("truncated", False)),
         },
     }
@@ -501,7 +501,7 @@ def recipes_catalog_resource() -> str:
 def knowledge_system_orientation() -> str:
     """Prompt that tells an agent how to use the knowledge system safely."""
     return (
-        "Use the agentkitchen MCP server as one progressive facade with progressive disclosure. "
+        "Use the memroos MCP server as one progressive facade with progressive disclosure. "
         "Start with core tools: health, manifest, search, read, memory_search, memory_save. "
         "If a task needs deeper capability, call knowledge_capabilities or knowledge_open_workspace. "
         "Use knowledge_workspace_call for deep actions like wiki compile. "

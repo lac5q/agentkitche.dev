@@ -12,7 +12,7 @@ Phase 58 ships the generic self-improvement loop: reflection on a low-W trace �
 In scope for Phase 58:
 - Reflection step: given a trace + W breakdown, produce one or more typed proposals from registered types, each with a forecast W-delta and rationale
 - Closed proposal-type registry (TypeScript const object, not runtime plugin)
-- Operator approval queue in Kitchen UI: diff view, forecast W-delta, approve/reject controls, persisted decisions
+- Operator approval queue in Memroos UI: diff view, forecast W-delta, approve/reject controls, persisted decisions
 - Apply → rerun-evals → keep-if-W-improved cycle with isolated-context strategy
 - Auto-rollback for regressed mutations; append-only audit log with full per-layer W deltas
 - Baseline W snapshot persisted with proposal at creation time (required for deterministic keep/discard comparison)
@@ -33,13 +33,13 @@ Out of scope for Phase 58:
 
 2. **Baseline W snapshot persisted at proposal creation time.** The `seal_proposals` table stores `baseline_w` (composite W of the originating eval run), `baseline_run_id` (FK to `eval_runs`), and `baseline_layer_json` (per-layer L1/L2/L3 breakdown). This makes the keep/discard comparison deterministic: any re-run of evals between proposal creation and apply cannot retroactively change the comparison target.
 
-3. **Closed proposal-type registry as TypeScript const.** `apps/kitchen/src/lib/seal/proposal-registry.ts` exports a `PROPOSAL_TYPES` const object keyed by type string and a `ProposalType` union type derived from it. Adding a type requires editing this file and updating the registry — no dynamic registration at runtime. This is enforced by the TypeScript exhaustiveness check in the reflection and apply handlers. The v2+ extension path (runtime plugin model) is documented in the registry file as a `// v2+ extension path` comment block and cross-referenced from the Phase 58 SEAL substrate README.
+3. **Closed proposal-type registry as TypeScript const.** `apps/memroos/src/lib/seal/proposal-registry.ts` exports a `PROPOSAL_TYPES` const object keyed by type string and a `ProposalType` union type derived from it. Adding a type requires editing this file and updating the registry — no dynamic registration at runtime. This is enforced by the TypeScript exhaustiveness check in the reflection and apply handlers. The v2+ extension path (runtime plugin model) is documented in the registry file as a `// v2+ extension path` comment block and cross-referenced from the Phase 58 SEAL substrate README.
 
 4. **Audit log is append-only by service-layer convention.** `seal_audit_log` has no UPDATE or DELETE routes. The API surface exposes GET only for reads and a POST-only write path in the service. The existing `audit_log` table (SEC-02, v1.5) is a separate table for agent actions; `seal_audit_log` is a purpose-built SEAL table with richer W-delta columns. No merger with the existing table — the schemas are incompatible and the semantic scopes are different.
 
 5. **Approval decisions are persisted independently of proposal state.** `seal_proposal_decisions` is a separate table (not a status column on `seal_proposals`) so the full approve/reject history is queryable even after a proposal is applied or rolled back. A proposal can transition: `pending → approved → applied` or `pending → approved → rolled_back` or `pending → rejected`. Each transition writes a row to `seal_proposal_decisions` and a row to `seal_audit_log`.
 
-6. **`/seal` page in Kitchen UI.** Following the `/evals` precedent from Phase 57, the SEAL approval queue lives at `/seal`. The page has two panels: a pending proposals queue (ApprovalQueue component) and a read-only audit log panel. The sidebar navigation entry is added alongside the Evals entry.
+6. **`/seal` page in Memroos UI.** Following the `/evals` precedent from Phase 57, the SEAL approval queue lives at `/seal`. The page has two panels: a pending proposals queue (ApprovalQueue component) and a read-only audit log panel. The sidebar navigation entry is added alongside the Evals entry.
 
 7. **Reflection step calls Phase 57's eval engine service.** `reflection.ts` consumes `EvalService.getRunById()` (or equivalent Phase 57 interface) to fetch the W breakdown for a trace, then applies a threshold (configurable in `memroos.eval.yaml` under `seal.reflection_threshold`, default 0.6) to decide whether the trace qualifies for reflection. Proposals are only generated for traces where W < threshold.
 
@@ -49,12 +49,12 @@ Out of scope for Phase 58:
 <code_context>
 ## Existing Code Insights
 
-- `apps/kitchen/src/lib/db-schema.ts` owns additive SQLite schema initialization. The `initSchema` function is CRITICAL — reached by all DB-backed routes. Phase 58 adds three tables: `seal_proposals`, `seal_proposal_decisions`, `seal_audit_log`.
-- `apps/kitchen/src/lib/db.ts` exposes the shared initialized SQLite singleton. Phase 58 uses the same singleton.
-- Phase 57 adds `apps/kitchen/src/lib/evals/` with scorer registry, composite W engine, and persistence. Phase 58 imports `EvalService` from this module to fetch baseline W and to rerun evals post-apply.
-- `apps/kitchen/src/lib/api-client.ts` is the centralized client data access module with TanStack Query hooks. Phase 58 adds `useSealProposals()`, `useSealAuditLog()`, and mutation hooks for approve/reject.
+- `apps/memroos/src/lib/db-schema.ts` owns additive SQLite schema initialization. The `initSchema` function is CRITICAL — reached by all DB-backed routes. Phase 58 adds three tables: `seal_proposals`, `seal_proposal_decisions`, `seal_audit_log`.
+- `apps/memroos/src/lib/db.ts` exposes the shared initialized SQLite singleton. Phase 58 uses the same singleton.
+- Phase 57 adds `apps/memroos/src/lib/evals/` with scorer registry, composite W engine, and persistence. Phase 58 imports `EvalService` from this module to fetch baseline W and to rerun evals post-apply.
+- `apps/memroos/src/lib/api-client.ts` is the centralized client data access module with TanStack Query hooks. Phase 58 adds `useSealProposals()`, `useSealAuditLog()`, and mutation hooks for approve/reject.
 - API route handlers use `Response.json(...)` and `export const dynamic = "force-dynamic"` — Phase 58 routes follow the same convention.
-- `apps/kitchen/src/components/layout/sidebar.tsx` owns navigation entries — Phase 58 adds a Seal entry alongside Evals.
+- `apps/memroos/src/components/layout/sidebar.tsx` owns navigation entries — Phase 58 adds a Seal entry alongside Evals.
 - Existing `audit_log` table (SEC-02) uses append-only semantics by convention. Phase 58 applies the same convention to `seal_audit_log` with an explicit service-layer guard.
 - Phase 57's `eval_runs` table is the source of `baseline_run_id` FK. Phase 58 does not write to `eval_runs` — it reads from it.
 </code_context>
@@ -62,7 +62,7 @@ Out of scope for Phase 58:
 <specifics>
 ## Specific Ideas
 
-### Library modules under `apps/kitchen/src/lib/seal/`
+### Library modules under `apps/memroos/src/lib/seal/`
 - `proposal-registry.ts` — `PROPOSAL_TYPES` const, `ProposalType` union, registry entry shape, v2+ comment block
 - `reflection.ts` — `reflectOnTrace(traceId, runId)` → `ProposalDraft[]`; reads W from eval engine, applies threshold, generates typed proposals with forecast W-delta and rationale
 - `apply.ts` — `applyProposal(proposalId)` → shadow-copy apply, eval rerun, keep/rollback decision
@@ -70,16 +70,16 @@ Out of scope for Phase 58:
 - `service.ts` — `SealService` class orchestrating reflection → approval → apply → audit; consumes `EvalService` from Phase 57
 
 ### API routes
-- `apps/kitchen/src/app/api/seal/proposals/route.ts` — GET (list with filter: pending/approved/rejected/applied/rolled_back) + POST (trigger reflection on a trace)
-- `apps/kitchen/src/app/api/seal/proposals/[id]/route.ts` — GET (single proposal with diff and baseline W) + POST `{action: "approve"|"reject"|"apply"}`
-- `apps/kitchen/src/app/api/seal/audit/route.ts` — GET only (append-only; no POST/PATCH/DELETE routes)
+- `apps/memroos/src/app/api/seal/proposals/route.ts` — GET (list with filter: pending/approved/rejected/applied/rolled_back) + POST (trigger reflection on a trace)
+- `apps/memroos/src/app/api/seal/proposals/[id]/route.ts` — GET (single proposal with diff and baseline W) + POST `{action: "approve"|"reject"|"apply"}`
+- `apps/memroos/src/app/api/seal/audit/route.ts` — GET only (append-only; no POST/PATCH/DELETE routes)
 
 ### UI
-- `apps/kitchen/src/app/seal/page.tsx` — `/seal` page with two panels
-- `apps/kitchen/src/components/seal/ApprovalQueue.tsx` — pending proposals list: proposal type badge, diff view (collapsible), forecast W-delta chip (green if positive, red if negative), approve/reject buttons; persists decision via TanStack mutation
-- `apps/kitchen/src/components/seal/AuditLogPanel.tsx` — read-only immutable audit table with per-layer W deltas; filterable by proposal ID
+- `apps/memroos/src/app/seal/page.tsx` — `/seal` page with two panels
+- `apps/memroos/src/components/seal/ApprovalQueue.tsx` — pending proposals list: proposal type badge, diff view (collapsible), forecast W-delta chip (green if positive, red if negative), approve/reject buttons; persists decision via TanStack mutation
+- `apps/memroos/src/components/seal/AuditLogPanel.tsx` — read-only immutable audit table with per-layer W deltas; filterable by proposal ID
 
-### Schema additions in `apps/kitchen/src/lib/db-schema.ts` (additive only)
+### Schema additions in `apps/memroos/src/lib/db-schema.ts` (additive only)
 ```
 seal_proposals:
   id, trace_id, run_id (FK eval_runs), agent_id, proposal_type,

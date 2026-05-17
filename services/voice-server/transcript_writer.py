@@ -3,7 +3,7 @@ voice-server/transcript_writer.py
 
 SQLite transcript persistence helper for the voice server.
 Writes voice session utterances to the shared messages table in
-data/conversations.db, using agent_id='voice' and project='agent-kitchen'.
+data/conversations.db, using agent_id='voice' and project='memroos'.
 
 Per VOICE-04 and Pitfall 6 in 22-RESEARCH.md:
 - Opens a new connection on every write (no persistent connection across processes)
@@ -37,7 +37,7 @@ class TranscriptWriter:
             conn.execute(
                 """INSERT OR IGNORE INTO messages
                    (session_id, project, agent_id, role, content, timestamp, request_id)
-                   VALUES (?, 'agent-kitchen', 'voice', ?, ?, ?, ?)""",
+                   VALUES (?, 'memroos', 'voice', ?, ?, ?, ?)""",
                 (
                     self.session_id,
                     role,

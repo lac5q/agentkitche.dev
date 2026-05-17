@@ -11,7 +11,7 @@ requirements: [FIN-01, FIN-02, FIN-03]
 
 ## Outcome
 
-Memoroos now has a deterministic bank transaction reconciliation vertical.
+Memroos now has a deterministic bank transaction reconciliation vertical.
 CSV/webhook/demo transaction events normalize into finance L3 outcome rows,
 each reconciliation decision writes immutable audit evidence, mismatch and
 exception decisions open HIL escalations, and finance terminology can be
@@ -19,7 +19,7 @@ enabled from `memroos.eval.yaml`.
 
 ## What Was Done
 
-- Added `apps/kitchen/src/lib/finance-reconciliation/` for CSV parsing,
+- Added `apps/memroos/src/lib/finance-reconciliation/` for CSV parsing,
   webhook normalization, deterministic 100-transaction demo generation,
   finance terminology, golden-set coverage validation, and processing.
 - Added `POST /api/finance-reconciliation` with demo, CSV, webhook, and events
@@ -33,13 +33,13 @@ enabled from `memroos.eval.yaml`.
 
 ## Verification
 
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/finance-reconciliation src/app/api/finance-reconciliation --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/finance-reconciliation src/app/api/finance-reconciliation --run`
   - 2 files, 9 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/l3 --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/l3 --run`
   - 2 files, 13 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/l3 src/lib/evals src/lib/finance-reconciliation src/app/api/finance-reconciliation --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/l3 src/lib/evals src/lib/finance-reconciliation src/app/api/finance-reconciliation --run`
   - 6 files, 36 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run typecheck`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run typecheck`
   - passed
 
 ## Notes

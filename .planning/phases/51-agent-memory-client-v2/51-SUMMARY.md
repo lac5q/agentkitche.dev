@@ -8,7 +8,7 @@ Let agent sessions retrieve compact relevant memory instead of dumping broad fil
 
 ## Shipped
 
-- Added `apps/kitchen/src/lib/agent-runtime/memory-client.ts`.
+- Added `apps/memroos/src/lib/agent-runtime/memory-client.ts`.
 - Added relevance-scored local memory search with synonym expansion.
 - Added context injection capped to 1,500 characters.
 - Added duplicate memory merging with `mergeCount`.
@@ -17,7 +17,7 @@ Let agent sessions retrieve compact relevant memory instead of dumping broad fil
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/lib/agent-runtime/__tests__/memory-client.test.ts` passed.
+- `npm --prefix apps/memroos run test -- src/lib/agent-runtime/__tests__/memory-client.test.ts` passed.
 - Full `npm test -- --run` passed.
 
 ## Risk Notes

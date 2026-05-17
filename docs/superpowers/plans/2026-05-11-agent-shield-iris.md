@@ -3,7 +3,7 @@
 **Date:** 2026-05-11
 **Status:** Phase 2 implemented
 **Owner:** Alba
-**Source:** Luis suggestion in Discord #agent_kitchen
+**Source:** Luis suggestion in Discord #agent_memroos
 
 ## Problem
 
@@ -12,7 +12,7 @@ MemroOS' current security scanner (`content-scanner.ts`) covers ~18 regex patter
 - Regex-only: no semantic understanding of prompt injection patterns
 - No MCP server / tool permission auditing
 - No agent configuration vulnerability scanning
-- No visibility of scan results in the Kitchen UI
+- No visibility of scan results in the Memroos UI
 - No pre-flight/post-execution security gate on dispatch
 
 ## What is Agent Shield
@@ -65,7 +65,7 @@ MemroOS (existing)                Iris (new)
 
 ## Phase 1 Results: Agent Shield Scan (completed 2026-05-11)
 
-### Kitchen scan: Grade C (72/100)
+### Memroos scan: Grade C (72/100)
 - 4 files scanned, 22 findings (2 critical, 5 high, 12 medium, 1 low, 2 info)
 - **Critical:** CLAUDE.md missing instruction boundary + data leakage defenses
 - **High:** Suspicious instruction in CLAUDE.md gitnexus comment, missing role/indirect/harmful defenses, no deny list in settings
@@ -93,7 +93,7 @@ This is the real value add: our current scanner is regex-only (secrets/PII/injec
 
 Implemented a first Iris security gate for dispatch and A2A message creation:
 
-- Added `apps/kitchen/src/lib/iris-scanner.ts`
+- Added `apps/memroos/src/lib/iris-scanner.ts`
 - Wrapped the existing `scanContent` checks so secrets, PII, and injection regex coverage stays intact
 - Added high-severity pre-flight rules for:
   - Direct instruction override attempts
@@ -111,7 +111,7 @@ Verification:
 - RED tests confirmed missing Iris behavior before implementation
 - Targeted Iris/dispatch/A2A tests pass: 21/21
 - Existing content scanner tests pass: 16/16
-- Full Kitchen test suite passes: 477/477 across 76 files
+- Full Memroos test suite passes: 477/477 across 76 files
 - ESLint exits 0 with 11 pre-existing warnings
 - Production build passes. One existing Turbopack NFT trace warning remains in `next.config.ts` via `/api/apo`
 - GitNexus change detection reports HIGH risk due expected A2A blast radius around `sendA2aMessage`
@@ -119,7 +119,7 @@ Verification:
 ## Implementation Phases
 
 ### Phase 1: Agent Shield evaluation
-- Clone and run agentshield locally against the Kitchen codebase
+- Clone and run agentshield locally against the Memroos codebase
 - Audit what it catches that `content-scanner.ts` misses
 - Decide: integrate as dependency vs fork/adapt patterns
 
@@ -136,7 +136,7 @@ Verification:
 
 Added a first registry-backed policy guard:
 
-- Added `apps/kitchen/src/lib/security-policy.ts`
+- Added `apps/memroos/src/lib/security-policy.ts`
 - Dispatch policy:
   - Allows legacy targets with no declared capabilities for backward compatibility
   - Denies targets that declare capabilities but do not include a dispatch-compatible capability
@@ -155,12 +155,12 @@ Verification:
 
 - Targeted policy tests: 28/28 passed
 - Affected A2A/dispatch/memory suites: 68/68 passed
-- Full Kitchen tests: 485/485 passed
+- Full Memroos tests: 485/485 passed
 - `npm run lint`: exits 0 with 11 pre-existing warnings
 - `npm run build`: passes with the existing `/api/apo` Turbopack NFT warning
 
 ### Phase 4: Audit UI
-- Show scan results, blocked attempts, and security events in Kitchen UI
+- Show scan results, blocked attempts, and security events in Memroos UI
 - New `/security` or `/iris` page with scan history
 
 ### Phase 5: Progressive capability

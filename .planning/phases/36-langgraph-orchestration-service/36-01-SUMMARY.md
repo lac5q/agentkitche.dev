@@ -19,7 +19,7 @@ requirements_remaining: [ORCH-01, ORCH-02, ORCH-03]
   - `POST /hil/{decision_id}/resolve`
   - `POST /tasks/{run_id}/failures`
   - `GET /health`
-- Added Kitchen proxy routes:
+- Added Memroos proxy routes:
   - `POST /api/orchestration`
   - `GET /api/orchestration/hil`
   - `POST /api/orchestration/hil/[id]`
@@ -30,10 +30,10 @@ requirements_remaining: [ORCH-01, ORCH-02, ORCH-03]
 ## Choices Made And Why
 
 - **Separate Python service:** Preserves the Phase 36 architecture and avoids running LangGraph inside the Next.js process.
-- **Dedicated SQLite DB path:** Defaults to `data/orchestration.db`, separate from Kitchen's main SQLite DB to avoid cross-process lock contention.
+- **Dedicated SQLite DB path:** Defaults to `data/orchestration.db`, separate from Memroos's main SQLite DB to avoid cross-process lock contention.
 - **Deterministic routing first:** Active agents with matching declared capability win, then stable name/id sorting. This is debuggable and easy to replace with richer policy once the LangGraph graph is fully wired.
-- **Kitchen remains control plane:** Kitchen proxies orchestration requests, provides canonical registry agents, enforces operator authorization, and renders HIL. It does not own routing policy.
-- **A2A boundary preserved:** The orchestration result records `LangGraph chooses policy; Kitchen/A2A owns transport`, keeping Phase 35 transport separate from Phase 36 policy.
+- **Memroos remains control plane:** Memroos proxies orchestration requests, provides canonical registry agents, enforces operator authorization, and renders HIL. It does not own routing policy.
+- **A2A boundary preserved:** The orchestration result records `LangGraph chooses policy; Memroos/A2A owns transport`, keeping Phase 35 transport separate from Phase 36 policy.
 - **Retry limit default is 2:** Small enough for fast operator feedback, configurable through `ORCHESTRATION_RETRY_LIMIT`.
 - **Secure HIL listing:** HIL decisions can include sensitive task summaries, so list and resolve routes both require the existing operator authorization gate.
 - **Python 3.9-compatible FastAPI models:** Pydantic on Python 3.9 failed on `str | None`, so service DTOs use `Optional[...]`.
@@ -48,9 +48,9 @@ requirements_remaining: [ORCH-01, ORCH-02, ORCH-03]
 - `python3 -m unittest discover services/orchestration/tests` — passed, 4 tests.
 - `python3 -m py_compile services/orchestration/engine.py services/orchestration/app.py services/orchestration/graph.py` — passed.
 - Python package import smoke: `importlib.import_module('services.orchestration.app')` — passed.
-- `npm --prefix apps/kitchen run test -- src/app/api/orchestration/__tests__/route.test.ts src/components/orchestration/__tests__/hil-panel.test.tsx` — passed, 5 tests.
-- `npm --prefix apps/kitchen run lint` — passed with 12 pre-existing warnings.
-- `npm --prefix apps/kitchen run build` — passed with the known pre-existing Turbopack NFT warning involving `/api/apo`.
+- `npm --prefix apps/memroos run test -- src/app/api/orchestration/__tests__/route.test.ts src/components/orchestration/__tests__/hil-panel.test.tsx` — passed, 5 tests.
+- `npm --prefix apps/memroos run lint` — passed with 12 pre-existing warnings.
+- `npm --prefix apps/memroos run build` — passed with the known pre-existing Turbopack NFT warning involving `/api/apo`.
 
 ## Remaining Phase 36 Work
 

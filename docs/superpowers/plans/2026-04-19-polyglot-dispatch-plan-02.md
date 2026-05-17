@@ -278,7 +278,7 @@
         capabilities: expect.any(Object),
         authentication: expect.any(Object),
         skills: expect.any(Array),
-        extensions: expect.objectContaining({ kitchen: expect.any(Object) }),
+        extensions: expect.objectContaining({ memroos: expect.any(Object) }),
       });
     });
   });
@@ -349,7 +349,7 @@
     };
     skills: ReturnType<typeof deriveSkills>;
     extensions: {
-      kitchen: {
+      memroos: {
         id: string;
         platform: string;
         location: string;
@@ -384,7 +384,7 @@
       },
       skills,
       extensions: {
-        kitchen: {
+        memroos: {
           id: agent.id,
           platform: agent.platform,
           location: agent.location,
@@ -516,7 +516,7 @@
             capabilities: Record<string, boolean>;
             authentication: { schemes: string[] };
             skills: Array<{ id: string; name: string; description: string; tags: string[] }>;
-            extensions: { kitchen: { id: string; platform: string; location: string; role: string } };
+            extensions: { memroos: { id: string; platform: string; location: string; role: string } };
           }>;
           timestamp: string;
         }>("/api/agents/cards"),
@@ -573,7 +573,7 @@
         ? {
             task_id: taskId,
             context_id: "ctx-1",
-            delegation: { task_summary: "test task", from_agent: "kitchen", to_agent: "sophia" },
+            delegation: { task_summary: "test task", from_agent: "memroos", to_agent: "sophia" },
             actions: [
               { id: 1, agent_id: "sophia", action_type: "checkpoint", summary: "step 1 done", artifacts: null, timestamp: "2026-04-19T10:00:00Z" },
               { id: 2, agent_id: "sophia", action_type: "stop", summary: "completed", artifacts: null, timestamp: "2026-04-19T10:01:00Z" },
@@ -757,7 +757,7 @@
   const MOCK_DELEGATIONS = [
     {
       task_id: "t1",
-      from_agent: "kitchen",
+      from_agent: "memroos",
       to_agent: "sophia",
       task_summary: "build the widget",
       priority: 3,
@@ -819,7 +819,7 @@
                 capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: true },
                 authentication: { schemes: ["none"] },
                 skills: [{ id: "code-execute", name: "Code Execution", description: "...", tags: ["code"] }],
-                extensions: { kitchen: { id: "sophia", platform: "openclaw", location: "tailscale", role: "developer" } },
+                extensions: { memroos: { id: "sophia", platform: "openclaw", location: "tailscale", role: "developer" } },
               },
             ],
             timestamp: "2026-04-19T10:00:00Z",
@@ -1007,16 +1007,16 @@
         <div className="grid gap-4 sm:grid-cols-2">
           {cards.map((card) => (
             <div
-              key={card.extensions.kitchen.id}
+              key={card.extensions.memroos.id}
               className="rounded-lg border border-slate-700 bg-slate-950 p-4 space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-sm font-semibold text-slate-200">{card.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{card.extensions.kitchen.role}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{card.extensions.memroos.role}</p>
                 </div>
                 <span className="text-xs text-slate-600 font-mono bg-slate-800 px-2 py-0.5 rounded">
-                  {card.extensions.kitchen.platform}
+                  {card.extensions.memroos.platform}
                 </span>
               </div>
               <p className="text-xs text-slate-400 break-all">{card.url}</p>
@@ -1100,7 +1100,7 @@
 
   ```typescript
   const NAV_ITEMS = [
-    { href: "/", label: "Kitchen Floor", icon: "👨‍🍳" },
+    { href: "/", label: "Memroos Floor", icon: "👨‍🍳" },
     { href: "/ledger", label: "The Ledger", icon: "🧾" },
     { href: "/notebooks", label: "Notebook Wall", icon: "🧠" },
     { href: "/library", label: "The Library", icon: "📚" },

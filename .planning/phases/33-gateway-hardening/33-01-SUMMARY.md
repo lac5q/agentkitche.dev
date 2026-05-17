@@ -20,10 +20,10 @@ field on every capability entry and a `categories` summary dict.
 
 ### OPSGW-01 — Lint debt resolved
 
-- Added a test-file override block in `apps/kitchen/eslint.config.mjs` that
+- Added a test-file override block in `apps/memroos/eslint.config.mjs` that
   turns off `@typescript-eslint/no-explicit-any` and demotes `no-unused-vars`
   to a warning for `**/__tests__/**` and `**/*.test.*` files.
-- Fixed `prefer-const` violation in `apps/kitchen/src/app/api/gitnexus/route.ts`
+- Fixed `prefer-const` violation in `apps/memroos/src/app/api/gitnexus/route.ts`
   (`let repos` → `const repos`).
 - Added `// eslint-disable-next-line react-hooks/purity` before impure
   expressions in `activity-feed.tsx`, `flow-edge.tsx`, and `health-panel.tsx`.
@@ -45,7 +45,7 @@ Converting the constants to lazy functions made the warning worse (1 → 2). The
 warning is non-blocking and cannot be resolved without moving APO storage to a
 static subfolder (e.g., `data/apo/`) rather than `~/.openclaw`.
 
-Resolution: added a `NOTE (OPSGW-02)` code comment in `apps/kitchen/src/app/api/apo/route.ts`
+Resolution: added a `NOTE (OPSGW-02)` code comment in `apps/memroos/src/app/api/apo/route.ts`
 documenting the root cause and the prerequisite architectural change required
 to fully resolve it.
 
@@ -94,14 +94,14 @@ distinguish runnable MCP servers from static references or unavailable entries.
 ## Files Changed
 
 ```
-apps/kitchen/eslint.config.mjs
-apps/kitchen/src/app/api/apo/route.ts
-apps/kitchen/src/app/api/gitnexus/route.ts
-apps/kitchen/src/components/flow/activity-feed.tsx
-apps/kitchen/src/components/flow/demo-mode.tsx
-apps/kitchen/src/components/flow/flow-edge.tsx
-apps/kitchen/src/components/library/health-panel.tsx
-apps/kitchen/src/components/voice/VoicePanel.tsx
+apps/memroos/eslint.config.mjs
+apps/memroos/src/app/api/apo/route.ts
+apps/memroos/src/app/api/gitnexus/route.ts
+apps/memroos/src/components/flow/activity-feed.tsx
+apps/memroos/src/components/flow/demo-mode.tsx
+apps/memroos/src/components/flow/flow-edge.tsx
+apps/memroos/src/components/library/health-panel.tsx
+apps/memroos/src/components/voice/VoicePanel.tsx
 services/knowledge-mcp/knowledge_system/tool_attention.py
 services/knowledge-mcp/tests/test_knowledge_system.py
 ```

@@ -139,7 +139,7 @@ function install() {
       run("launchctl", ["kickstart", "-k", `${domain}/${job.label}`], { stdio: "inherit" });
     }
   }
-  console.log("Installed Memoroos memory resilience jobs.");
+  console.log("Installed Memroos memory resilience jobs.");
 }
 
 function uninstall() {
@@ -149,7 +149,7 @@ function uninstall() {
     run("launchctl", ["bootout", domain, target], { stdio: "ignore" });
     fs.rmSync(target, { force: true });
   }
-  console.log("Uninstalled Memoroos memory resilience jobs.");
+  console.log("Uninstalled Memroos memory resilience jobs.");
 }
 
 function status() {

@@ -1,0 +1,54 @@
+const OPERATOR_HEADER = "x-memroos-operator-key";
+
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+function forwardedHost(request: Request): string | null {
+  const forwardedHostHeader = request.headers.get("x-forwarded-host");
+  const host = forwardedHostHeader?.split(",")[0]?.trim();
+  return host || null;
+}
+
+function hostnameFromHostHeader(value: string): string {
+  if (value.startsWith("[")) {
+    return value.slice(1, value.indexOf("]"));
+  }
+  return value.split(":")[0] ?? value;
+}
+
+function getRequestHostname(request: Request): string | null {
+  const host = forwardedHost(request);
+  if (host) return hostnameFromHostHeader(host);
+
+  try {
+    return new URL(request.url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function hasOperatorKey(request: Request, expectedKey: string): boolean {
+  const headerKey = request.headers.get(OPERATOR_HEADER);
+  const authorization = request.headers.get("authorization");
+  const bearerKey = authorization?.match(/^Bearer\s+(.+)$/i)?.[1] ?? null;
+  return headerKey === expectedKey || bearerKey === expectedKey;
+}
+
+export function authorizeRegistryWrite(request: Request): boolean {
+  const hostname = getRequestHostname(request);
+  if (hostname && isLoopbackHost(hostname)) return true;
+
+  const operatorKey = process.env.MEMROOS_OPERATOR_API_KEY;
+  if (operatorKey) {
+    return hasOperatorKey(request, operatorKey);
+  }
+  return false;
+}
+
+export function registryWriteUnauthorizedResponse(): Response {
+  return Response.json(
+    { ok: false, error: "Registry write authorization required" },
+    { status: 403 }
+  );
+}

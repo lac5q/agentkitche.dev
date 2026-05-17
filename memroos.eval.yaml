@@ -43,7 +43,7 @@ agents:
 
 business_ops:
   poll_interval_seconds: 300
-  correlation_id_field: kitchen_correlation_id
+  correlation_id_field: memroos_correlation_id
 
 finance:
   enabled: false
@@ -62,7 +62,6 @@ cove:
   enabled: false
   max_verification_questions: 4
   parallel_verification: true
-  # judge_endpoint: http://localhost:11434/v1
 
 companies:
   default:

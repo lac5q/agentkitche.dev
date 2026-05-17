@@ -40,7 +40,7 @@ Gemini embeddings2 costing $90-120/month for 5,411 documents. Need cheaper alter
 - **Model**: clip-ViT-L-14 (768-dim, multimodal)
 - **Base image**: nvidia/cuda:11.8.0-runtime-ubuntu22.04
 - **Dependencies**: PyTorch 2.0.1, sentence-transformers 2.2.2, FastAPI 0.109.0
-- **Docker image**: agentkitchen/embedding-server
+- **Docker image**: memroos/embedding-server
 - **Deployment**: Vast.ai batch instances
 
 ### Files Created

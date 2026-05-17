@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deliver the provider-agnostic dispatch backend — schema migrations, adapters, `/api/dispatch` route, poll script, and full test coverage — so any agent can be dispatched from the Kitchen without touching a vendor SDK.
+**Goal:** Deliver the provider-agnostic dispatch backend — schema migrations, adapters, `/api/dispatch` route, poll script, and full test coverage — so any agent can be dispatched from the Memroos without touching a vendor SDK.
 
 **Architecture:** `hive_delegations` is the task queue (SQLite, zero broker). Two adapters handle delivery: `openclaw` (file-drop to `~/.openclaw/delivery-queue/`) for `platform=opencode`, and `hive-poll` (null, agent polls `/api/hive`) for `claude|codex|qwen|gemini`. The `/api/dispatch` POST route writes the delegation row, selects the adapter, calls it, and returns `{ok,task_id,context_id,adapter,mode}`. Zero LLM calls in this path.
 
@@ -116,7 +116,7 @@ Append after the status rebuild block:
 - [ ] **Step 5: Verify the schema initializes cleanly**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx tsx -e "
+cd /Users/yourname/github/memroos && npx tsx -e "
 import { getDb } from './src/lib/db.ts';
 const db = getDb();
 const info = db.prepare(\"PRAGMA table_info(hive_delegations)\").all();
@@ -131,7 +131,7 @@ Expected output: columns array includes `context_id` and `result`; migrated key 
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/lib/db-schema.ts && git commit -m "feat(dispatch): schema v2 — context_id, result, canceled status, two indexes"
+cd /Users/yourname/github/memroos && git add src/lib/db-schema.ts && git commit -m "feat(dispatch): schema v2 — context_id, result, canceled status, two indexes"
 ```
 
 ---
@@ -144,7 +144,7 @@ cd /Users/yourname/github/agent-kitchen && git add src/lib/db-schema.ts && git c
 - [ ] **Step 1: Create the types file**
 
 ```bash
-mkdir -p /Users/yourname/github/agent-kitchen/src/lib/dispatch
+mkdir -p /Users/yourname/github/memroos/src/lib/dispatch
 ```
 
 Create `src/lib/dispatch/types.ts`:
@@ -180,7 +180,7 @@ export interface AgentAdapter {
 - [ ] **Step 2: Verify TypeScript compiles**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx tsc --noEmit 2>&1 | head -20
+cd /Users/yourname/github/memroos && npx tsc --noEmit 2>&1 | head -20
 ```
 
 Expected: no errors.
@@ -188,7 +188,7 @@ Expected: no errors.
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/lib/dispatch/types.ts && git commit -m "feat(dispatch): DispatchTask, DispatchResult, AgentAdapter types"
+cd /Users/yourname/github/memroos && git add src/lib/dispatch/types.ts && git commit -m "feat(dispatch): DispatchTask, DispatchResult, AgentAdapter types"
 ```
 
 ---
@@ -211,7 +211,7 @@ import { hivePollAdapter } from "../hive-poll-adapter";
 const task = {
   task_id: "abc-123",
   context_id: "ctx-456",
-  from_agent: "kitchen",
+  from_agent: "memroos",
   to_agent: "sophia",
   task_summary: "Draft blog post",
   priority: 5,
@@ -241,7 +241,7 @@ describe("hivePollAdapter", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/hive-poll-adapter.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/hive-poll-adapter.test.ts 2>&1 | tail -15
 ```
 
 Expected: FAIL — `Cannot find module '../hive-poll-adapter'`
@@ -269,7 +269,7 @@ export const hivePollAdapter: AgentAdapter = {
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/hive-poll-adapter.test.ts 2>&1 | tail -10
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/hive-poll-adapter.test.ts 2>&1 | tail -10
 ```
 
 Expected: PASS — 2 tests
@@ -277,7 +277,7 @@ Expected: PASS — 2 tests
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/lib/dispatch/hive-poll-adapter.ts src/lib/dispatch/__tests__/hive-poll-adapter.test.ts && git commit -m "feat(dispatch): hive-poll adapter + tests"
+cd /Users/yourname/github/memroos && git add src/lib/dispatch/hive-poll-adapter.ts src/lib/dispatch/__tests__/hive-poll-adapter.test.ts && git commit -m "feat(dispatch): hive-poll adapter + tests"
 ```
 
 ---
@@ -302,7 +302,7 @@ import os from "os";
 const task = {
   task_id: "task-xyz-001",
   context_id: "ctx-abc-002",
-  from_agent: "kitchen",
+  from_agent: "memroos",
   to_agent: "alba",
   task_summary: "Coordinate morning standup",
   priority: 3,
@@ -360,7 +360,7 @@ describe("openclawAdapter", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/openclaw-adapter.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/openclaw-adapter.test.ts 2>&1 | tail -15
 ```
 
 Expected: FAIL — `Cannot find module '../openclaw-adapter'`
@@ -412,7 +412,7 @@ export const openclawAdapter: AgentAdapter = {
       dispatched_at: task.dispatched_at,
       hive_endpoint:
         process.env.HIVE_PUBLIC_URL ??
-        "https://kitchen.example.com/api/hive",
+        "https://memroos.example.com/api/hive",
     };
     const file = path.join(queueDir, `${task.task_id}.json`);
     try {
@@ -443,7 +443,7 @@ export const openclawAdapter: AgentAdapter = {
 The test uses dynamic imports (re-import after each env var change) to pick up the runtime `OPENCLAW_QUEUE_DIR`. Ensure vitest config does not cache modules between tests by adding `vi.resetModules()` at the top of each test if the import is cached.
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/openclaw-adapter.test.ts 2>&1 | tail -10
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/openclaw-adapter.test.ts 2>&1 | tail -10
 ```
 
 Expected: PASS — 3 tests
@@ -453,7 +453,7 @@ If the "unwritable" test is flaky (root may be able to write anywhere), adjust: 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/lib/dispatch/openclaw-adapter.ts src/lib/dispatch/__tests__/openclaw-adapter.test.ts && git commit -m "feat(dispatch): openclaw file-drop adapter + tests"
+cd /Users/yourname/github/memroos && git add src/lib/dispatch/openclaw-adapter.ts src/lib/dispatch/__tests__/openclaw-adapter.test.ts && git commit -m "feat(dispatch): openclaw file-drop adapter + tests"
 ```
 
 ---
@@ -528,7 +528,7 @@ describe("selectAdapter", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/adapter-factory.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/adapter-factory.test.ts 2>&1 | tail -15
 ```
 
 Expected: FAIL — `Cannot find module '../adapter-factory'`
@@ -558,7 +558,7 @@ export function selectAdapter(agent: RemoteAgentConfig): AgentAdapter {
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/lib/dispatch/__tests__/adapter-factory.test.ts 2>&1 | tail -10
+cd /Users/yourname/github/memroos && npx vitest run src/lib/dispatch/__tests__/adapter-factory.test.ts 2>&1 | tail -10
 ```
 
 Expected: PASS — 8 tests
@@ -566,7 +566,7 @@ Expected: PASS — 8 tests
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/lib/dispatch/adapter-factory.ts src/lib/dispatch/__tests__/adapter-factory.test.ts && git commit -m "feat(dispatch): selectAdapter factory + all-agent resolution tests"
+cd /Users/yourname/github/memroos && git add src/lib/dispatch/adapter-factory.ts src/lib/dispatch/__tests__/adapter-factory.test.ts && git commit -m "feat(dispatch): selectAdapter factory + all-agent resolution tests"
 ```
 
 ---
@@ -580,7 +580,7 @@ cd /Users/yourname/github/agent-kitchen && git add src/lib/dispatch/adapter-fact
 - [ ] **Step 1: Check what getRemoteAgents returns**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && grep -n "getRemoteAgents\|export" src/lib/agent-registry.ts | head -20
+cd /Users/yourname/github/memroos && grep -n "getRemoteAgents\|export" src/lib/agent-registry.ts | head -20
 ```
 
 Note the function signature and import path. You'll need it in the dispatch route.
@@ -754,7 +754,7 @@ describe("POST /api/dispatch", () => {
 - [ ] **Step 3: Run test to verify it fails**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/app/api/dispatch/__tests__/route.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/app/api/dispatch/__tests__/route.test.ts 2>&1 | tail -15
 ```
 
 Expected: FAIL — `Cannot find module '../route'`
@@ -811,7 +811,7 @@ export async function POST(req: NextRequest | Request) {
   // 3. Scan content
   const db = getDb();
   const scan = scanContent(body.task_summary);
-  const from_agent = body.from_agent ?? "kitchen";
+  const from_agent = body.from_agent ?? "memroos";
   if (scan.blocked) {
     writeAuditLog(db, {
       actor: from_agent,
@@ -923,7 +923,7 @@ export async function POST(req: NextRequest | Request) {
 - [ ] **Step 5: Run test to verify it passes**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/app/api/dispatch/__tests__/route.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/app/api/dispatch/__tests__/route.test.ts 2>&1 | tail -15
 ```
 
 Expected: PASS — 9 tests
@@ -931,7 +931,7 @@ Expected: PASS — 9 tests
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/app/api/dispatch/route.ts src/app/api/dispatch/__tests__/route.test.ts && git commit -m "feat(dispatch): POST /api/dispatch route + 9 E2E tests"
+cd /Users/yourname/github/memroos && git add src/app/api/dispatch/route.ts src/app/api/dispatch/__tests__/route.test.ts && git commit -m "feat(dispatch): POST /api/dispatch route + 9 E2E tests"
 ```
 
 ---
@@ -993,7 +993,7 @@ describe("GET /api/hive lineage", () => {
       json: async () => ({
         type: "delegation",
         task_id: "t1",
-        from_agent: "kitchen",
+        from_agent: "memroos",
         to_agent: "sophia",
         task_summary: "lineage test task",
         priority: 5,
@@ -1041,7 +1041,7 @@ describe("GET /api/hive lineage", () => {
       json: async () => ({
         type: "delegation",
         task_id: "t2",
-        from_agent: "kitchen",
+        from_agent: "memroos",
         to_agent: "sophia",
         task_summary: "cancelable task",
         status: "pending",
@@ -1051,7 +1051,7 @@ describe("GET /api/hive lineage", () => {
       json: async () => ({
         type: "delegation",
         task_id: "t2",
-        from_agent: "kitchen",
+        from_agent: "memroos",
         to_agent: "sophia",
         task_summary: "cancelable task",
         status: "canceled",
@@ -1066,7 +1066,7 @@ describe("GET /api/hive lineage", () => {
       json: async () => ({
         type: "delegation",
         task_id: "t3",
-        from_agent: "kitchen",
+        from_agent: "memroos",
         to_agent: "sophia",
         task_summary: "result test",
         status: "pending",
@@ -1076,7 +1076,7 @@ describe("GET /api/hive lineage", () => {
       json: async () => ({
         type: "delegation",
         task_id: "t3",
-        from_agent: "kitchen",
+        from_agent: "memroos",
         to_agent: "sophia",
         task_summary: "result test",
         status: "completed",
@@ -1097,7 +1097,7 @@ describe("GET /api/hive lineage", () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/app/api/hive/__tests__/lineage.test.ts 2>&1 | tail -20
+cd /Users/yourname/github/memroos && npx vitest run src/app/api/hive/__tests__/lineage.test.ts 2>&1 | tail -20
 ```
 
 Expected: FAIL — tests that exercise `task_id` GET and `canceled` status will fail on current route.
@@ -1234,7 +1234,7 @@ const VALID_STATUSES = ['pending', 'active', 'paused', 'completed', 'failed', 'c
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/app/api/hive/__tests__/lineage.test.ts 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/app/api/hive/__tests__/lineage.test.ts 2>&1 | tail -15
 ```
 
 Expected: PASS — 4 tests
@@ -1242,7 +1242,7 @@ Expected: PASS — 4 tests
 - [ ] **Step 5: Run all hive tests to ensure no regressions**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run src/app/api/hive/ 2>&1 | tail -15
+cd /Users/yourname/github/memroos && npx vitest run src/app/api/hive/ 2>&1 | tail -15
 ```
 
 Expected: all pass.
@@ -1250,7 +1250,7 @@ Expected: all pass.
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git add src/app/api/hive/route.ts src/app/api/hive/__tests__/lineage.test.ts && git commit -m "feat(dispatch): extend /api/hive — canceled status, result field, lineage GET"
+cd /Users/yourname/github/memroos && git add src/app/api/hive/route.ts src/app/api/hive/__tests__/lineage.test.ts && git commit -m "feat(dispatch): extend /api/hive — canceled status, result field, lineage GET"
 ```
 
 ---
@@ -1282,7 +1282,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-HIVE_URL="${HIVE_URL:-https://kitchen.example.com/api/hive}"
+HIVE_URL="${HIVE_URL:-https://memroos.example.com/api/hive}"
 HIVE_TIMEOUT="${HIVE_TIMEOUT:-5}"
 URL="${HIVE_URL}?type=delegation&to_agent=${AGENT_ID}&status=${STATUS}&limit=${LIMIT}"
 
@@ -1349,7 +1349,7 @@ Expected: dispatch returns `{"ok":true,"adapter":"openclaw","mode":"pushed"}`. A
 - [ ] **Step 1: Run full test suite**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx vitest run 2>&1 | tail -30
+cd /Users/yourname/github/memroos && npx vitest run 2>&1 | tail -30
 ```
 
 Expected: all tests pass. Zero failures.
@@ -1357,7 +1357,7 @@ Expected: all tests pass. Zero failures.
 - [ ] **Step 2: Run TypeScript type check**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx tsc --noEmit 2>&1 | head -30
+cd /Users/yourname/github/memroos && npx tsc --noEmit 2>&1 | head -30
 ```
 
 Expected: no errors.
@@ -1365,7 +1365,7 @@ Expected: no errors.
 - [ ] **Step 3: Run production build**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npm run build 2>&1 | tail -20
+cd /Users/yourname/github/memroos && npm run build 2>&1 | tail -20
 ```
 
 Expected: build succeeds, no TS or lint errors.
@@ -1375,7 +1375,7 @@ Expected: build succeeds, no TS or lint errors.
 Per CLAUDE.md requirements — run before final commit:
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && npx gitnexus detect_changes 2>&1 | head -40
+cd /Users/yourname/github/memroos && npx gitnexus detect_changes 2>&1 | head -40
 ```
 
 Review output. Confirm changes match: `db-schema.ts`, `hive/route.ts`, new `dispatch/` files only.
@@ -1383,7 +1383,7 @@ Review output. Confirm changes match: `db-schema.ts`, `hive/route.ts`, new `disp
 - [ ] **Step 5: Final commit if any stragglers**
 
 ```bash
-cd /Users/yourname/github/agent-kitchen && git status
+cd /Users/yourname/github/memroos && git status
 # Stage any unstaged changes and commit
 git add -p  # review carefully
 git commit -m "feat(dispatch): plan 01 complete — full test suite green"

@@ -15,7 +15,7 @@ Let an operator see what security controls are active, what was blocked, which a
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/app/api/security/report/__tests__/route.test.ts` passed.
+- `npm --prefix apps/memroos run test -- src/app/api/security/report/__tests__/route.test.ts` passed.
 - Full `npm test -- --run` passed.
 - Playwright browser check confirmed `/library` renders `Security Operations`.
 

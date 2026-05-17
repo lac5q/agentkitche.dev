@@ -17,10 +17,10 @@ created: 2026-05-05
 
 | Property | Value |
 |----------|-------|
-| **Framework** | Vitest for Kitchen TypeScript/Next.js route/service/component tests; optional mocked Python/ADK fixture docs/tests if planner adds examples |
-| **Config file** | `apps/kitchen/vitest.config.ts` |
-| **Quick run command** | `npm --prefix apps/kitchen run test -- <changed test files>` |
-| **Full suite command** | `npm --prefix apps/kitchen run test -- <phase 35 test files> && npm --prefix apps/kitchen run lint && npm --prefix apps/kitchen run build` |
+| **Framework** | Vitest for Memroos TypeScript/Next.js route/service/component tests; optional mocked Python/ADK fixture docs/tests if planner adds examples |
+| **Config file** | `apps/memroos/vitest.config.ts` |
+| **Quick run command** | `npm --prefix apps/memroos run test -- <changed test files>` |
+| **Full suite command** | `npm --prefix apps/memroos run test -- <phase 35 test files> && npm --prefix apps/memroos run lint && npm --prefix apps/memroos run build` |
 | **Estimated runtime** | ~15-45 seconds targeted; build may take longer |
 
 ---
@@ -38,10 +38,10 @@ created: 2026-05-05
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 35-01-01 | 01 | 1 | A2A-01, A2A-08 | T35-card-auth | Agent card declares enforced auth scheme and leaks no secrets | route/unit | `npm --prefix apps/kitchen run test -- src/lib/a2a src/app/.well-known` | ❌ W0 | ⬜ pending |
-| 35-02-01 | 02 | 2 | A2A-03, A2A-04, A2A-06 | T35-ssrf-registration | Card ingestion validates URL/card and writes only through canonical registry | service/route | `npm --prefix apps/kitchen run test -- src/lib/a2a src/app/api/a2a` | ❌ W0 | ⬜ pending |
-| 35-03-01 | 03 | 3 | A2A-02, A2A-07, A2A-08 | T35-task-auth | Task send/get/cancel/stream require authenticated caller and enforce task ownership | service/route | `npm --prefix apps/kitchen run test -- src/lib/a2a src/app/message:send src/app/tasks` | ❌ W0 | ⬜ pending |
-| 35-04-01 | 04 | 4 | A2A-04, A2A-05, A2A-06 | T35-delegation-lineage | Delegation uses registered A2A agents, preserves lineage, and surfaces ADK fixture in Flow | integration/component | `npm --prefix apps/kitchen run test -- src/lib/a2a src/components/flow src/components/agents` | ❌ W0 | ⬜ pending |
+| 35-01-01 | 01 | 1 | A2A-01, A2A-08 | T35-card-auth | Agent card declares enforced auth scheme and leaks no secrets | route/unit | `npm --prefix apps/memroos run test -- src/lib/a2a src/app/.well-known` | ❌ W0 | ⬜ pending |
+| 35-02-01 | 02 | 2 | A2A-03, A2A-04, A2A-06 | T35-ssrf-registration | Card ingestion validates URL/card and writes only through canonical registry | service/route | `npm --prefix apps/memroos run test -- src/lib/a2a src/app/api/a2a` | ❌ W0 | ⬜ pending |
+| 35-03-01 | 03 | 3 | A2A-02, A2A-07, A2A-08 | T35-task-auth | Task send/get/cancel/stream require authenticated caller and enforce task ownership | service/route | `npm --prefix apps/memroos run test -- src/lib/a2a src/app/message:send src/app/tasks` | ❌ W0 | ⬜ pending |
+| 35-04-01 | 04 | 4 | A2A-04, A2A-05, A2A-06 | T35-delegation-lineage | Delegation uses registered A2A agents, preserves lineage, and surfaces ADK fixture in Flow | integration/component | `npm --prefix apps/memroos run test -- src/lib/a2a src/components/flow src/components/agents` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,11 +49,11 @@ created: 2026-05-05
 
 ## Wave 0 Requirements
 
-- [ ] `apps/kitchen/src/lib/a2a/__tests__/agent-card.test.ts` — stubs for A2A-01/A2A-08.
-- [ ] `apps/kitchen/src/lib/a2a/__tests__/registration.test.ts` — stubs for A2A-03/A2A-04/A2A-06.
-- [ ] `apps/kitchen/src/lib/a2a/__tests__/task-store.test.ts` — stubs for A2A-02/A2A-07/A2A-08.
-- [ ] `apps/kitchen/src/app/**/__tests__/a2a-route.test.ts` or route-specific test files — stubs for send/stream/get/cancel auth and behavior.
-- [ ] `apps/kitchen/src/components/flow/__tests__/registry-flow-roster.test.tsx` extension or new ADK/A2A fixture test — verifies registered A2A/ADK agents surface in Flow.
+- [ ] `apps/memroos/src/lib/a2a/__tests__/agent-card.test.ts` — stubs for A2A-01/A2A-08.
+- [ ] `apps/memroos/src/lib/a2a/__tests__/registration.test.ts` — stubs for A2A-03/A2A-04/A2A-06.
+- [ ] `apps/memroos/src/lib/a2a/__tests__/task-store.test.ts` — stubs for A2A-02/A2A-07/A2A-08.
+- [ ] `apps/memroos/src/app/**/__tests__/a2a-route.test.ts` or route-specific test files — stubs for send/stream/get/cancel auth and behavior.
+- [ ] `apps/memroos/src/components/flow/__tests__/registry-flow-roster.test.tsx` extension or new ADK/A2A fixture test — verifies registered A2A/ADK agents surface in Flow.
 
 ---
 

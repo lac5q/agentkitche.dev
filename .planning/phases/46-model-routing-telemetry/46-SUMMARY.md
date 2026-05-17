@@ -8,7 +8,7 @@ Turn model choice into retained evidence by capturing structured outcomes for pr
 
 ## Shipped
 
-- Added `apps/kitchen/src/lib/model-routing.ts`.
+- Added `apps/memroos/src/lib/model-routing.ts`.
 - Added route-local `model_routing_events` table initialization.
 - Added `/api/model-routing/telemetry` GET and POST.
 - Captured task type, agent, provider, model, strategy, latency, token counts, cost estimate, success, quality score, tags, prompt hash, and error.

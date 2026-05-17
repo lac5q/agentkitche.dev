@@ -1,0 +1,20 @@
+FROM node:22-bookworm-slim AS deps
+WORKDIR /app/apps/memroos
+COPY apps/memroos/package*.json ./
+RUN npm ci
+
+FROM node:22-bookworm-slim AS builder
+WORKDIR /app/apps/memroos
+COPY --from=deps /app/apps/memroos/node_modules ./node_modules
+COPY apps/memroos ./
+RUN npm run build
+
+FROM node:22-bookworm-slim AS runner
+WORKDIR /app/apps/memroos
+ENV NODE_ENV=production
+COPY --from=builder /app/apps/memroos/.next ./.next
+COPY --from=builder /app/apps/memroos/public ./public
+COPY --from=builder /app/apps/memroos/package*.json ./
+COPY --from=deps /app/apps/memroos/node_modules ./node_modules
+EXPOSE 3000
+CMD ["npm", "run", "start", "--", "--hostname", "0.0.0.0", "--port", "3000"]

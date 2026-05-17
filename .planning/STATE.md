@@ -14,13 +14,13 @@ progress:
   percent: 100
 ---
 
-# State: Memoroos
+# State: Memroos
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
-**Core value:** Any agent framework plugs into Kitchen — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
+**Core value:** Any agent framework plugs into Memroos — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
 **Current focus:** Phase 69 — Context Source Contracts + Runtime Resilience
 
 ## Current Position
@@ -52,7 +52,7 @@ Last activity: 2026-05-17
 - Total v2.0-v2.4 plans completed: 29
 - Phase 35 execution completed: 2026-05-05
 - Phase 36 completed: 2026-05-05
-- Latest Phase 40 gate: docs link/content review, markdown grep checks, Kitchen lint, and build passed
+- Latest Phase 40 gate: docs link/content review, markdown grep checks, Memroos lint, and build passed
 
 ## Accumulated Context
 
@@ -71,13 +71,13 @@ Last activity: 2026-05-17
 ### v2.0 architectural constraints
 
 - **LangGraph runs as a Python service** — separate process from Next.js, same pattern as Pipecat voice service
-- **LangGraph checkpoint DB is `data/orchestration.db`** — SEPARATE from Kitchen's main SQLite DB to avoid cross-process lock contention
+- **LangGraph checkpoint DB is `data/orchestration.db`** — SEPARATE from Memroos's main SQLite DB to avoid cross-process lock contention
 - **A2A adapter and LangGraph are separate layers** — A2A owns transport/protocol/task-state mapping; LangGraph owns routing policy, capability selection, retry, HIL. They communicate via internal API (ORCH-07 contract)
 - **REG-00 canonical registry is complete** — A2A and REST registration both write through the same model
 - **Phase 35 A2A layer is complete** — agent cards, A2A registration, durable task APIs, SSE, outbound delegation, ADK fixture, Registry/Flow surfacing
 - **A2A adapter routing is protocol-driven** — `protocol: a2a` selects A2A; platform alone does not reroute legacy Gemini agents
 - **Outbound A2A credentials are env-key-only** — metadata may name an env var, but UI must not render bearer/API-key values or raw auth headers
-- **ADK proof fixture is optional** — `examples/adk-a2a-agent/` is not imported by Kitchen startup
+- **ADK proof fixture is optional** — `examples/adk-a2a-agent/` is not imported by Memroos startup
 
 ### v2.5 ACTUAL Status (reconciliation audit 2026-05-16)
 
@@ -99,7 +99,7 @@ have plan dirs + code (lib/auth/, /api/auth/, login/register) — v3 direction.
 
 ### Blockers/Concerns (verified)
 
-- **BUILD BROKEN:** new untracked `apps/kitchen/src/middleware.ts` (auth, ph63/64)
+- **BUILD BROKEN:** new untracked `apps/memroos/src/middleware.ts` (auth, ph63/64)
   collides with `proxy.ts`. This Next.js replaced middleware→proxy; the two files
   hold *different* logic (RBAC vs host-redirect) and must be merged, not deleted.
 

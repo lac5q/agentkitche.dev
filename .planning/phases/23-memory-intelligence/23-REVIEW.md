@@ -12,7 +12,7 @@ reviewed_at: 2026-04-18T00:00:00Z
 
 ## Summary
 
-13 files reviewed covering the memory intelligence backend (consolidation engine, decay engine, 3 API routes, instrumentation scheduler) and the dashboard UI panels wiring them into the Kitchen Floor and Ledger pages. Code is well-structured with deliberate security mitigations (allowlist validation, parameterized queries, input clamping). One inconsistency in error handling between the two schedulers warrants attention.
+13 files reviewed covering the memory intelligence backend (consolidation engine, decay engine, 3 API routes, instrumentation scheduler) and the dashboard UI panels wiring them into the Memroos Floor and Ledger pages. Code is well-structured with deliberate security mitigations (allowlist validation, parameterized queries, input clamping). One inconsistency in error handling between the two schedulers warrants attention.
 
 ## Findings
 
@@ -91,7 +91,7 @@ const runId = typeof raw === 'bigint' ? Number(raw) : raw;
 - src/app/api/recall/route.ts
 - src/app/ledger/page.tsx
 - src/app/page.tsx
-- src/components/kitchen/agent-peers-panel.tsx
+- src/components/memroos/agent-peers-panel.tsx
 - src/components/ledger/memory-intelligence-panel.tsx
 - src/lib/api-client.ts
 - src/lib/db-ingest.ts

@@ -1,7 +1,7 @@
 ---
 phase: 14-skill-failure-rate
 plan: "02"
-subsystem: agent-kitchen-nextjs
+subsystem: memroos-nextjs
 tags: [failures-parser, api-skills, react-flow-canvas, tdd, skill-06, observability]
 dependency_graph:
   requires: [14-01]
@@ -160,14 +160,14 @@ No new network endpoints, auth paths, file access patterns, or schema changes be
 
 ## Visual QA Note
 
-Per STATE.md pending QA note: full visual QA at `kitchen.example.com` recommended before v1.3 milestone close to verify Cookbooks node failure count renders correctly in production with real `failures.log` data.
+Per STATE.md pending QA note: full visual QA at `memroos.example.com` recommended before v1.3 milestone close to verify Cookbooks node failure count renders correctly in production with real `failures.log` data.
 
 ## Self-Check: PASSED
 
-- `/Users/yourname/github/agent-kitchen/.claude/worktrees/agent-ac92e0e1/src/lib/failures-parser.ts` — FOUND
-- `/Users/yourname/github/agent-kitchen/.claude/worktrees/agent-ac92e0e1/src/lib/__tests__/failures-parser.test.ts` — FOUND
-- `/Users/yourname/github/agent-kitchen/.claude/worktrees/agent-ac92e0e1/src/app/api/skills/route.ts` — FOUND (contains `failuresByAgent`)
-- `/Users/yourname/github/agent-kitchen/.claude/worktrees/agent-ac92e0e1/src/components/flow/react-flow-canvas.tsx` — FOUND (contains `failuresByAgent?.`)
+- `/Users/yourname/github/memroos/.claude/worktrees/agent-ac92e0e1/src/lib/failures-parser.ts` — FOUND
+- `/Users/yourname/github/memroos/.claude/worktrees/agent-ac92e0e1/src/lib/__tests__/failures-parser.test.ts` — FOUND
+- `/Users/yourname/github/memroos/.claude/worktrees/agent-ac92e0e1/src/app/api/skills/route.ts` — FOUND (contains `failuresByAgent`)
+- `/Users/yourname/github/memroos/.claude/worktrees/agent-ac92e0e1/src/components/flow/react-flow-canvas.tsx` — FOUND (contains `failuresByAgent?.`)
 - Commit `09d5a55` — FOUND
 - Commit `f28a94b` — FOUND
 - Commit `a6175ed` — FOUND

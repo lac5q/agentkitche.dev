@@ -68,7 +68,7 @@ completed: 2026-04-17
 
 ## Accomplishments
 
-- `deriveAgentId()` correctly decodes Claude project directory names (e.g., `-Users-jdoe-github-agent-kitchen` → `agent-kitchen`), handles `--` literal-dash encoding and `paperclip` fast-path
+- `deriveAgentId()` correctly decodes Claude project directory names (e.g., `-Users-jdoe-github-memroos` → `memroos`), handles `--` literal-dash encoding and `paperclip` fast-path
 - `extractContent()` filters content per type: text blocks only for user/assistant; thinking/tool_use/system blocks all excluded
 - `ingestAllSessions()` scans `CLAUDE_MEMORY_PATH`, skips unchanged files via mtime+size comparison, wraps inserts in transactions for performance, updates `last_ingest_ts` in meta table
 - `recallByKeyword()` attempts phrase match first, falls back to plain match on zero results; catches FTS5 syntax errors; caps limit at 100

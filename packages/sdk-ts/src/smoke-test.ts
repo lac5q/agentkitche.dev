@@ -1,5 +1,5 @@
 /**
- * @memoroos/eval-sdk smoke test
+ * @memroos/eval-sdk smoke test
  *
  * Submits a sample trace to the MemroOS Public Eval API and prints the W score.
  * Exits 0 on success, 1 on error.

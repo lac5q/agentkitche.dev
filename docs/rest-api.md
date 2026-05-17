@@ -7,13 +7,13 @@ This reference covers the stable v2 integration surface. UI-only read endpoints 
 Operator writes use either header:
 
 ```text
-x-kitchen-operator-key: <KITCHEN_OPERATOR_API_KEY>
+x-memroos-operator-key: <MEMROOS_OPERATOR_API_KEY>
 ```
 
 or:
 
 ```text
-Authorization: Bearer <KITCHEN_OPERATOR_API_KEY>
+Authorization: Bearer <MEMROOS_OPERATOR_API_KEY>
 ```
 
 Agent writes use:
@@ -40,7 +40,7 @@ Request:
   "platform": "openclaw",
   "protocol": "rest",
   "ttlMinutes": 15,
-  "mcpUrl": "https://kitchen.example/mcp"
+  "mcpUrl": "https://memroos.example/mcp"
 }
 ```
 
@@ -51,16 +51,16 @@ Response:
   "ok": true,
   "token": "signed-onboarding-token",
   "expiresAt": "2026-05-05T00:15:00.000Z",
-  "command": "curl -fsSL 'https://kitchen.example/api/onboarding/script?token=...' | bash -s -- --id 'maria' ...",
-  "mcpUrl": "https://kitchen.example/mcp"
+  "command": "curl -fsSL 'https://memroos.example/api/onboarding/script?token=...' | bash -s -- --id 'maria' ...",
+  "mcpUrl": "https://memroos.example/mcp"
 }
 ```
 
 ### `GET /api/onboarding/script?token=...`
 
-Serves the bootstrap shell script for a valid invite token. The script posts to `/api/onboarding/register`, stores the one-time agent API key in `~/.agent-kitchen/<agent-id>.env`, and can install MCP config for `hermes`, `openclaw`, `claude`, `gemini`, `qwen`, `codex`, `stdout`, `none`, or a specific `file:/path`.
+Serves the bootstrap shell script for a valid invite token. The script posts to `/api/onboarding/register`, stores the one-time agent API key in `~/.memroos/<agent-id>.env`, and can install MCP config for `hermes`, `openclaw`, `claude`, `gemini`, `qwen`, `codex`, `stdout`, `none`, or a specific `file:/path`.
 
-The default `--mcp-target auto` maps from `platform` to the matching runtime installer. Runtime CLI commands are preferred over static config edits when available; fallback writes are scoped to each runtime's user config. The script also writes `~/.agent-kitchen/<agent-id>.onboarding-report.json` with the method used, so operators can see when a runtime CLI changed and a fallback was needed.
+The default `--mcp-target auto` maps from `platform` to the matching runtime installer. Runtime CLI commands are preferred over static config edits when available; fallback writes are scoped to each runtime's user config. The script also writes `~/.memroos/<agent-id>.onboarding-report.json` with the method used, so operators can see when a runtime CLI changed and a fallback was needed.
 
 ### `POST /api/onboarding/register`
 
@@ -89,8 +89,8 @@ Response includes the registered agent, a one-time `apiKey`, and an MCP config:
   "apiKey": "ak_maria_...",
   "mcp": {
     "mcpServers": {
-      "agentkitchen": {
-        "url": "https://kitchen.example/mcp"
+      "memroos": {
+        "url": "https://memroos.example/mcp"
       }
     }
   }
@@ -183,7 +183,7 @@ Request:
 
 ### `GET /.well-known/agent-card.json`
 
-Kitchen's canonical A2A card.
+Memroos's canonical A2A card.
 
 ### `GET /.well-known/agent.json`
 
@@ -191,7 +191,7 @@ Compatibility alias for clients that still look for the older path.
 
 ### `POST /a2a`
 
-JSON-RPC endpoint. Supports Kitchen's current A2A task methods for sending messages, listing tasks, fetching tasks, and canceling tasks.
+JSON-RPC endpoint. Supports Memroos's current A2A task methods for sending messages, listing tasks, fetching tasks, and canceling tasks.
 
 ### `POST /message:send`
 
@@ -237,7 +237,7 @@ Request:
 
 ### `POST /api/memory/add`
 
-Requires agent bearer auth. Writes through mem0 and records the write in Kitchen.
+Requires agent bearer auth. Writes through mem0 and records the write in Memroos.
 
 Request:
 

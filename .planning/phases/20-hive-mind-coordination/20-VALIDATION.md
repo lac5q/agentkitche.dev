@@ -20,12 +20,12 @@
 | HIVE-03 | Delegation UPSERT on task_id conflict | `src/app/api/hive/__tests__/route.test.ts` | POST delegation twice with same task_id updates status | same |
 | HIVE-03 | Delegation GET retrieves delegation rows | `src/app/api/hive/__tests__/route.test.ts` | POST delegation then GET ?type=delegation returns it | same |
 | HIVE-03 | Checkpoint JSON round-trips | `src/app/api/hive/__tests__/route.test.ts` | checkpoint with completedSteps, lastStepAt, resumeFrom preserved | same |
-| HIVE-04 | Feed auto-refreshes at 5s interval | `src/components/kitchen/__tests__/hive-feed.test.tsx` | useHiveFeed hook has refetchInterval=5000 | `npx vitest run src/components/kitchen/__tests__/hive-feed.test.tsx` |
-| HIVE-04 | Feed renders action rows | `src/components/kitchen/__tests__/hive-feed.test.tsx` | HiveFeed renders agent_id, action_type chip, summary, timestamp | same |
-| HIVE-04 | Feed handles empty state | `src/components/kitchen/__tests__/hive-feed.test.tsx` | HiveFeed shows "No hive activity yet" when actions=[] | same |
-| HIVE-04 | Feed handles loading state | `src/components/kitchen/__tests__/hive-feed.test.tsx` | HiveFeed shows spinner when isLoading=true | same |
+| HIVE-04 | Feed auto-refreshes at 5s interval | `src/components/memroos/__tests__/hive-feed.test.tsx` | useHiveFeed hook has refetchInterval=5000 | `npx vitest run src/components/memroos/__tests__/hive-feed.test.tsx` |
+| HIVE-04 | Feed renders action rows | `src/components/memroos/__tests__/hive-feed.test.tsx` | HiveFeed renders agent_id, action_type chip, summary, timestamp | same |
+| HIVE-04 | Feed handles empty state | `src/components/memroos/__tests__/hive-feed.test.tsx` | HiveFeed shows "No hive activity yet" when actions=[] | same |
+| HIVE-04 | Feed handles loading state | `src/components/memroos/__tests__/hive-feed.test.tsx` | HiveFeed shows spinner when isLoading=true | same |
 | HIVE-05 | Paperclip agent_id round-trips | `src/app/api/hive/__tests__/route.test.ts` | POST with agent_id="paperclip" appears in GET results | `npx vitest run src/app/api/hive/__tests__/route.test.ts` |
-| DASH-02 | HiveFeed wired into Kitchen Floor | `src/app/page.tsx` (structural) | grep HiveFeed src/app/page.tsx | `grep -q "HiveFeed" src/app/page.tsx` |
+| DASH-02 | HiveFeed wired into Memroos Floor | `src/app/page.tsx` (structural) | grep HiveFeed src/app/page.tsx | `grep -q "HiveFeed" src/app/page.tsx` |
 
 ---
 
@@ -48,7 +48,7 @@
 npx vitest run src/app/api/hive/__tests__/route.test.ts
 
 # Wave 2 gate
-npx vitest run src/components/kitchen/__tests__/hive-feed.test.tsx
+npx vitest run src/components/memroos/__tests__/hive-feed.test.tsx
 
 # Full phase gate (before /gsd-verify-work)
 npx vitest run
@@ -61,4 +61,4 @@ npm run build
 
 All test files are new (Wave 0 gap). They are created as part of execution:
 - `src/app/api/hive/__tests__/route.test.ts` — created in Plan 20-01 Task 2
-- `src/components/kitchen/__tests__/hive-feed.test.tsx` — created in Plan 20-02 Task 1
+- `src/components/memroos/__tests__/hive-feed.test.tsx` — created in Plan 20-02 Task 1

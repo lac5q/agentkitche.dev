@@ -17,7 +17,7 @@ revision through a provider-neutral endpoint abstraction.
 ## Dependencies
 
 - Phase 57: eval scorer registry and W scoring.
-- Phase 63: Memoroos naming/auth baseline.
+- Phase 63: Memroos naming/auth baseline.
 
 ## Requirements
 

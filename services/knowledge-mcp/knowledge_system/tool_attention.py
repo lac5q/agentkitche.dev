@@ -20,7 +20,7 @@ SUPPORTED_OPTIONAL_CAPABILITIES = {"gitnexus", "agent-lightning"}
 
 
 def repo_root() -> Path:
-    configured = os.environ.get("AGENT_KITCHEN_ROOT")
+    configured = os.environ.get("MEMROOS_ROOT")
     if configured:
         return Path(configured).expanduser().resolve()
     return Path(__file__).resolve().parents[3]
@@ -55,7 +55,7 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _optional_capability_names() -> set[str]:
-    raw = os.environ.get("KITCHEN_OPTIONAL_CAPABILITIES", "")
+    raw = os.environ.get("MEMROOS_OPTIONAL_CAPABILITIES", "")
     return {
         item.strip().lower()
         for item in raw.split(",")
@@ -80,7 +80,7 @@ def _agent_lightning_status(root: Path) -> str:
     home = Path.home()
     proposals = Path(os.environ.get("APO_PROPOSALS_PATH", str(home / ".openclaw" / "skills" / "proposals"))).expanduser()
     cron_log = Path(os.environ.get("APO_CRON_LOG_PATH", str(home / ".openclaw" / "logs" / "agent-lightning-cron.log"))).expanduser()
-    package = _read_json(root / "apps" / "kitchen" / "package.json")
+    package = _read_json(root / "apps" / "memroos" / "package.json")
     has_worker = bool(package.get("scripts", {}).get("apo:worker"))
     if has_worker and proposals.exists() and cron_log.exists():
         return "available"
@@ -285,7 +285,7 @@ def _optional_capabilities(root: Path) -> list[dict[str, Any]]:
                     "Need human-gated self-learning changes to skills or agent instructions",
                     "Need Agent Lightning approval worker guidance",
                 ],
-                load_command="Use /apo or npm --prefix apps/kitchen run apo:worker",
+                load_command="Use /apo or npm --prefix apps/memroos run apo:worker",
                 category="capability",
             )
         )
@@ -328,7 +328,7 @@ def _skill_capabilities() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     skills_root = Path(os.environ.get("SKILLS_PATH", str(Path.home() / ".claude" / "skills"))).expanduser()
     source = {
         "id": "skills-path",
-        "label": "Kitchen-visible skills",
+        "label": "Memroos-visible skills",
         "type": "skills",
         "path": str(skills_root),
         "status": "available" if skills_root.exists() else "missing",

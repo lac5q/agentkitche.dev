@@ -1,6 +1,6 @@
 # Phase 36 Code Review
 
-**Scope:** Phase 36 orchestration service, Kitchen proxy routes, and HIL UI.
+**Scope:** Phase 36 orchestration service, Memroos proxy routes, and HIL UI.
 **Status:** No open findings after fixes.
 
 ## Findings Fixed

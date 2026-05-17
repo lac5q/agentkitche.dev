@@ -1,7 +1,7 @@
 /**
- * @memoroos/eval-sdk — Standalone publishable types.
+ * @memroos/eval-sdk — Standalone publishable types.
  *
- * These are copied (not imported) from apps/kitchen/src/lib/evals/types.ts
+ * These are copied (not imported) from apps/memroos/src/lib/evals/types.ts
  * so that the SDK has no monorepo workspace dependency and can be published
  * independently to npm.
  *
@@ -9,7 +9,7 @@
  */
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Mirrored from apps/kitchen/src/lib/evals/types.ts
+// Mirrored from apps/memroos/src/lib/evals/types.ts
 // ──────────────────────────────────────────────────────────────────────────────
 
 export type EvalLayer = "l1" | "l2" | "l3";

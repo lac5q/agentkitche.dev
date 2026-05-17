@@ -28,4 +28,4 @@ Result: all checks passed.
 
 ## Next
 
-Phase 31: Kitchen Tool Gateway Operations UI.
+Phase 31: Memroos Tool Gateway Operations UI.

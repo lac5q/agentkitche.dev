@@ -52,7 +52,7 @@ Phase 60 does not depend on Phase 59's `eval_case_addition` mechanism to expand 
 
 **`agent_instruction_patch`**: The `registered_agents` table has no `system_prompt` / `instructions` field. Phase 60 adds a new `agent_instructions` table (`agent_id` FK, `instructions_text`, `version`, `created_at`, `is_active`) to the `initSchema` function. The shadow-copy apply strategy from Phase 58 (transaction-wrapped write, rollback on W_post < W_baseline) works directly: the proposal diff is a text patch against `instructions_text`; apply writes a new `agent_instructions` row in a transaction; if evals pass, the row is committed with `is_active = true` and the previous row flipped to `is_active = false`; on rollback, the transaction is aborted.
 
-**`skill_addition`**: v1 scope is a structured DB record only. Phase 60 adds a `proposed_skills` table (mirroring `agent_skill_reports` shape plus a `proposal_id` FK). Shadow apply inserts into `proposed_skills` within a transaction; the scorer reads from this shadow table to evaluate whether the skill improves W; on keep, the row is promoted to `agent_skill_reports`. No file-system write occurs at v1. The v2 file-system scaffolding path (write a skill script to `apps/kitchen/src/lib/skills/`) is documented in `proposal-registry.ts` alongside the `skill_addition` entry as a `// v2: file-system scaffold` comment, and cross-referenced from the Phase 60 CONTEXT deferred section.
+**`skill_addition`**: v1 scope is a structured DB record only. Phase 60 adds a `proposed_skills` table (mirroring `agent_skill_reports` shape plus a `proposal_id` FK). Shadow apply inserts into `proposed_skills` within a transaction; the scorer reads from this shadow table to evaluate whether the skill improves W; on keep, the row is promoted to `agent_skill_reports`. No file-system write occurs at v1. The v2 file-system scaffolding path (write a skill script to `apps/memroos/src/lib/skills/`) is documented in `proposal-registry.ts` alongside the `skill_addition` entry as a `// v2: file-system scaffold` comment, and cross-referenced from the Phase 60 CONTEXT deferred section.
 
 **`tool_routing_update`**: Phase 60 adds a `agent_tool_routing_policies` table (`agent_id` FK, `tool_name`, `context_pattern`, `preference_weight REAL`, `created_at`, `is_active`). The diff is a structured `{tool_name, context_pattern, new_weight, old_weight}` JSON object. Shadow apply writes a new row in the same transaction-and-rollback pattern as `agent_instruction_patch`.
 
@@ -121,9 +121,9 @@ When `trajectory_multi_step` is active on a golden-set example that has no `step
 
 ### Decision 6 — v2 file-system skill scaffold path (deferred, documented)
 
-The `skill_addition` v1 mutation target is a DB record only. The v2 path — writing a skill TypeScript module to `apps/kitchen/src/lib/skills/<skill-id>/index.ts`, registering it in a skills manifest, and testing it in CI — requires a file-system isolated-apply strategy. The planned approach (documented in `proposal-registry.ts` comment, not implemented in Phase 60):
+The `skill_addition` v1 mutation target is a DB record only. The v2 path — writing a skill TypeScript module to `apps/memroos/src/lib/skills/<skill-id>/index.ts`, registering it in a skills manifest, and testing it in CI — requires a file-system isolated-apply strategy. The planned approach (documented in `proposal-registry.ts` comment, not implemented in Phase 60):
 
-1. Write the proposed skill file to a staging directory: `apps/kitchen/src/lib/skills/_proposed/<skill-id>/index.ts`
+1. Write the proposed skill file to a staging directory: `apps/memroos/src/lib/skills/_proposed/<skill-id>/index.ts`
 2. Rerun evals with an environment flag that resolves the staging skill instead of the canonical path
 3. On keep: `mv` the staging file to the canonical path, add to skills manifest, trigger a build verification
 4. On rollback: delete the staging file
@@ -143,7 +143,7 @@ Trajectory scoring is Phoenix-style in spirit: each step in `steps[]` is judged 
 ## How Named Weight Presets Work (end-to-end)
 
 1. `memroos.eval.yaml` has a `weight_presets:` map and an `active_preset:` key.
-2. `apps/kitchen/src/lib/evals/config.ts` loads the YAML, resolves `active_preset` if set, and returns the effective `EvalWeights` (either from the manual `weights:` block or from the named preset).
+2. `apps/memroos/src/lib/evals/config.ts` loads the YAML, resolves `active_preset` if set, and returns the effective `EvalWeights` (either from the manual `weights:` block or from the named preset).
 3. The `/evals` config panel reads the active preset via `useEvalConfig()`. A new `PresetSelector` component renders a dropdown of available preset names plus a "custom" option (which shows the manual weight sliders).
 4. Selecting a preset POSTs `{active_preset: "outcome-weighted"}` to `POST /api/evals/config`, which updates `memroos.eval.yaml` on disk (same path as Phase 57 config write).
 5. All subsequent eval runs use the updated weights. The `configHash` field in `eval_runs` captures which preset was active, making preset-to-preset W comparisons deterministic and queryable.

@@ -14,5 +14,5 @@
 4. **Explicitly distinguish canonical registry from legacy remote config.**
    Why: `/agents` shows only DB-backed canonical agents. Older `agents.config.json` entries must be registered or ingested before they become canonical.
 
-5. **Keep LangGraph as an orchestration boundary, not a Kitchen replacement.**
-   Why: Kitchen should remain a durable thin broker/operator UI while the Python service owns graph execution and checkpoints.
+5. **Keep LangGraph as an orchestration boundary, not a Memroos replacement.**
+   Why: Memroos should remain a durable thin broker/operator UI while the Python service owns graph execution and checkpoints.

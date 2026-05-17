@@ -117,7 +117,7 @@ def test_chatgpt_search_returns_connector_result_shape(monkeypatch):
         (root / "sources").mkdir()
         (root / "sources" / "note.md").write_text("# Agent Memory\n\nImportant agent memory architecture note")
         monkeypatch.setenv("KNOWLEDGE_ROOT", str(root))
-        monkeypatch.setenv("KITCHEN_MCP_PUBLIC_BASE_URL", "https://kitchen.example.test")
+        monkeypatch.setenv("MEMROOS_MCP_PUBLIC_BASE_URL", "https://memroos.example.test")
 
         payload = mcp_server.search("architecture")
 
@@ -126,7 +126,7 @@ def test_chatgpt_search_returns_connector_result_shape(monkeypatch):
             {
                 "id": "sources/note.md#L3",
                 "title": "Agent Memory",
-                "url": "https://kitchen.example.test/knowledge/sources/note.md#L3",
+                "url": "https://memroos.example.test/knowledge/sources/note.md#L3",
             }
         ]
 
@@ -137,7 +137,7 @@ def test_chatgpt_fetch_returns_connector_document_shape(monkeypatch):
         (root / "sources").mkdir()
         (root / "sources" / "note.md").write_text("# Agent Memory\n\nImportant agent memory architecture note")
         monkeypatch.setenv("KNOWLEDGE_ROOT", str(root))
-        monkeypatch.setenv("KITCHEN_MCP_PUBLIC_BASE_URL", "https://kitchen.example.test")
+        monkeypatch.setenv("MEMROOS_MCP_PUBLIC_BASE_URL", "https://memroos.example.test")
 
         payload = mcp_server.fetch("sources/note.md#L3")
 
@@ -145,10 +145,10 @@ def test_chatgpt_fetch_returns_connector_document_shape(monkeypatch):
             "id": "sources/note.md#L3",
             "title": "Agent Memory",
             "text": "# Agent Memory\n\nImportant agent memory architecture note",
-            "url": "https://kitchen.example.test/knowledge/sources/note.md#L3",
+            "url": "https://memroos.example.test/knowledge/sources/note.md#L3",
             "metadata": {
                 "path": "sources/note.md",
-                "source": "agentkitchen",
+                "source": "memroos",
                 "truncated": False,
             },
         }
@@ -166,24 +166,24 @@ def test_core_tools_stay_small_for_progressive_disclosure():
 
 
 def test_mcp_transport_env_supports_stdio_and_remote_http(monkeypatch):
-    monkeypatch.delenv("KITCHEN_MCP_TRANSPORT", raising=False)
+    monkeypatch.delenv("MEMROOS_MCP_TRANSPORT", raising=False)
     assert mcp_server._server_transport() == "stdio"
 
-    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "http")
+    monkeypatch.setenv("MEMROOS_MCP_TRANSPORT", "http")
     assert mcp_server._server_transport() == "streamable-http"
 
-    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "streamable_http")
+    monkeypatch.setenv("MEMROOS_MCP_TRANSPORT", "streamable_http")
     assert mcp_server._server_transport() == "streamable-http"
 
-    monkeypatch.setenv("KITCHEN_MCP_TRANSPORT", "sse")
+    monkeypatch.setenv("MEMROOS_MCP_TRANSPORT", "sse")
     assert mcp_server._server_transport() == "sse"
 
 
 def test_mcp_server_options_are_env_configurable(monkeypatch):
-    monkeypatch.setenv("KITCHEN_MCP_HOST", "0.0.0.0")
-    monkeypatch.setenv("KITCHEN_MCP_PORT", "8765")
-    monkeypatch.setenv("KITCHEN_MCP_STREAMABLE_HTTP_PATH", "/mcp")
-    monkeypatch.setenv("KITCHEN_MCP_STATELESS_HTTP", "true")
+    monkeypatch.setenv("MEMROOS_MCP_HOST", "0.0.0.0")
+    monkeypatch.setenv("MEMROOS_MCP_PORT", "8765")
+    monkeypatch.setenv("MEMROOS_MCP_STREAMABLE_HTTP_PATH", "/mcp")
+    monkeypatch.setenv("MEMROOS_MCP_STATELESS_HTTP", "true")
 
     assert mcp_server._server_options() == {
         "host": "0.0.0.0",
@@ -196,12 +196,12 @@ def test_mcp_server_options_are_env_configurable(monkeypatch):
 
 
 def test_mcp_auth_provider_is_disabled_without_token(monkeypatch):
-    monkeypatch.delenv("KITCHEN_MCP_BEARER_TOKEN", raising=False)
+    monkeypatch.delenv("MEMROOS_MCP_BEARER_TOKEN", raising=False)
     assert mcp_server._auth_provider() is None
 
 
 def test_mcp_auth_provider_accepts_only_configured_bearer_token(monkeypatch):
-    monkeypatch.setenv("KITCHEN_MCP_BEARER_TOKEN", "secret-token")
+    monkeypatch.setenv("MEMROOS_MCP_BEARER_TOKEN", "secret-token")
     if mcp_server.DebugTokenVerifier is None:
         with pytest.raises(RuntimeError, match="requires FastMCP auth support"):
             mcp_server._auth_provider()
@@ -282,7 +282,7 @@ def test_tool_attention_catalog_discovers_and_records_outcomes(monkeypatch):
                 }
             )
         )
-        monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(root))
+        monkeypatch.setenv("MEMROOS_ROOT", str(root))
         monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(catalog_path))
         monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(root / "logs" / "outcomes.jsonl"))
         monkeypatch.setenv("SKILLS_PATH", str(root / "missing-skills"))
@@ -320,7 +320,7 @@ def test_tool_attention_top_level_mcp_tools(monkeypatch):
         root = Path(tmp)
         (root / "logs").mkdir()
         (root / ".mcp.json").write_text(json.dumps({"mcpServers": {"gitnexus": {"command": "gitnexus"}}}))
-        monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(root))
+        monkeypatch.setenv("MEMROOS_ROOT", str(root))
         monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(root / "missing-catalog.json"))
         monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(root / "logs" / "outcomes.jsonl"))
         monkeypatch.setenv("SKILLS_PATH", str(root / "missing-skills"))
@@ -349,11 +349,11 @@ def test_tool_attention_optional_agent_lightning(monkeypatch):
         root = Path(tmp)
         (root / "logs").mkdir()
         (root / ".mcp.json").write_text(json.dumps({"mcpServers": {"gitnexus": {"command": "gitnexus"}}}))
-        monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(root))
+        monkeypatch.setenv("MEMROOS_ROOT", str(root))
         monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(root / "missing-catalog.json"))
         monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(root / "logs" / "outcomes.jsonl"))
         monkeypatch.setenv("SKILLS_PATH", str(root / "missing-skills"))
-        monkeypatch.setenv("KITCHEN_OPTIONAL_CAPABILITIES", "gitnexus,agent-lightning")
+        monkeypatch.setenv("MEMROOS_OPTIONAL_CAPABILITIES", "gitnexus,agent-lightning")
 
         discovered = mcp_server.tool_discover("agent lightning APO skill proposals", limit=5)
         assert "capability:agent-lightning" in {item["id"] for item in discovered["capabilities"]}
@@ -372,7 +372,7 @@ def test_tool_attention_optional_agent_lightning(monkeypatch):
 def _setup_minimal_root(tmp: Path, monkeypatch) -> Path:
     """Write a minimal env so tool_attention functions work in isolation."""
     (tmp / ".mcp.json").write_text(json.dumps({"mcpServers": {"test-server": {"command": "test"}}}))
-    monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(tmp))
+    monkeypatch.setenv("MEMROOS_ROOT", str(tmp))
     monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(tmp / "missing-catalog.json"))
     monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(tmp / "outcomes.jsonl"))
     monkeypatch.setenv("SKILLS_PATH", str(tmp / "missing-skills"))
@@ -426,7 +426,7 @@ def test_tool_record_outcome_writes_jsonl(monkeypatch, tmp_path):
     """tool_record_outcome appends a well-formed record to the outcomes log."""
     outcomes_path = tmp_path / "outcomes.jsonl"
     monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(outcomes_path))
-    monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("MEMROOS_ROOT", str(tmp_path))
     monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(tmp_path / "missing-catalog.json"))
     monkeypatch.setenv("SKILLS_PATH", str(tmp_path / "missing-skills"))
 
@@ -462,7 +462,7 @@ def test_tool_stats_omits_raw_task_text(monkeypatch, tmp_path):
         }) + "\n"
     )
     monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(outcomes_path))
-    monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("MEMROOS_ROOT", str(tmp_path))
     monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(tmp_path / "missing-catalog.json"))
     monkeypatch.setenv("SKILLS_PATH", str(tmp_path / "missing-skills"))
 
@@ -487,7 +487,7 @@ def test_tool_discover_categories_distinguish_types(monkeypatch, tmp_path):
     skills_dir.mkdir(parents=True)
     (skills_dir / "SKILL.md").write_text("# my-skill\ndescription: A test skill\n")
 
-    monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("MEMROOS_ROOT", str(tmp_path))
     monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(tmp_path / "missing-catalog.json"))
     monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(tmp_path / "outcomes.jsonl"))
     monkeypatch.setenv("SKILLS_PATH", str(tmp_path / "skills"))
@@ -507,7 +507,7 @@ def test_tool_discover_categories_distinguish_types(monkeypatch, tmp_path):
 def test_capability_category_field_set_on_all_types(monkeypatch, tmp_path):
     """Every capability returned by build_catalog has a category field."""
     (tmp_path / ".mcp.json").write_text(json.dumps({"mcpServers": {"srv": {}}}))
-    monkeypatch.setenv("AGENT_KITCHEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("MEMROOS_ROOT", str(tmp_path))
     monkeypatch.setenv("TOOL_ATTENTION_CATALOG", str(tmp_path / "missing-catalog.json"))
     monkeypatch.setenv("TOOL_ATTENTION_OUTCOMES", str(tmp_path / "outcomes.jsonl"))
     monkeypatch.setenv("SKILLS_PATH", str(tmp_path / "missing-skills"))

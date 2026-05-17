@@ -4,7 +4,7 @@ Completed 2026-05-11.
 
 ## Product Goal
 
-Make `agentkitchen.dev` safe and legible for external contributors before the agent workflow memory product is shared more broadly.
+Make `memroos.dev` safe and legible for external contributors before the agent workflow memory product is shared more broadly.
 
 ## Shipped
 

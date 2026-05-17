@@ -44,20 +44,20 @@ def _write_state(active: bool, session_id: str | None) -> None:
 
 
 def _parse_agent(websocket) -> str:
-    """Extract ?agent= query param from the WebSocket path, defaulting to 'kitchen'."""
+    """Extract ?agent= query param from the WebSocket path, defaulting to 'memroos'."""
     try:
         path = getattr(websocket, "path", "") or ""
         if "?" in path:
             qs = path.split("?", 1)[1]
             for part in qs.split("&"):
                 if part.startswith("agent="):
-                    return part[6:] or "kitchen"
+                    return part[6:] or "memroos"
     except Exception:
         pass
-    return "kitchen"
+    return "memroos"
 
 
-async def build_pipeline(transport, session_id: str, agent: str = "kitchen") -> Pipeline:
+async def build_pipeline(transport, session_id: str, agent: str = "memroos") -> Pipeline:
     """Build the appropriate pipeline based on VOICE_MODE env var."""
     mode = os.getenv("VOICE_MODE", "gemini").lower()
     if mode == "cascade":

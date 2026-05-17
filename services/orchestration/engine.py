@@ -1,6 +1,6 @@
 """Phase 36 orchestration engine.
 
-The engine keeps LangGraph's decision boundary explicit while Kitchen/A2A remain
+The engine keeps LangGraph's decision boundary explicit while Memroos/A2A remain
 responsible for actually transporting work to agents.
 """
 
@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-BOUNDARY = "LangGraph chooses policy; Kitchen/A2A owns transport"
+BOUNDARY = "LangGraph chooses policy; Memroos/A2A owns transport"
 ACTIVE_STATUSES = {"active", "busy"}
 
 

@@ -46,8 +46,8 @@ test("checkGitNexus reports available when cli, MCP config, and registry are pre
 
 test("checkAgentLightning reports degraded when worker exists but supporting paths/scripts are missing", () => {
   const root = tempRoot();
-  fs.mkdirSync(path.join(root, "apps", "kitchen"), { recursive: true });
-  fs.writeFileSync(path.join(root, "apps", "kitchen", "package.json"), JSON.stringify({ scripts: { "apo:worker": "node worker.js" } }));
+  fs.mkdirSync(path.join(root, "apps", "memroos"), { recursive: true });
+  fs.writeFileSync(path.join(root, "apps", "memroos", "package.json"), JSON.stringify({ scripts: { "apo:worker": "node worker.js" } }));
 
   const result = checkAgentLightning({ root, env: { HOME: path.join(root, "home") } });
   assert.equal(result.status, "degraded");

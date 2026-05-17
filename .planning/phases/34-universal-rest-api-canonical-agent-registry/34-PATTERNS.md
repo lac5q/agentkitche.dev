@@ -7,7 +7,7 @@
 
 ### SQLite Schema And Access
 
-**Use:** `apps/kitchen/src/lib/db-schema.ts`, `apps/kitchen/src/lib/db.ts`
+**Use:** `apps/memroos/src/lib/db-schema.ts`, `apps/memroos/src/lib/db.ts`
 
 Pattern:
 - Keep all DDL in `initSchema(db)`.
@@ -22,7 +22,7 @@ Phase 34 application:
 
 ### Route Handler Tests
 
-**Use:** `apps/kitchen/src/app/api/*/__tests__/route.test.ts`
+**Use:** `apps/memroos/src/app/api/*/__tests__/route.test.ts`
 
 Pattern:
 - Use `// @vitest-environment node` where route tests need server APIs.
@@ -35,7 +35,7 @@ Phase 34 application:
 
 ### Existing Agent DTOs
 
-**Use:** `apps/kitchen/src/types/index.ts`, `apps/kitchen/src/components/kitchen/agent-card.tsx`
+**Use:** `apps/memroos/src/types/index.ts`, `apps/memroos/src/components/memroos/agent-card.tsx`
 
 Pattern:
 - Browser components consume an `Agent` shape with status, platform, role, last heartbeat, counts, remote metadata, and optional current task.
@@ -47,7 +47,7 @@ Phase 34 application:
 
 ### Agent Registry Compatibility
 
-**Use:** `apps/kitchen/src/lib/agent-registry.ts`, `apps/kitchen/src/app/api/dispatch/route.ts`, `apps/kitchen/src/components/dispatch/*`
+**Use:** `apps/memroos/src/lib/agent-registry.ts`, `apps/memroos/src/app/api/dispatch/route.ts`, `apps/memroos/src/components/dispatch/*`
 
 Pattern:
 - Dispatch currently expects `RemoteAgentConfig`.
@@ -59,7 +59,7 @@ Phase 34 application:
 
 ### UI Page Style
 
-**Use:** `apps/kitchen/src/app/library/page.tsx`, `apps/kitchen/src/app/cookbooks/page.tsx`, `apps/kitchen/src/app/dispatch/page.tsx`
+**Use:** `apps/memroos/src/app/library/page.tsx`, `apps/memroos/src/app/cookbooks/page.tsx`, `apps/memroos/src/app/dispatch/page.tsx`
 
 Pattern:
 - Page header with amber title and small slate subtitle.
@@ -73,7 +73,7 @@ Phase 34 application:
 
 ### Flow Dynamic Data Wiring
 
-**Use:** `apps/kitchen/src/app/flow/page.tsx`, `apps/kitchen/src/components/flow/flow-canvas.tsx`
+**Use:** `apps/memroos/src/app/flow/page.tsx`, `apps/memroos/src/components/flow/flow-canvas.tsx`
 
 Pattern:
 - Page gathers live data with hooks and passes summaries to the canvas.

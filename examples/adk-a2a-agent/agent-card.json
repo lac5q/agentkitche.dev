@@ -15,8 +15,8 @@
     "bearerAuth": {
       "type": "http",
       "scheme": "bearer",
-      "bearerFormat": "Kitchen agent API key",
-      "description": "Use a Kitchen-issued bearer/API key for machine-to-machine A2A requests."
+      "bearerFormat": "Memroos agent API key",
+      "description": "Use a Memroos-issued bearer/API key for machine-to-machine A2A requests."
     },
     "apiKeyAuth": {
       "type": "apiKey",
@@ -46,7 +46,7 @@
       "sample": true,
       "agentId": "check_prime_agent"
     },
-    "kitchen": {
+    "memroos": {
       "profile": "local-dev",
       "source": "adk",
       "cardPaths": {

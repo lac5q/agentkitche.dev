@@ -20,7 +20,7 @@ requirements_addressed: [MEM-01, MEM-02, MEM-03, MEM-04, MEM-05, PROFILE-03]
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/lib/memory/__tests__/tiers.test.ts src/app/api/memory/__tests__/tier-routes.test.ts src/app/api/memory/__tests__/add-route.test.ts src/components/ledger/__tests__/memory-intelligence-panel.test.tsx` — passed.
+- `npm --prefix apps/memroos run test -- src/lib/memory/__tests__/tiers.test.ts src/app/api/memory/__tests__/tier-routes.test.ts src/app/api/memory/__tests__/add-route.test.ts src/components/ledger/__tests__/memory-intelligence-panel.test.tsx` — passed.
 
 ## Residual Notes
 

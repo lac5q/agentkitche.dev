@@ -4,7 +4,7 @@ Verified 2026-05-11.
 
 ## Automated Gates
 
-- `npm --prefix apps/kitchen run test -- src/app/api/security/report/__tests__/route.test.ts src/app/api/security/capabilities/__tests__/route.test.ts` passed.
+- `npm --prefix apps/memroos run test -- src/app/api/security/report/__tests__/route.test.ts src/app/api/security/capabilities/__tests__/route.test.ts` passed.
 - Full `npm test -- --run` passed: 81 files, 495 tests.
 - `npm run typecheck` passed.
 - `npm run lint` passed with 11 existing warnings.

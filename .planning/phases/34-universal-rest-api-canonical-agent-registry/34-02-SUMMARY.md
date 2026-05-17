@@ -39,29 +39,29 @@ Framework-agnostic REST writes now authenticate with per-agent bearer keys and w
 
 ### Tool outcome append helper
 
-Added `appendToolAttentionOutcome` in `apps/kitchen/src/lib/tool-attention.ts` so the route writes through the same JSONL source that existing tool-attention analytics read.
+Added `appendToolAttentionOutcome` in `apps/memroos/src/lib/tool-attention.ts` so the route writes through the same JSONL source that existing tool-attention analytics read.
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/app/api/agents/__tests__/registry-route.test.ts src/app/api/heartbeat/__tests__/route.test.ts src/app/api/skills/__tests__/report-route.test.ts src/app/api/memory/__tests__/add-route.test.ts src/app/api/tool-attention/__tests__/record-route.test.ts` — **16 passed**
-- `npm --prefix apps/kitchen run test -- src/app/api/agents/__tests__/card.test.ts src/app/api/remote-agents/route.ts src/app/api/tool-attention/__tests__/route.test.ts` — **6 passed** with one pre-existing Vitest hoist warning
-- `npm --prefix apps/kitchen run lint -- ...` targeted Wave 2 files — **passed**
-- `git diff --check -- apps/kitchen/src/app/api apps/kitchen/src/lib/agent-registry.ts apps/kitchen/src/lib/tool-attention.ts` — **passed**
+- `npm --prefix apps/memroos run test -- src/app/api/agents/__tests__/registry-route.test.ts src/app/api/heartbeat/__tests__/route.test.ts src/app/api/skills/__tests__/report-route.test.ts src/app/api/memory/__tests__/add-route.test.ts src/app/api/tool-attention/__tests__/record-route.test.ts` — **16 passed**
+- `npm --prefix apps/memroos run test -- src/app/api/agents/__tests__/card.test.ts src/app/api/remote-agents/route.ts src/app/api/tool-attention/__tests__/route.test.ts` — **6 passed** with one pre-existing Vitest hoist warning
+- `npm --prefix apps/memroos run lint -- ...` targeted Wave 2 files — **passed**
+- `git diff --check -- apps/memroos/src/app/api apps/memroos/src/lib/agent-registry.ts apps/memroos/src/lib/tool-attention.ts` — **passed**
 - `gitnexus api_impact` for `/api/agents`, `/api/heartbeat`, `/api/remote-agents`, `/api/skills`, `/api/memory`, and `/api/tool-attention` — **LOW risk** except unrelated existing `/api/memory-consolidate` shape mismatch noted by GitNexus
 - `gitnexus detect_changes` — **medium risk**, expected route/tool-attention changes
 
 ## Files Changed
 
-- `apps/kitchen/src/app/api/agents/route.ts` — canonical registry read
-- `apps/kitchen/src/app/api/agents/register/route.ts` — registration endpoint
-- `apps/kitchen/src/app/api/agents/[id]/route.ts` — get/deregister endpoint
-- `apps/kitchen/src/app/api/heartbeat/route.ts` — authenticated heartbeat POST
-- `apps/kitchen/src/app/api/skills/report/route.ts` — authenticated skill report endpoint
-- `apps/kitchen/src/app/api/memory/add/route.ts` — authenticated mem0 write baseline
-- `apps/kitchen/src/app/api/tool-attention/record/route.ts` — authenticated tool outcome endpoint
-- `apps/kitchen/src/lib/agent-registry.ts` — shared header authentication helper
-- `apps/kitchen/src/lib/tool-attention.ts` — JSONL append helper
-- Route tests under `apps/kitchen/src/app/api/**/__tests__`
+- `apps/memroos/src/app/api/agents/route.ts` — canonical registry read
+- `apps/memroos/src/app/api/agents/register/route.ts` — registration endpoint
+- `apps/memroos/src/app/api/agents/[id]/route.ts` — get/deregister endpoint
+- `apps/memroos/src/app/api/heartbeat/route.ts` — authenticated heartbeat POST
+- `apps/memroos/src/app/api/skills/report/route.ts` — authenticated skill report endpoint
+- `apps/memroos/src/app/api/memory/add/route.ts` — authenticated mem0 write baseline
+- `apps/memroos/src/app/api/tool-attention/record/route.ts` — authenticated tool outcome endpoint
+- `apps/memroos/src/lib/agent-registry.ts` — shared header authentication helper
+- `apps/memroos/src/lib/tool-attention.ts` — JSONL append helper
+- Route tests under `apps/memroos/src/app/api/**/__tests__`
 
 ## Decisions Made
 
@@ -85,7 +85,7 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-Plan 34-03 can now build the Registry UI and migrate Kitchen Floor/Flow against canonical `/api/agents` data. The write API and auth contract are in place.
+Plan 34-03 can now build the Registry UI and migrate Memroos Floor/Flow against canonical `/api/agents` data. The write API and auth contract are in place.
 
 ---
 *Phase: 34-universal-rest-api-canonical-agent-registry*

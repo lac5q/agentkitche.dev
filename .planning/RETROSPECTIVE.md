@@ -1,4 +1,4 @@
-# Retrospective: Memoroos
+# Retrospective: Memroos
 
 ---
 
@@ -120,7 +120,7 @@
 
 - Top-level gateway MCP tools (Phase 29) — `tool_catalog`, `tool_discover`, `tool_load`, `tool_record_outcome`, `tool_stats` callable directly from any MCP client
 - Outcome-aware selection (Phase 30) — success/failure scoring by capability, contextSignals aggregated from outcome metadata
-- Kitchen Gateway Ops UI (Phase 31/32-04) — outcome score badges, SimilarTaskPanel, collapsible context filter form on Cookbooks page
+- Memroos Gateway Ops UI (Phase 31/32-04) — outcome score badges, SimilarTaskPanel, collapsible context filter form on Cookbooks page
 - Python contextMatchSignal ported to TypeScript (Phase 32) — exact multipliers (task_type×2, repo×2, agent_id×1, tags×1); task field never read; `GET /api/tool-attention/similar` route + `useSimilarTaskRecommendations` hook
 - Gateway hardening (Phase 33) — lint exits 0, pytest coverage 11→18 tests, `tool_discover` category field + categories summary dict
 
@@ -169,7 +169,7 @@
 - **Reconciliation-first closeout** — artifact analysis found the real missing item: `58-02-SUMMARY.md`, not more implementation.
 - **Honesty guardrail held** — Tier 1 W-lift is explicitly modeled and deterministic; behavioral instruction/skill lift was deferred instead of overclaimed.
 - **Minimal viable golden sets were enough to exercise drift guard** — positive and policy-leak negative examples made the 0.85 agreement floor meaningful.
-- **Full verification recovered confidence** — targeted SEAL tests, full Kitchen Vitest, and production build all passed before archival.
+- **Full verification recovered confidence** — targeted SEAL tests, full Memroos Vitest, and production build all passed before archival.
 
 ### What Was Inefficient
 

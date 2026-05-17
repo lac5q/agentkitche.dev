@@ -10,26 +10,26 @@ provides: [unified-audit-log, hil-escalation-queue, audit-export]
 affects: [seal-audit, eval-runs, sidebar, middleware, db-schema]
 key-files:
   created:
-    - apps/kitchen/src/lib/audit/event-types.ts
-    - apps/kitchen/src/lib/audit/schema.ts
-    - apps/kitchen/src/lib/audit/write.ts
-    - apps/kitchen/src/lib/audit/query.ts
-    - apps/kitchen/src/lib/audit/sla.ts
-    - apps/kitchen/src/lib/evals/sla-config.ts
-    - apps/kitchen/src/app/api/audit/route.ts
-    - apps/kitchen/src/app/api/audit/export/route.ts
-    - apps/kitchen/src/app/api/escalations/route.ts
-    - apps/kitchen/src/app/api/escalations/[id]/resolve/route.ts
-    - apps/kitchen/src/app/audit/page.tsx
-    - apps/kitchen/src/app/escalations/page.tsx
-    - apps/kitchen/src/__tests__/audit.test.ts
-    - apps/kitchen/src/__tests__/audit-api.test.ts
-    - apps/kitchen/src/__tests__/audit-perf.test.ts
+    - apps/memroos/src/lib/audit/event-types.ts
+    - apps/memroos/src/lib/audit/schema.ts
+    - apps/memroos/src/lib/audit/write.ts
+    - apps/memroos/src/lib/audit/query.ts
+    - apps/memroos/src/lib/audit/sla.ts
+    - apps/memroos/src/lib/evals/sla-config.ts
+    - apps/memroos/src/app/api/audit/route.ts
+    - apps/memroos/src/app/api/audit/export/route.ts
+    - apps/memroos/src/app/api/escalations/route.ts
+    - apps/memroos/src/app/api/escalations/[id]/resolve/route.ts
+    - apps/memroos/src/app/audit/page.tsx
+    - apps/memroos/src/app/escalations/page.tsx
+    - apps/memroos/src/__tests__/audit.test.ts
+    - apps/memroos/src/__tests__/audit-api.test.ts
+    - apps/memroos/src/__tests__/audit-perf.test.ts
   modified:
-    - apps/kitchen/src/lib/db-schema.ts
-    - apps/kitchen/src/lib/seal/audit.ts
-    - apps/kitchen/src/lib/api-client.ts
-    - apps/kitchen/src/components/layout/sidebar.tsx
+    - apps/memroos/src/lib/db-schema.ts
+    - apps/memroos/src/lib/seal/audit.ts
+    - apps/memroos/src/lib/api-client.ts
+    - apps/memroos/src/components/layout/sidebar.tsx
     - memroos.eval.yaml
 decisions:
   - Dual-write shim in seal/audit.ts keeps seal_audit_log populated during Phase 64→65 transition; unified write failures are non-fatal (logged, not thrown)
@@ -52,7 +52,7 @@ Phase 64 delivers a unified, append-only `audit_entries` table enforced at two l
 
 A separate `hil_escalations` table tracks open work items with per-type SLA deadlines configured in `memroos.eval.yaml`. `openEscalation()` and `resolveEscalation()` run as atomic transactions that write `hil.created` and `hil.resolved` audit entries respectively. SLA breach detection runs lazily on each `GET /api/escalations` call, transitioning overdue open escalations to `sla_breached` and writing `hil.sla_breached` audit entries. A one-shot backfill migration maps all legacy `seal_audit_log` and `audit_log` rows into `audit_entries` (guarded by a `meta` flag).
 
-The API surface includes paginated query (`GET /api/audit`), streaming NDJSON and CSV export (`GET /api/audit/export`), escalation list with `slaRemainingMs` computed field (`GET /api/escalations`), and escalation resolution (`POST /api/escalations/:id/resolve`). RBAC is enforced: reviewer can read both endpoints; operator and admin can export and resolve; non-authenticated gets 403. The Kitchen UI gains `/audit` (filter sidebar, paginated table, export dropdown) and `/escalations` (tabbed queue, SLA countdown cards, resolve modal) pages, plus sidebar nav entries for both.
+The API surface includes paginated query (`GET /api/audit`), streaming NDJSON and CSV export (`GET /api/audit/export`), escalation list with `slaRemainingMs` computed field (`GET /api/escalations`), and escalation resolution (`POST /api/escalations/:id/resolve`). RBAC is enforced: reviewer can read both endpoints; operator and admin can export and resolve; non-authenticated gets 403. The Memroos UI gains `/audit` (filter sidebar, paginated table, export dropdown) and `/escalations` (tabbed queue, SLA countdown cards, resolve modal) pages, plus sidebar nav entries for both.
 
 ## Requirements Met
 
@@ -108,40 +108,40 @@ Turbopack NFT warnings), focused audit tests (27/27), and a clean full
 - **Found during:** Task 17 testing
 - **Issue:** Streaming string chunks (not encoded) caused `TypeError: Received non-Uint8Array chunk` in Node.js test environment
 - **Fix:** Wrap all controller.enqueue() calls with `enc.encode()` (TextEncoder)
-- **Files modified:** `apps/kitchen/src/app/api/audit/export/route.ts`
+- **Files modified:** `apps/memroos/src/app/api/audit/export/route.ts`
 - **Commit:** `2f741bd`
 
 **3. [Rule 1 - Bug] EscalationWithCountdown TypeScript property resolution**
 - **Found during:** Typecheck
 - **Issue:** `extends import("@/lib/audit/schema").HilEscalation` pattern didn't expand properties in page components
 - **Fix:** Inlined all HilEscalation fields directly in EscalationWithCountdown interface
-- **Files modified:** `apps/kitchen/src/lib/api-client.ts`
+- **Files modified:** `apps/memroos/src/lib/api-client.ts`
 - **Commit:** `d7d36db`
 
 **4. [Rule 1 - Bug] Cursor pagination with same-millisecond timestamps**
 - **Found during:** Task 16 testing
 - **Issue:** In-memory DB inserts happen so fast that multiple rows get identical `created_at`; cursor uses `< ?` which dropped same-timestamp rows
 - **Fix:** Inject explicit staggered ISO timestamps (1s apart) in test seed data
-- **Files modified:** `apps/kitchen/src/__tests__/audit.test.ts`
+- **Files modified:** `apps/memroos/src/__tests__/audit.test.ts`
 - **Commit:** `2f741bd`
 
 **5. [Rule 2 - Missing] `getSlaSeconds` in separate file**
 - **Found during:** Task 5 implementation
 - **Issue:** `eval-config.ts` existed but did not have `hil.sla_defaults` parsing; Task 14 was meant to extend it
-- **Fix:** Created `apps/kitchen/src/lib/evals/sla-config.ts` as a focused helper that reads the `hil` block via `loadEvalConfig()` with raw cast; avoids modifying the complex existing parser
-- **Files modified:** `apps/kitchen/src/lib/evals/sla-config.ts` (created)
+- **Fix:** Created `apps/memroos/src/lib/evals/sla-config.ts` as a focused helper that reads the `hil` block via `loadEvalConfig()` with raw cast; avoids modifying the complex existing parser
+- **Files modified:** `apps/memroos/src/lib/evals/sla-config.ts` (created)
 - **Commit:** `8528e51`
 
 **6. [Rule 1 - Bug] Perf test tenant FK constraint**
 - **Found during:** Task 15 testing
 - **Issue:** Seeding with multiple tenant IDs ("tenant-b", "tenant-c") failed FK; `tenants` table only has "default-tenant"
 - **Fix:** Changed perf test seeding to use only "default-tenant"
-- **Files modified:** `apps/kitchen/src/__tests__/audit-perf.test.ts`
+- **Files modified:** `apps/memroos/src/__tests__/audit-perf.test.ts`
 - **Commit:** `2f741bd`
 
 ## Known Stubs
 
-- **`apps/kitchen/src/app/escalations/page.tsx` line ~153**: `const canResolve = true` — role-based resolve button visibility is hardcoded to `true` pending a session context provider (Phase 63 delivers auth but no client-side role context hook yet). The API correctly enforces 403 for reviewer; the button will appear for all users but fail server-side for non-operator/admin. Phase 65 will wire the session role.
+- **`apps/memroos/src/app/escalations/page.tsx` line ~153**: `const canResolve = true` — role-based resolve button visibility is hardcoded to `true` pending a session context provider (Phase 63 delivers auth but no client-side role context hook yet). The API correctly enforces 403 for reviewer; the button will appear for all users but fail server-side for non-operator/admin. Phase 65 will wire the session role.
 
 ## Threat Flags
 

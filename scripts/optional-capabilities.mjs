@@ -39,7 +39,7 @@ export function checkGitNexus({ root = process.cwd(), env = process.env } = {}) 
   const hasCli = commandExists("gitnexus", env);
   const hasMcpRegistration = Boolean(mcp.data?.mcpServers?.gitnexus);
 
-  if (!hasCli) warnings.push("GitNexus CLI not found. Install it or remove gitnexus from KITCHEN_OPTIONAL_CAPABILITIES.");
+  if (!hasCli) warnings.push("GitNexus CLI not found. Install it or remove gitnexus from MEMROOS_OPTIONAL_CAPABILITIES.");
   if (!mcp.exists) warnings.push("Missing .mcp.json; GitNexus will not appear as an MCP server.");
   else if (!mcp.readable) warnings.push(".mcp.json is not valid JSON; cannot verify GitNexus MCP registration.");
   else if (!hasMcpRegistration) warnings.push(".mcp.json does not register mcpServers.gitnexus.");
@@ -58,7 +58,7 @@ export function checkAgentLightning({ root = process.cwd(), env = process.env } 
   const home = env.HOME || "";
   const proposalsPath = env.APO_PROPOSALS_PATH || path.join(home, ".openclaw", "skills", "proposals");
   const cronLogPath = env.APO_CRON_LOG_PATH || path.join(home, ".openclaw", "logs", "agent-lightning-cron.log");
-  const packagePath = path.join(root, "apps", "kitchen", "package.json");
+  const packagePath = path.join(root, "apps", "memroos", "package.json");
   const rootCurateScript = path.join(root, "scripts", "curate-agent-skills.mjs");
   const rootInstallScript = path.join(root, "scripts", "install-skill-curation-launchd.mjs");
   const packageJson = readJsonIfPresent(packagePath);
@@ -66,7 +66,7 @@ export function checkAgentLightning({ root = process.cwd(), env = process.env } 
   const proposalsExist = fs.existsSync(proposalsPath);
   const cronLogExists = fs.existsSync(cronLogPath);
 
-  if (!hasWorker) warnings.push("apps/kitchen package.json does not define apo:worker.");
+  if (!hasWorker) warnings.push("apps/memroos package.json does not define apo:worker.");
   if (!proposalsExist) warnings.push(`APO proposals path not found yet: ${proposalsPath}`);
   if (!cronLogExists) warnings.push(`APO cron log not found yet: ${cronLogPath}`);
   if (!fs.existsSync(rootCurateScript)) warnings.push("Root script missing: scripts/curate-agent-skills.mjs.");
@@ -79,7 +79,7 @@ export function checkAgentLightning({ root = process.cwd(), env = process.env } 
   };
 }
 
-export function checkOptionalCapabilities({ value = process.env.KITCHEN_OPTIONAL_CAPABILITIES || "", root = process.cwd(), env = process.env } = {}) {
+export function checkOptionalCapabilities({ value = process.env.MEMROOS_OPTIONAL_CAPABILITIES || "", root = process.cwd(), env = process.env } = {}) {
   return parseOptionalCapabilities(value).map((capability) => {
     if (capability === "gitnexus") return checkGitNexus({ root, env });
     if (capability === "agent-lightning") return checkAgentLightning({ root, env });

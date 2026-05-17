@@ -13,8 +13,8 @@ This phase owns:
 - DB schema and TypeScript service layer for registered agents, capabilities, heartbeats, API keys, skill reports, memory write audit, and tool outcome write audit.
 - Framework-agnostic REST writes for heartbeat, skill reports, memory adds, and tool-attention outcome records.
 - Per-agent API key authentication for all Phase 34 write endpoints.
-- Kitchen Agent Registry UI with register/deregister behavior.
-- Flow and Kitchen roster reads from the canonical registry rather than hardcoded/file-backed agent IDs.
+- Memroos Agent Registry UI with register/deregister behavior.
+- Flow and Memroos roster reads from the canonical registry rather than hardcoded/file-backed agent IDs.
 
 This phase does not own:
 - A2A protocol endpoints, agent cards, task lifecycle, or Google ADK adapters. Those begin in Phase 35.
@@ -28,7 +28,7 @@ This phase does not own:
 
 ### Scope
 - Use one canonical SQLite-backed registry service as the only mutation path for agent lifecycle state.
-- Keep existing read surfaces backward-compatible where practical: `/api/agents`, `/api/remote-agents`, dispatch card endpoints, Kitchen Floor, Voice, Dispatch, and Flow should keep working while reading from the canonical service.
+- Keep existing read surfaces backward-compatible where practical: `/api/agents`, `/api/remote-agents`, dispatch card endpoints, Memroos Floor, Voice, Dispatch, and Flow should keep working while reading from the canonical service.
 - Register and deregister from UI through the same service functions future A2A registration will call.
 - Store remote connection metadata as nullable columns or JSON on the registered agent record; do not keep a separate remote-agent config model as the canonical source.
 - Treat local/file-backed discovery as a transitional import/adapter only. It may seed registry records, but source code should not contain hardcoded agent identifiers after this phase.
@@ -49,7 +49,7 @@ This phase does not own:
 
 ### UI And Flow
 - Add a real Agent Registry page using the existing restrained operational dashboard language: dense list/table plus details drawer/form, not a marketing page.
-- Kitchen Floor may continue to show cards, but cards should be grouped from registry fields rather than platform-specific hardcoded sections.
+- Memroos Floor may continue to show cards, but cards should be grouped from registry fields rather than platform-specific hardcoded sections.
 - Flow must remove `KEY_AGENT_IDS`, fixed named remote-agent icons, and hardcoded gateway subtitles where they represent agents. System infrastructure nodes can remain static when they are not agent roster entries.
 - Flow agent nodes should be derived from registered agents with stable layout rules and graceful overflow.
 </decisions>
@@ -65,22 +65,22 @@ This phase does not own:
 - `.planning/STATE.md` - Carry-forward architectural constraints, especially Qdrant Cloud, mem0 write path, and separate future LangGraph DB.
 
 ### Existing Registry And API Surfaces
-- `apps/kitchen/src/lib/agent-registry.ts` - Current file-backed remote-agent registry adapter to replace.
-- `apps/kitchen/src/app/api/agents/route.ts` - Current local agent read endpoint.
-- `apps/kitchen/src/app/api/remote-agents/route.ts` - Current remote agent read endpoint.
-- `apps/kitchen/src/app/api/heartbeat/route.ts` - Current read-only file heartbeat endpoint; Phase 34 adds authenticated POST.
-- `apps/kitchen/src/app/api/skills/route.ts` - Current skills read endpoint; Phase 34 adds authenticated report route.
-- `apps/kitchen/src/app/api/memory/route.ts` - Current memory read/search endpoint; Phase 34 adds authenticated POST baseline.
-- `apps/kitchen/src/app/api/tool-attention/route.ts` - Current tool-attention read endpoint; Phase 34 adds authenticated outcome record route.
+- `apps/memroos/src/lib/agent-registry.ts` - Current file-backed remote-agent registry adapter to replace.
+- `apps/memroos/src/app/api/agents/route.ts` - Current local agent read endpoint.
+- `apps/memroos/src/app/api/remote-agents/route.ts` - Current remote agent read endpoint.
+- `apps/memroos/src/app/api/heartbeat/route.ts` - Current read-only file heartbeat endpoint; Phase 34 adds authenticated POST.
+- `apps/memroos/src/app/api/skills/route.ts` - Current skills read endpoint; Phase 34 adds authenticated report route.
+- `apps/memroos/src/app/api/memory/route.ts` - Current memory read/search endpoint; Phase 34 adds authenticated POST baseline.
+- `apps/memroos/src/app/api/tool-attention/route.ts` - Current tool-attention read endpoint; Phase 34 adds authenticated outcome record route.
 
 ### Existing DB And UI Patterns
-- `apps/kitchen/src/lib/db-schema.ts` - SQLite schema initialization and additive migration pattern.
-- `apps/kitchen/src/lib/db.ts` - Shared `better-sqlite3` singleton.
-- `apps/kitchen/src/components/kitchen/agent-card.tsx` - Existing agent card presentation.
-- `apps/kitchen/src/components/kitchen/agent-grid.tsx` - Existing grouped agent roster.
-- `apps/kitchen/src/app/page.tsx` - Kitchen Floor composition and local/remote merge logic to remove.
-- `apps/kitchen/src/app/flow/page.tsx` - Flow page data wiring.
-- `apps/kitchen/src/components/flow/flow-canvas.tsx` and `apps/kitchen/src/components/flow/react-flow-canvas.tsx` - Flow agent node construction and hardcoded roster patterns.
+- `apps/memroos/src/lib/db-schema.ts` - SQLite schema initialization and additive migration pattern.
+- `apps/memroos/src/lib/db.ts` - Shared `better-sqlite3` singleton.
+- `apps/memroos/src/components/memroos/agent-card.tsx` - Existing agent card presentation.
+- `apps/memroos/src/components/memroos/agent-grid.tsx` - Existing grouped agent roster.
+- `apps/memroos/src/app/page.tsx` - Memroos Floor composition and local/remote merge logic to remove.
+- `apps/memroos/src/app/flow/page.tsx` - Flow page data wiring.
+- `apps/memroos/src/components/flow/flow-canvas.tsx` and `apps/memroos/src/components/flow/react-flow-canvas.tsx` - Flow agent node construction and hardcoded roster patterns.
 </canonical_refs>
 
 <specifics>

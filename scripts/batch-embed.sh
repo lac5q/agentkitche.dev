@@ -111,7 +111,7 @@ fi
 trap cleanup EXIT
 
 main() {
-  log "=== Memoroos Local Batch Embedding Runner ==="
+  log "=== Memroos Local Batch Embedding Runner ==="
   log "Root: $ROOT_DIR"
 
   if should_skip_for_daytime_pressure; then

@@ -9,7 +9,7 @@ source: ROADMAP v3.0
 
 ## Product Intent
 
-Memoroos should prove the compliance platform on a concrete regulated workflow:
+Memroos should prove the compliance platform on a concrete regulated workflow:
 bank transaction reconciliation. Transaction events must feed the existing L3
 business-outcome layer, reconciliation examples must exercise the eval/drift
 guard path, and finance-mode UI/API labels should describe the domain in
@@ -18,7 +18,7 @@ operator language.
 ## Dependencies
 
 - Phase 61: L3 adapter pattern and `business_outcome_events` table exist under
-  `apps/kitchen/src/lib/l3`.
+  `apps/memroos/src/lib/l3`.
 - Phase 64: immutable audit entries and HIL escalation queues exist and should
   capture reconciliation decisions and exceptions.
 

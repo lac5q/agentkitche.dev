@@ -53,7 +53,7 @@ class OrchestrationEngineTest(unittest.TestCase):
         self.assertEqual(result["selectedAgentId"], "active-agent")
         self.assertEqual(result["correlationId"], "corr-1")
         self.assertEqual(result["retryLimit"], 2)
-        self.assertEqual(result["boundary"], "LangGraph chooses policy; Kitchen/A2A owns transport")
+        self.assertEqual(result["boundary"], "LangGraph chooses policy; Memroos/A2A owns transport")
         run = self.store.get_run(result["runId"])
         self.assertEqual(run["selected_agent_id"], "active-agent")
         lineage = self.store.list_lineage(result["correlationId"])

@@ -15,13 +15,13 @@ created: 2026-05-05
 
 ## Phase UI Scope
 
-Phase 35 is not a redesign. It extends the Phase 34 Agent Registry and Flow roster so Kitchen can clearly show standards-compatible A2A agents, Google ADK proof agents, task lifecycle state, and secure multi-machine connection details.
+Phase 35 is not a redesign. It extends the Phase 34 Agent Registry and Flow roster so Memroos can clearly show standards-compatible A2A agents, Google ADK proof agents, task lifecycle state, and secure multi-machine connection details.
 
 Primary surfaces:
-- `apps/kitchen/src/app/agents/page.tsx` - Agent Registry page.
-- `apps/kitchen/src/components/agents/*` - registration form, registry table, and detail drawer.
-- `apps/kitchen/src/app/flow/page.tsx` - live Flow dashboard.
-- `apps/kitchen/src/components/flow/*` - graph nodes, node detail panel, and live activity.
+- `apps/memroos/src/app/agents/page.tsx` - Agent Registry page.
+- `apps/memroos/src/components/agents/*` - registration form, registry table, and detail drawer.
+- `apps/memroos/src/app/flow/page.tsx` - live Flow dashboard.
+- `apps/memroos/src/components/flow/*` - graph nodes, node detail panel, and live activity.
 
 Non-goals:
 - Do not introduce a new visual system.
@@ -37,9 +37,9 @@ Non-goals:
 |----------|-------|
 | Tool | none |
 | Preset | not applicable |
-| Component library | existing local Kitchen components, Radix-derived primitives where already present |
+| Component library | existing local Memroos components, Radix-derived primitives where already present |
 | Icon library | existing icon/text badge patterns only; do not add a new icon dependency |
-| Font | inherit existing Kitchen app typography |
+| Font | inherit existing Memroos app typography |
 
 Implementation notes:
 - Preserve the current dark operational dashboard language: slate backgrounds, thin borders, amber hierarchy, compact tables, and drawers.
@@ -109,14 +109,14 @@ Accent reserved for: page titles, selected protocol/status filters, primary regi
 |---------|------|
 | Primary CTA | Register A2A Agent |
 | Empty state heading | No A2A agents registered |
-| Empty state body | Add an agent-card URL from Google ADK or another A2A-compatible agent to bring it into Kitchen. |
+| Empty state body | Add an agent-card URL from Google ADK or another A2A-compatible agent to bring it into Memroos. |
 | Error state | Agent card could not be validated. Check the URL, auth scheme, and network reachability. |
 | Destructive confirmation | Deregister agent: This removes the agent from active routing but preserves task and audit history. |
 
 Additional required copy:
-- A2A registration helper: `Paste the agent-card URL exposed by the remote agent. Kitchen will validate the card, security scheme, endpoint, and declared skills before adding it to the registry.`
+- A2A registration helper: `Paste the agent-card URL exposed by the remote agent. Memroos will validate the card, security scheme, endpoint, and declared skills before adding it to the registry.`
 - ADK helper: `For Google ADK, use the agent-card URL from an A2A-enabled ADK server, for example an agent served with adk api_server --a2a.`
-- Auth helper: `Kitchen never displays stored bearer tokens or API keys after creation.`
+- Auth helper: `Memroos never displays stored bearer tokens or API keys after creation.`
 - Private network helper: `Private network or Tailscale URLs are recommended for startup multi-machine deployments. HTTPS is supported when the agent is reachable outside the LAN.`
 - Stream fallback helper: `Live stream disconnected. Use task lookup for the latest durable state.`
 - Compatibility helper: `Using official A2A message and task endpoints; legacy roadmap method names are compatibility-only if implemented.`
@@ -231,7 +231,7 @@ Flow:
 
 Dependency rule:
 - Do not add a new component registry, icon library, animation library, or design framework for Phase 35 UI work.
-- If implementation later needs a component, compose it from existing Kitchen primitives first.
+- If implementation later needs a component, compose it from existing Memroos primitives first.
 
 ---
 
@@ -242,7 +242,7 @@ Dependency rule:
 | Copywriting | Specific A2A/ADK registration, validation, auth, stream fallback, and destructive copy exists. | PASS |
 | Visuals | Preserves existing dark operational console language and defines where A2A/ADK metadata appears. | PASS |
 | Color | Defines dominant/secondary/accent/destructive/status colors and reserves amber. | PASS |
-| Typography | Locks current Kitchen text hierarchy and metadata sizing. | PASS |
+| Typography | Locks current Memroos text hierarchy and metadata sizing. | PASS |
 | Spacing | Uses 4px-based spacing scale with no exceptions. | PASS |
 | Registry Safety | Forbids new third-party UI blocks/dependencies in this phase. | PASS |
 

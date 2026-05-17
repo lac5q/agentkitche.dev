@@ -1,6 +1,6 @@
 # MemroOS as an MCP Server
 
-MemroOS exposes a small MCP facade named `agentkitchen` for knowledge, memory, and progressive tool discovery. The facade keeps the legacy server id for compatibility. It supports both:
+MemroOS exposes a small MCP facade named `memroos` for knowledge, memory, and progressive tool discovery. The facade keeps the legacy server id for compatibility. It supports both:
 
 - **stdio**: best when the MCP client runs on the same machine or has a local clone.
 - **Streamable HTTP**: best for Maria/Sophia or any agent on another machine over Tailscale/LAN.
@@ -8,7 +8,7 @@ MemroOS exposes a small MCP facade named `agentkitchen` for knowledge, memory, a
 The server entry point is:
 
 ```bash
-scripts/agentkitchen-mcp.sh
+scripts/memroos-mcp.sh
 ```
 
 It keeps stdout clean for MCP JSON-RPC, installs missing Python MCP dependencies into `.venv` if needed, and defaults `KNOWLEDGE_ROOT` to `~/github/knowledge` when present.
@@ -20,11 +20,11 @@ Use this when the agent client can run commands on the same filesystem as the Me
 ```json
 {
   "mcpServers": {
-    "agentkitchen": {
+    "memroos": {
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "exec \"${AGENT_KITCHEN_ROOT:-$HOME/github/memroos}/scripts/agentkitchen-mcp.sh\""
+        "exec \"${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh\""
       ]
     }
   }
@@ -35,11 +35,11 @@ For Hermes, the equivalent config is:
 
 ```yaml
 mcp_servers:
-  agentkitchen:
+  memroos:
     command: /bin/bash
     args:
       - -lc
-      - exec "${AGENT_KITCHEN_ROOT:-$HOME/github/memroos}/scripts/agentkitchen-mcp.sh"
+      - exec "${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh"
 ```
 
 ## Option B — remote Streamable HTTP client
@@ -51,7 +51,7 @@ On the MemroOS host:
 ```bash
 cd ~/github/memroos
 npm run mcp:http
-# or: ./scripts/agentkitchen-mcp.sh --http --host 0.0.0.0 --port 8765
+# or: ./scripts/memroos-mcp.sh --http --host 0.0.0.0 --port 8765
 ```
 
 Then on Maria/Sophia's machine, add:
@@ -59,8 +59,8 @@ Then on Maria/Sophia's machine, add:
 ```json
 {
   "mcpServers": {
-    "agentkitchen": {
-      "url": "http://<kitchen-tailscale-host-or-ip>:8765/mcp"
+    "memroos": {
+      "url": "http://<memroos-tailscale-host-or-ip>:8765/mcp"
     }
   }
 }
@@ -70,11 +70,11 @@ For Hermes on Maria/Sophia's machine:
 
 ```yaml
 mcp_servers:
-  agentkitchen:
-    url: http://<kitchen-tailscale-host-or-ip>:8765/mcp
+  memroos:
+    url: http://<memroos-tailscale-host-or-ip>:8765/mcp
 ```
 
-Replace `<kitchen-tailscale-host-or-ip>` with the Kitchen machine's Tailscale DNS name or 100.x Tailscale IP.
+Replace `<memroos-tailscale-host-or-ip>` with the Memroos machine's Tailscale DNS name or 100.x Tailscale IP.
 
 ## ChatGPT connector server
 
@@ -84,16 +84,16 @@ For the easy macOS setup, install the HTTP MCP facade as a LaunchAgent:
 
 ```bash
 cd ~/github/memroos
-KITCHEN_MCP_PUBLIC_BASE_URL=https://kitchen.example npm run install:mcp:chatgpt
+MEMROOS_MCP_PUBLIC_BASE_URL=https://memroos.example npm run install:mcp:chatgpt
 ```
 
-The installer writes `~/Library/LaunchAgents/com.agentkitchen.chatgpt-mcp.plist`, keeps the server alive on port `8765`, and prints the connector URL:
+The installer writes `~/Library/LaunchAgents/com.memroos.chatgpt-mcp.plist`, keeps the server alive on port `8765`, and prints the connector URL:
 
 ```text
-https://kitchen.example/mcp
+https://memroos.example/mcp
 ```
 
-The installer also creates `~/.agent-kitchen/com.agentkitchen.chatgpt-mcp.env` with a generated `KITCHEN_MCP_BEARER_TOKEN` and `0600` permissions. HTTP clients must send:
+The installer also creates `~/.memroos/com.memroos.chatgpt-mcp.env` with a generated `MEMROOS_MCP_BEARER_TOKEN` and `0600` permissions. HTTP clients must send:
 
 ```text
 Authorization: Bearer <token>
@@ -106,23 +106,23 @@ Useful follow-up commands:
 ```bash
 npm run install:mcp:chatgpt -- status
 npm run install:mcp:chatgpt -- uninstall
-tail -f /tmp/agentkitchen-chatgpt-mcp.log
+tail -f /tmp/memroos-chatgpt-mcp.log
 ```
 
-There is also an editable plist template at `examples/mcp/com.agentkitchen.chatgpt-mcp.plist` for non-default LaunchAgent setups.
+There is also an editable plist template at `examples/mcp/com.memroos.chatgpt-mcp.plist` for non-default LaunchAgent setups.
 
 ## Smoke tests
 
 Local stdio config parse:
 
 ```bash
-bash -n scripts/agentkitchen-mcp.sh
+bash -n scripts/memroos-mcp.sh
 ```
 
 Remote HTTP server health via MCP initialize is easiest with an MCP-aware client, but a basic HTTP reachability check should return an MCP response rather than connection refused:
 
 ```bash
-curl -i http://<kitchen-host>:8765/mcp
+curl -i http://<memroos-host>:8765/mcp
 ```
 
 Expected: HTTP reaches the FastMCP endpoint. Some clients require a POST/session handshake, so a plain GET may return 405/406; that is still better than connection refused.

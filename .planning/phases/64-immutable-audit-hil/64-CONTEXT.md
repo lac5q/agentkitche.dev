@@ -22,7 +22,7 @@ Phase 64 ships a single unified, immutable `audit_entries` table that captures e
 - Migration of `seal_audit_log` entries into `audit_entries`; `seal_audit_log` becomes a read-only view alias
 - `audit_entries` query API — filterable by agent, time range, event type, actor; JSON + NDJSON streaming export; CSV export
 - HIL escalation queue — `GET /api/escalations` (open items with SLA countdown), `POST /api/escalations/:id/resolve` (operator/admin only)
-- Kitchen UI: `/audit` page (log viewer, filter panel, export button) and `/escalations` page (team queue with SLA countdown, overdue-red flagging)
+- Memroos UI: `/audit` page (log viewer, filter panel, export button) and `/escalations` page (team queue with SLA countdown, overdue-red flagging)
 - RBAC enforcement from Phase 63: admin + operator can resolve escalations; reviewer reads both pages; non-authenticated blocked by middleware
 - Updated `writeAuditEntry()` adapter writes to `audit_entries`; existing `seal_audit_log` write path becomes a compatibility shim
 - 1M-row perf verification: seed script + automated assertion (p95 < 200ms)
@@ -103,7 +103,7 @@ No `updated_at` column — the table is append-only. Any correction or annotatio
 
 ### Decision 4 — Event Type Taxonomy (closed enum at v1)
 
-All valid `event_type` values are enumerated as a TypeScript const in `apps/kitchen/src/lib/audit/event-types.ts`. Adding a new type requires a code change to this file, same pattern as SEAL's closed proposal-type registry. This ensures query filters are validated at compile time.
+All valid `event_type` values are enumerated as a TypeScript const in `apps/memroos/src/lib/audit/event-types.ts`. Adding a new type requires a code change to this file, same pattern as SEAL's closed proposal-type registry. This ensures query filters are validated at compile time.
 
 Taxonomy (v1):
 ```
@@ -215,7 +215,7 @@ Operators override these in their local `memroos.eval.yaml` without code changes
 
 ### Decision 10 — actor_id dependency on Phase 63
 
-Phase 64 depends on Phase 63's `users` table (`users.id TEXT PRIMARY KEY` — nanoid). For automated system events, `actor_id = 'system'` and `actor_role = 'system'`. For human actions, `actor_id` is the authenticated user's `users.id`, resolved via `authenticateUser(req)` from `apps/kitchen/src/lib/user-auth.ts` (Phase 63).
+Phase 64 depends on Phase 63's `users` table (`users.id TEXT PRIMARY KEY` — nanoid). For automated system events, `actor_id = 'system'` and `actor_role = 'system'`. For human actions, `actor_id` is the authenticated user's `users.id`, resolved via `authenticateUser(req)` from `apps/memroos/src/lib/user-auth.ts` (Phase 63).
 
 If Phase 64 is implemented before Phase 63 ships, every route that writes audit entries must accept a fallback: if no authenticated user is present (pre-auth phase), `actor_id = 'anonymous'` and `actor_role = 'system'`. This fallback is removed once Phase 63 middleware is enforced.
 </decisions>
@@ -223,9 +223,9 @@ If Phase 64 is implemented before Phase 63 ships, every route that writes audit 
 <code_context>
 ## Existing Code Insights
 
-**Tables already in `apps/kitchen/src/lib/db-schema.ts` that Phase 64 must co-exist with:**
+**Tables already in `apps/memroos/src/lib/db-schema.ts` that Phase 64 must co-exist with:**
 - `audit_log` (SEC-02) — `actor TEXT`, `action TEXT`, `target TEXT`, `severity TEXT`, `timestamp TEXT`. All columns map to `audit_entries`; this table is migrated and becomes a view.
-- `seal_audit_log` (Phase 58) — W-delta columns collapse into `metadata_json`. `writeAuditEntry()` in `apps/kitchen/src/lib/seal/audit.ts` is the existing write path; Phase 64 updates it to write to `audit_entries`.
+- `seal_audit_log` (Phase 58) — W-delta columns collapse into `metadata_json`. `writeAuditEntry()` in `apps/memroos/src/lib/seal/audit.ts` is the existing write path; Phase 64 updates it to write to `audit_entries`.
 - `seal_proposals`, `seal_proposal_decisions` — `entity_type = 'seal_proposal'`, `entity_id = proposal.id` in audit entries.
 - `eval_runs` — `entity_type = 'eval_run'`, `entity_id = run.id` in audit entries.
 - `tenants`, `tenant_api_keys` — `tenant_id` FK target for audit_entries.
@@ -233,17 +233,17 @@ If Phase 64 is implemented before Phase 63 ships, every route that writes audit 
 **Phase 63 tables that Phase 64 depends on (not yet shipped):**
 - `users(id TEXT PRIMARY KEY)` — `actor_id` FK target for human actions.
 - `user_roles` — used to denormalize `actor_role` at write time.
-- `authenticateUser(req)` in `apps/kitchen/src/lib/user-auth.ts` — resolves `actor_id` from JWT.
+- `authenticateUser(req)` in `apps/memroos/src/lib/user-auth.ts` — resolves `actor_id` from JWT.
 
 **Existing patterns Phase 64 follows:**
 - All DDL is additive — `CREATE TABLE IF NOT EXISTS`, no destructive changes.
 - Additive column migrations via `ALTER TABLE ... ADD COLUMN` wrapped in try/catch.
 - One-shot migrations guarded by a `meta` flag (pattern established for `hive_delegations_v2_migrated`).
 - API routes use `Response.json(...)` and `export const dynamic = "force-dynamic"`.
-- TanStack Query hooks in `apps/kitchen/src/lib/api-client.ts` for all UI data fetching.
-- Sidebar nav in `apps/kitchen/src/components/layout/sidebar.tsx` — Phase 64 adds `/audit` and `/escalations` entries (after the SEAL entry Phase 58 added).
+- TanStack Query hooks in `apps/memroos/src/lib/api-client.ts` for all UI data fetching.
+- Sidebar nav in `apps/memroos/src/components/layout/sidebar.tsx` — Phase 64 adds `/audit` and `/escalations` entries (after the SEAL entry Phase 58 added).
 
-**New library location:** `apps/kitchen/src/lib/audit/` — separate from `apps/kitchen/src/lib/seal/audit.ts`. The SEAL-specific write helper becomes a thin adapter calling the unified library.
+**New library location:** `apps/memroos/src/lib/audit/` — separate from `apps/memroos/src/lib/seal/audit.ts`. The SEAL-specific write helper becomes a thin adapter calling the unified library.
 
 **RBAC enforcement:** Phase 63's middleware already enforces JWT on all non-public API routes. Phase 64 adds route-level role checks:
 - `GET /api/audit` — reviewer, operator, admin
@@ -255,7 +255,7 @@ If Phase 64 is implemented before Phase 63 ships, every route that writes audit 
 <specifics>
 ## Specific Implementation Shape
 
-### New library: `apps/kitchen/src/lib/audit/`
+### New library: `apps/memroos/src/lib/audit/`
 - `event-types.ts` — `AUDIT_EVENT_TYPES` const object, `AuditEventType` union type, taxonomy per Decision 4
 - `schema.ts` — `AuditEntry` and `HilEscalation` TypeScript types
 - `write.ts` — `writeAuditEntry(entry, db?)` (INSERT only); `openEscalation(params, db?)` (INSERT to hil_escalations + write `hil.created` audit entry); `resolveEscalation(id, resolution, db?)` (UPDATE hil_escalations + write `hil.resolved` audit entry — NOTE: escalation table IS mutable; only audit_entries is immutable)
@@ -263,14 +263,14 @@ If Phase 64 is implemented before Phase 63 ships, every route that writes audit 
 - `sla.ts` — `checkSlaBreaches(db?)` — marks overdue escalations as `sla_breached` and writes audit entries; called on each GET /escalations response to lazily enforce SLA
 
 ### API routes
-- `apps/kitchen/src/app/api/audit/route.ts` — `GET` (query with filters: agent_id, event_type, actor_id, from, to, limit, cursor); `GET /api/audit/export` as a separate route handler for streaming
-- `apps/kitchen/src/app/api/audit/export/route.ts` — streaming NDJSON and CSV export
-- `apps/kitchen/src/app/api/escalations/route.ts` — `GET` (list open/all escalations with SLA countdown); triggers lazy SLA breach check
-- `apps/kitchen/src/app/api/escalations/[id]/resolve/route.ts` — `POST` (operator/admin only; writes resolution + audit entry)
+- `apps/memroos/src/app/api/audit/route.ts` — `GET` (query with filters: agent_id, event_type, actor_id, from, to, limit, cursor); `GET /api/audit/export` as a separate route handler for streaming
+- `apps/memroos/src/app/api/audit/export/route.ts` — streaming NDJSON and CSV export
+- `apps/memroos/src/app/api/escalations/route.ts` — `GET` (list open/all escalations with SLA countdown); triggers lazy SLA breach check
+- `apps/memroos/src/app/api/escalations/[id]/resolve/route.ts` — `POST` (operator/admin only; writes resolution + audit entry)
 
 ### UI pages
-- `apps/kitchen/src/app/audit/page.tsx` — log viewer with filter sidebar (agent dropdown, event type multi-select, date range, actor); paginated table; Export button (NDJSON/CSV)
-- `apps/kitchen/src/app/escalations/page.tsx` — team queue; cards showing entity type, entity ID, escalation type, SLA countdown (red when overdue); Resolve button (operator/admin only); read-only for reviewer role
+- `apps/memroos/src/app/audit/page.tsx` — log viewer with filter sidebar (agent dropdown, event type multi-select, date range, actor); paginated table; Export button (NDJSON/CSV)
+- `apps/memroos/src/app/escalations/page.tsx` — team queue; cards showing entity type, entity ID, escalation type, SLA countdown (red when overdue); Resolve button (operator/admin only); read-only for reviewer role
 
 ### Sidebar additions (in `sidebar.tsx`)
 ```typescript
@@ -279,9 +279,9 @@ If Phase 64 is implemented before Phase 63 ships, every route that writes audit 
 ```
 
 ### SEAL audit adapter update
-`apps/kitchen/src/lib/seal/audit.ts` — `writeAuditEntry()` updated to call the new unified `writeAuditEntry()` from `apps/kitchen/src/lib/audit/write.ts` with appropriate field mapping (`entity_type = 'seal_proposal'`, W-delta fields in `metadata_json`). The legacy INSERT to `seal_audit_log` is kept as a dual-write shim until cutover.
+`apps/memroos/src/lib/seal/audit.ts` — `writeAuditEntry()` updated to call the new unified `writeAuditEntry()` from `apps/memroos/src/lib/audit/write.ts` with appropriate field mapping (`entity_type = 'seal_proposal'`, W-delta fields in `metadata_json`). The legacy INSERT to `seal_audit_log` is kept as a dual-write shim until cutover.
 
-### Schema additions in `apps/kitchen/src/lib/db-schema.ts`
+### Schema additions in `apps/memroos/src/lib/db-schema.ts`
 All additive:
 1. `audit_entries` table + 6 indexes + 2 immutability triggers
 2. `hil_escalations` table + 3 indexes

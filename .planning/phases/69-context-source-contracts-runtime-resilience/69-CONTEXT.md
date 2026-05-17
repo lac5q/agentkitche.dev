@@ -9,7 +9,7 @@ gathered: 2026-05-16
 
 ## Why This Exists
 
-The May 2026 Memoroos dogfood incidents exposed a repeated failure pattern:
+The May 2026 Memroos dogfood incidents exposed a repeated failure pattern:
 the product had powerful local memory/context behavior, but too much of it
 depended on implicit local services, external cron entries, hidden app-specific
 SQLite sources, and human memory of what should be indexed. When one lane
@@ -56,7 +56,7 @@ get the guardrails by default.
 ## Current Product Gaps
 
 - Source ingestion scripts for Gmail/Spark/transcripts live in the external
-  knowledge repo rather than a Memoroos-owned connector contract.
+  knowledge repo rather than a Memroos-owned connector contract.
 - qmd collection definitions are mostly local machine state rather than
   declarative product config.
 - Runtime service installation is fragmented across local launchd plists,

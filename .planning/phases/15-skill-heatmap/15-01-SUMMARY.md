@@ -122,7 +122,7 @@ No new network endpoints, auth paths, or file access patterns introduced. `contr
 
 ## Visual QA Pending
 
-Per STATE.md: full visual QA at kitchen.example.com recommended before v1.3 milestone close. Verify:
+Per STATE.md: full visual QA at memroos.example.com recommended before v1.3 milestone close. Verify:
 1. Click Cookbooks node → detail panel opens → "Contribution Activity" heading visible
 2. 30-column grid renders with color intensity
 3. Hovering a cell highlights ONLY that cell (no sibling flicker)

@@ -1,18 +1,18 @@
 # Google ADK Integration
 
-Google ADK is the first compatibility proof for Kitchen's A2A path. The goal is runnable interoperability, not docs-only compatibility.
+Google ADK is the first compatibility proof for Memroos's A2A path. The goal is runnable interoperability, not docs-only compatibility.
 
 ## Recommended Path
 
 1. Start the ADK agent server.
 2. Confirm it exposes an A2A-compatible agent card.
-3. Register the card with Kitchen.
-4. Send tasks through Kitchen's A2A broker.
+3. Register the card with Memroos.
+4. Send tasks through Memroos's A2A broker.
 
 ```bash
 curl -X POST http://localhost:3000/api/a2a/agents/register \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "cardUrl": "http://localhost:8001/a2a/check_prime_agent/.well-known/agent-card.json",
     "source": "adk",
@@ -50,11 +50,11 @@ curl -N -X POST http://localhost:3000/message:stream \
   }'
 ```
 
-Kitchen returns SSE `task.update` events and stores task state durably.
+Memroos returns SSE `task.update` events and stores task state durably.
 
 ## Compatibility Expectations
 
 - Use the current A2A card and task lifecycle routes, not stale `tasks/send` wording.
 - Keep the ADK fixture runnable in CI or local smoke where possible.
 - Bind the ADK identity to the canonical registry entry.
-- Use bearer credentials issued by Kitchen for write/reporting operations.
+- Use bearer credentials issued by Memroos for write/reporting operations.

@@ -12,7 +12,7 @@ tech_stack:
   patterns: ["useQuery polling hooks", "KpiCard grid layout", "ButtonState pattern for async actions", "TDD RED-GREEN flow"]
 key_files:
   created:
-    - src/components/kitchen/agent-peers-panel.tsx
+    - src/components/memroos/agent-peers-panel.tsx
     - src/components/ledger/memory-intelligence-panel.tsx
     - src/components/__tests__/agent-peers-panel.test.tsx
     - src/components/__tests__/memory-intelligence-panel.test.tsx
@@ -34,7 +34,7 @@ metrics:
 
 # Phase 23 Plan 02: Dashboard UI Panels Summary
 
-**One-liner:** Two new React panels wire /api/memory-stats and /api/agent-peers into the Ledger and Kitchen Floor dashboards via useQuery polling hooks.
+**One-liner:** Two new React panels wire /api/memory-stats and /api/agent-peers into the Ledger and Memroos Floor dashboards via useQuery polling hooks.
 
 ## What Was Built
 
@@ -44,7 +44,7 @@ Added `useAgentPeers` (5s poll, query key `['agent-peers', windowMinutes]`) and 
 Created test stub files for both panels — initially failing (TDD RED) because the components didn't exist yet.
 
 ### Task 2: Panels and page wiring (TDD GREEN)
-**AgentPeersPanel** (`src/components/kitchen/agent-peers-panel.tsx`):
+**AgentPeersPanel** (`src/components/memroos/agent-peers-panel.tsx`):
 - Section header with amber-500 label "Agent Peers" + divider
 - Loading spinner, empty state ("No active peers in the last N minutes.")
 - Peer list: agent_id (w-24 truncated), status chip (ACTION_COLORS map), current_task (flex-1 truncated), relative last_seen
@@ -86,7 +86,7 @@ No new security-relevant surface introduced. Both panels are read-only displays 
 ## Self-Check: PASSED
 
 Files confirmed to exist:
-- src/components/kitchen/agent-peers-panel.tsx ✓
+- src/components/memroos/agent-peers-panel.tsx ✓
 - src/components/ledger/memory-intelligence-panel.tsx ✓
 - src/components/__tests__/agent-peers-panel.test.tsx ✓
 - src/components/__tests__/memory-intelligence-panel.test.tsx ✓

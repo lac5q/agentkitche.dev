@@ -8,7 +8,7 @@ Prevent agents from using delegation targets, memory tiers, or tool paths outsid
 
 ## Shipped
 
-- Added shared policy helper at `apps/kitchen/src/lib/security-policy.ts`.
+- Added shared policy helper at `apps/memroos/src/lib/security-policy.ts`.
 - Dispatch policy denies targets that declare capabilities but lack dispatch-compatible capabilities.
 - A2A send policy denies callers that declare capabilities but lack A2A send-compatible capabilities.
 - Memory policy denies tier writes outside declared memory capabilities.

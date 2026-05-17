@@ -18,7 +18,7 @@ OpenAI-compatible local endpoints for Ollama/vLLM/Hermes style deployments.
 
 ## What Was Done
 
-- Added `apps/kitchen/src/lib/cove/` with:
+- Added `apps/memroos/src/lib/cove/` with:
   - `cove(agentFn, config)` runtime wrapper.
   - `runCovePipeline()` for draft -> questions -> checks -> revised answer.
   - `createOpenAICompatibleCoveClient()` for local OpenAI-compatible endpoints.
@@ -34,13 +34,13 @@ OpenAI-compatible local endpoints for Ollama/vLLM/Hermes style deployments.
 
 ## Verification
 
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/cove --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/cove --run`
   - 1 file, 6 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/evals src/lib/cove --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/evals src/lib/cove --run`
   - 3 files, 20 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/app/api/admin/compliance --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/app/api/admin/compliance --run`
   - 1 file, 3 tests passed; verified config restoration
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run typecheck`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run typecheck`
   - passed
 
 ## Notes

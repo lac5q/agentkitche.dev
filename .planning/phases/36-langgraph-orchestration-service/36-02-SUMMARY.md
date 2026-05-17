@@ -24,14 +24,14 @@ requirements_addressed: [ORCH-01, ORCH-02, ORCH-03]
 
 - **Use run ID as LangGraph thread ID:** This keeps checkpoint lookup deterministic and aligns graph state with the persisted orchestration run.
 - **Resume on approve and reject:** Reject is a real graph continuation, not only a service status update. This avoids orphaned paused checkpoints.
-- **Keep deterministic capability selection in `OrchestrationEngine`:** The graph owns policy state/checkpoint/HIL, while the engine still performs the simple Phase 36 routing rule. Later richer LangGraph routing can move more selection logic into the graph without changing Kitchen/A2A transport.
-- **Use the same dedicated SQLite file for orchestration metadata and LangGraph checkpoints:** This satisfies the separate-DB requirement while keeping all orchestration-only state together and away from Kitchen's main DB.
+- **Keep deterministic capability selection in `OrchestrationEngine`:** The graph owns policy state/checkpoint/HIL, while the engine still performs the simple Phase 36 routing rule. Later richer LangGraph routing can move more selection logic into the graph without changing Memroos/A2A transport.
+- **Use the same dedicated SQLite file for orchestration metadata and LangGraph checkpoints:** This satisfies the separate-DB requirement while keeping all orchestration-only state together and away from Memroos's main DB.
 
 ## Verification
 
 - `python3 -m unittest discover services/orchestration/tests` — passed, 8 tests.
 - `python3 -m py_compile services/orchestration/engine.py services/orchestration/app.py services/orchestration/graph.py` — passed.
-- `npm --prefix apps/kitchen run test -- src/app/api/orchestration/__tests__/route.test.ts src/components/orchestration/__tests__/hil-panel.test.tsx` — passed, 5 tests.
+- `npm --prefix apps/memroos run test -- src/app/api/orchestration/__tests__/route.test.ts src/components/orchestration/__tests__/hil-panel.test.tsx` — passed, 5 tests.
 
 ## Residual Notes
 

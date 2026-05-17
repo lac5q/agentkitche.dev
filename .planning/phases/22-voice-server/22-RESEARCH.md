@@ -242,7 +242,7 @@ def build_gemini_pipeline(transport, session_id: str):
         api_key=os.getenv("GOOGLE_API_KEY"),
         settings=GeminiLiveLLMService.Settings(
             model="models/gemini-2.5-flash-native-audio-preview-12-2025",
-            system_instruction="You are a helpful kitchen assistant for Agent Kitchen.",
+            system_instruction="You are a helpful memroos assistant for Memroos.",
             voice="Puck",
             vad=GeminiVADParams(silence_duration_ms=500),
         ),
@@ -424,7 +424,7 @@ def build_fallback_tts() -> FallbackTTSService:
 
 ### Pattern 6: TranscriptWriter — SQLite Persistence (VOICE-04)
 
-The existing `messages` table in `data/conversations.db` already has the right shape. Voice transcripts go in as `agent_id='voice'`, `project='agent-kitchen'`.
+The existing `messages` table in `data/conversations.db` already has the right shape. Voice transcripts go in as `agent_id='voice'`, `project='memroos'`.
 
 WAL mode + busy_timeout=5000ms are set by the Next.js process. Python must also set them on every new connection. [VERIFIED: src/lib/db.ts lines 18-20]
 
@@ -447,7 +447,7 @@ class TranscriptWriter:
             conn.execute(
                 """INSERT OR IGNORE INTO messages
                    (session_id, project, agent_id, role, content, timestamp, request_id)
-                   VALUES (?, 'agent-kitchen', 'voice', ?, ?, ?, ?)""",
+                   VALUES (?, 'memroos', 'voice', ?, ?, ?, ?)""",
                 (self.session_id, role, content,
                  datetime.now(timezone.utc).isoformat(),
                  str(uuid.uuid4())),

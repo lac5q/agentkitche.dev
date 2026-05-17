@@ -18,7 +18,7 @@ Do NOT bake finance-specific logic into the core. Keep it in the vertical layer.
 - Immutable audit log: every agent decision traceable, reason attached, append-only
 - HIL escalation queue: operator-visible, approve/reject with audit record
 - Self-hosted Docker profile: data never leaves their environment
-- Rename: Kitchen → Memoroos (product name, codebase + docs)
+- Rename: Memroos → Memroos (product name, codebase + docs)
 
 ## Finance vertical (reference implementation)
 - Bank transaction reconciliation governance

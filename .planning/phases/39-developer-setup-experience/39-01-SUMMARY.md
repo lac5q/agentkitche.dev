@@ -26,4 +26,4 @@ requirements_addressed: [DEV-01, DEV-02, PROFILE-01, PROFILE-02, PROFILE-04]
 
 ## Residual Notes
 
-- Wizard prepares first-agent setup guidance but does not auto-register an agent because credential minting should happen against the operator's real running Kitchen instance.
+- Wizard prepares first-agent setup guidance but does not auto-register an agent because credential minting should happen against the operator's real running Memroos instance.

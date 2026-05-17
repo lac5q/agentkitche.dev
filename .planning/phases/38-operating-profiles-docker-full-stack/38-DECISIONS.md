@@ -9,7 +9,7 @@
    Why: These match the user requirement for OpenClaw/Hermes-like defaults that operators can customize without forking source.
 
 3. **Docker compose includes six services and no local Qdrant.**
-   Why: Qdrant Cloud is a fixed v2.0 architectural constraint. Compose starts Kitchen, mem0, Neo4j, voice, knowledge MCP, and orchestration.
+   Why: Qdrant Cloud is a fixed v2.0 architectural constraint. Compose starts Memroos, mem0, Neo4j, voice, knowledge MCP, and orchestration.
 
 4. **Use Neo4j local container for graph tier.**
    Why: Unlike Qdrant, Neo4j is part of the v2.0 local/full-stack runtime.

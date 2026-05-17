@@ -1,6 +1,6 @@
 """LangGraph runtime for Phase 36 orchestration policy.
 
-A2A/Kitchen owns transport. This graph owns policy state, approval pauses,
+A2A/Memroos owns transport. This graph owns policy state, approval pauses,
 and checkpoint resume semantics.
 """
 

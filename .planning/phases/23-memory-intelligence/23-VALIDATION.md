@@ -69,7 +69,7 @@ created: 2026-04-18
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | instrumentation.ts boots schedulers on server start | MEM-01/02 | Cannot unit-test Next.js server lifecycle | Start `npm run dev`, check server logs for `[consolidation] started` and `[decay] started` messages |
-| Dashboard panels render live data | MEM-03/04 | Requires running app + data in SQLite | Open `/kitchen` or ledger page; verify AgentPeersPanel and MemoryIntelligencePanel render without errors |
+| Dashboard panels render live data | MEM-03/04 | Requires running app + data in SQLite | Open `/memroos` or ledger page; verify AgentPeersPanel and MemoryIntelligencePanel render without errors |
 | Consolidation runs and writes insights | MEM-01 | Requires real ANTHROPIC_API_KEY + messages in DB | POST to `/api/memory-consolidate` with some test messages; verify `memory_meta_insights` rows written |
 
 ---

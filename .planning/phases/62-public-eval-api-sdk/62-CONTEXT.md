@@ -16,12 +16,12 @@ Phase 62 ships the externally-facing eval product surface: a versioned, tenant-i
 
 - Tenant model: `tenants` and `tenant_api_keys` tables; additive `tenant_id` column on all existing v2.5 eval tables; per-API-key tenant resolution middleware
 - Public HTTP surface at `/api/public/v1/eval/` (POST: submit trace, GET run result); `/api/public/v1/proposals/` (GET: list proposals for a tenant); tenant scoping enforced on all routes
-- OpenInference trace format support (pinned to `openinference-semantic-conventions` v0.1.x): mapper from OpenInference span attributes to `AgentEvalTrace`; MemroOS JSON format is `AgentEvalTrace` from `apps/kitchen/src/lib/evals/types.ts` — no new schema invented
+- OpenInference trace format support (pinned to `openinference-semantic-conventions` v0.1.x): mapper from OpenInference span attributes to `AgentEvalTrace`; MemroOS JSON format is `AgentEvalTrace` from `apps/memroos/src/lib/evals/types.ts` — no new schema invented
 - TypeScript SDK: `packages/sdk-ts/` — publish as `@memroos/sdk`; wraps public API with typed request/response models; includes `submitTrace()`, `getRunResult()`, `listProposals()`, and streaming support
 - Python SDK: `packages/sdk-py/` — publish as `memroos`; same surface in idiomatic Python (dataclasses, async/await, type hints); `pip install memroos` smoke-test
 - Rate limiting: token-bucket per `tenant_id`, configurable cap, `X-RateLimit-*` response headers
 - Customer quickstart: `docs/eval-quickstart.md` — "first eval in 5 minutes" walkthrough from `pip install memroos` / `npm i @memroos/sdk` through first scored trace
-- Phase 59 + Phase 60 refactor: update `apps/kitchen/src/lib/seal/reflection.ts` and `apps/kitchen/src/lib/seal/apply.ts` (and any Phase 59 memory-eval callers) to route their `EvalService` calls through the public HTTP surface using the TypeScript SDK, with a `localhost`-configured SDK client. This proves API-06.
+- Phase 59 + Phase 60 refactor: update `apps/memroos/src/lib/seal/reflection.ts` and `apps/memroos/src/lib/seal/apply.ts` (and any Phase 59 memory-eval callers) to route their `EvalService` calls through the public HTTP surface using the TypeScript SDK, with a `localhost`-configured SDK client. This proves API-06.
 - Dogfood verification test: an integration test that runs the Phase 59 memory autogen loop and Phase 60 agent autogen loop end-to-end using only public API calls, not internal imports of `EvalService`.
 
 ### Out of scope for Phase 62
@@ -65,11 +65,11 @@ Public route layout:
 - `GET  /api/public/v1/proposals` — list queued proposals for the tenant; optional `?traceId=` filter
 - `GET  /api/public/v1/proposals/[proposalId]` — retrieve a single proposal with diff and W-delta forecast; tenant-scoped
 
-All routes: `Authorization: Bearer <api_key>` header required. Responses follow existing Kitchen `Response.json()` convention. Rate limit headers on every response.
+All routes: `Authorization: Bearer <api_key>` header required. Responses follow existing Memroos `Response.json()` convention. Rate limit headers on every response.
 
 ### Decision 3 — OpenInference format mapping
 
-OpenInference is pinned to `openinference-semantic-conventions` v0.1.x (the latest stable as of 2026-05-15). The mapper lives at `apps/kitchen/src/lib/evals/openinference-mapper.ts`. It converts an OpenInference `SpanAttributes` object (or a simplified flat JSON object following the same attribute names) into an `AgentEvalTrace`.
+OpenInference is pinned to `openinference-semantic-conventions` v0.1.x (the latest stable as of 2026-05-15). The mapper lives at `apps/memroos/src/lib/evals/openinference-mapper.ts`. It converts an OpenInference `SpanAttributes` object (or a simplified flat JSON object following the same attribute names) into an `AgentEvalTrace`.
 
 Key mappings:
 | OpenInference attribute | AgentEvalTrace field |
@@ -82,7 +82,7 @@ Key mappings:
 | `metadata.agent_id` (custom) | `agentId` |
 | `llm.token_count.total` → cost heuristic | `outcome.costUsd` (estimated) |
 
-The MemroOS JSON format is `AgentEvalTrace` as defined in `apps/kitchen/src/lib/evals/types.ts`. The `POST /api/public/v1/eval` handler detects format by inspecting for `openinference.span.kind` at the root; if absent, it treats the payload as MemroOS JSON. Both paths call the same `EvalService.scoreAndMaybePersistEvalTrace()`.
+The MemroOS JSON format is `AgentEvalTrace` as defined in `apps/memroos/src/lib/evals/types.ts`. The `POST /api/public/v1/eval` handler detects format by inspecting for `openinference.span.kind` at the root; if absent, it treats the payload as MemroOS JSON. Both paths call the same `EvalService.scoreAndMaybePersistEvalTrace()`.
 
 ### Decision 4 — SDK structure: monorepo packages, publishable externally
 
@@ -93,7 +93,7 @@ Both SDKs live in the monorepo so Phase 59/60 can dogfood them via local workspa
   - `src/client.ts` — `MemroosClient(baseUrl: string, apiKey: string)` with `submitTrace(trace: AgentEvalTrace | OpenInferenceTrace): Promise<EvalSubmitResult>`, `getRunResult(runId: string): Promise<EvalRunResult>`, `listProposals(filter?: ProposalFilter): Promise<Proposal[]>`
   - `src/types.ts` — re-exports `AgentEvalTrace` type, defines `EvalSubmitResult`, `ProposalFilter`, `Proposal`, `OpenInferenceTrace`
   - `src/smoke-test.ts` — runnable quickstart script (the one the customer docs point to); imports a bundled sample trace and sample golden set, submits, asserts W is a number
-  - Workspace reference in `apps/kitchen/package.json`: `"@memroos/sdk": "workspace:../../../packages/sdk-ts"`
+  - Workspace reference in `apps/memroos/package.json`: `"@memroos/sdk": "workspace:../../../packages/sdk-ts"`
 
 - `packages/sdk-py/` — Python SDK
   - `pyproject.toml`: `name = "memroos"`, `version = "0.1.0"`, Python ≥ 3.10
@@ -110,11 +110,11 @@ Concretely:
 - Any call to `EvalService.runForTrace()` or `scoreAndMaybePersistEvalTrace()` in SEAL Phase 58's `apply.ts` or any Phase 59/60 module that evaluates a mutation is replaced with `memroosClient.submitTrace(trace)` followed by `memroosClient.getRunResult(runId)`.
 - The `MemroosClient` instance in these callers is configured with `baseUrl: process.env.MEMROOS_PUBLIC_API_URL ?? 'http://localhost:3000'` so the localhost call round-trips through the HTTP surface without leaving the machine during development.
 - Existing direct imports of `EvalService` that are NOT part of the autogen loop (e.g. the `/api/evals` internal routes) are left unchanged — only the SEAL apply/rerun path is refactored.
-- A new integration test in `apps/kitchen/src/__tests__/e2e/dogfood-api.test.ts` starts the Kitchen server, runs the Phase 59 memory loop and Phase 60 agent loop using only SDK calls, and asserts end-to-end W values are returned.
+- A new integration test in `apps/memroos/src/__tests__/e2e/dogfood-api.test.ts` starts the Memroos server, runs the Phase 59 memory loop and Phase 60 agent loop using only SDK calls, and asserts end-to-end W values are returned.
 
 ### Decision 6 — Rate limiting implementation
 
-Token-bucket rate limiting per `tenant_id`, implemented as Next.js middleware in `apps/kitchen/src/middleware.ts` (or extended if middleware already exists). Config: `memroos.eval.yaml` gets a new `public_api.rate_limit` block:
+Token-bucket rate limiting per `tenant_id`, implemented as Next.js middleware in `apps/memroos/src/middleware.ts` (or extended if middleware already exists). Config: `memroos.eval.yaml` gets a new `public_api.rate_limit` block:
 
 ```yaml
 public_api:
@@ -135,16 +135,16 @@ Phase 61 introduces `tenant_id TEXT NOT NULL DEFAULT 'default-tenant'` on `busin
 <code_context>
 ## Existing Code Insights
 
-- `apps/kitchen/src/lib/db-schema.ts` owns `initSchema` — CRITICAL symbol (all DB routes initialize through it). Phase 62 adds two new tables and `ALTER TABLE ... ADD COLUMN` statements for eight existing tables. Run `gitnexus_impact({target: "initSchema", direction: "upstream"})` before editing.
-- `apps/kitchen/src/lib/evals/types.ts` defines `AgentEvalTrace` — this is the MemroOS JSON format. OpenInference mapper translates to this type; no new trace schema introduced.
-- `apps/kitchen/src/lib/evals/service.ts` exports `EvalService` and `scoreAndMaybePersistEvalTrace()`. The public API handler calls these; Phase 59/60 dogfood callers are refactored to call the SDK instead.
-- `apps/kitchen/src/lib/evals/config.ts` parses `memroos.eval.yaml`. Phase 62 extends it to parse the new `public_api:` block.
-- `apps/kitchen/src/lib/operator-auth.ts` handles internal operator authentication for Kitchen UI routes. Phase 62's per-tenant API key auth for public routes is a separate middleware, not mixed with operator auth.
-- `apps/kitchen/src/lib/api-client.ts` handles internal TanStack Query hooks. Phase 62 does not add hooks to this file (SDK callers use the SDK, not internal API client).
-- `apps/kitchen/src/lib/seal/apply.ts` is the Phase 58 module that calls `EvalService.runForTrace()` — this is one of the callers to refactor for dogfood (task 9).
+- `apps/memroos/src/lib/db-schema.ts` owns `initSchema` — CRITICAL symbol (all DB routes initialize through it). Phase 62 adds two new tables and `ALTER TABLE ... ADD COLUMN` statements for eight existing tables. Run `gitnexus_impact({target: "initSchema", direction: "upstream"})` before editing.
+- `apps/memroos/src/lib/evals/types.ts` defines `AgentEvalTrace` — this is the MemroOS JSON format. OpenInference mapper translates to this type; no new trace schema introduced.
+- `apps/memroos/src/lib/evals/service.ts` exports `EvalService` and `scoreAndMaybePersistEvalTrace()`. The public API handler calls these; Phase 59/60 dogfood callers are refactored to call the SDK instead.
+- `apps/memroos/src/lib/evals/config.ts` parses `memroos.eval.yaml`. Phase 62 extends it to parse the new `public_api:` block.
+- `apps/memroos/src/lib/operator-auth.ts` handles internal operator authentication for Memroos UI routes. Phase 62's per-tenant API key auth for public routes is a separate middleware, not mixed with operator auth.
+- `apps/memroos/src/lib/api-client.ts` handles internal TanStack Query hooks. Phase 62 does not add hooks to this file (SDK callers use the SDK, not internal API client).
+- `apps/memroos/src/lib/seal/apply.ts` is the Phase 58 module that calls `EvalService.runForTrace()` — this is one of the callers to refactor for dogfood (task 9).
 - Golden sets live at `golden-sets/` in the repo root. Phase 62's quickstart sample re-uses the existing `golden-sets/business-ops-50.jsonl`.
-- `packages/` directory exists at repo root (monorepo workspace) — confirm with `ls /Users/lcalderon/github/memoroos/packages/` before creating SDK packages.
-- Rate limiting middleware location: check for existing `apps/kitchen/src/middleware.ts` before creating; extend if present.
+- `packages/` directory exists at repo root (monorepo workspace) — confirm with `ls /Users/lcalderon/github/memroos/packages/` before creating SDK packages.
+- Rate limiting middleware location: check for existing `apps/memroos/src/middleware.ts` before creating; extend if present.
 </code_context>
 
 <specifics>
@@ -189,21 +189,21 @@ ALTER TABLE agent_tool_routing_policies ADD COLUMN tenant_id TEXT NOT NULL DEFAU
 
 ### New library modules
 
-`apps/kitchen/src/lib/public-api/`
+`apps/memroos/src/lib/public-api/`
 - `tenant-auth.ts` — `resolveTenant(authHeader: string | null, db): {tenantId: string, scopes: string[]} | null`; hashes the bearer token (SHA-256), queries `tenant_api_keys`, checks `revoked_at` is null
 - `rate-limiter.ts` — token-bucket per tenantId; `checkRateLimit(tenantId: string): RateLimitResult`; reads config from `memroos.eval.yaml` `public_api.rate_limit`; LRU map with 1000-key cap
 
-`apps/kitchen/src/lib/evals/openinference-mapper.ts`
+`apps/memroos/src/lib/evals/openinference-mapper.ts`
 - `isOpenInferenceTrace(payload: unknown): boolean` — detects `openinference.span.kind` at root
 - `mapOpenInferenceToAgentEvalTrace(span: OpenInferenceSpan): AgentEvalTrace` — attribute mapping table per Decision 3
 - `OpenInferenceSpan` type (local; mirrors the flat attribute bag from openinference-semantic-conventions v0.1.x)
 
 ### Public API routes
 
-- `apps/kitchen/src/app/api/public/v1/eval/route.ts` — POST: resolve tenant, check rate limit, detect format, map to `AgentEvalTrace`, call `scoreAndMaybePersistEvalTrace()` with `tenantId`, return `{runId, w, layers, proposalIds}`
-- `apps/kitchen/src/app/api/public/v1/eval/[runId]/route.ts` — GET: resolve tenant, verify run belongs to tenant, return `EvalRunResult`
-- `apps/kitchen/src/app/api/public/v1/proposals/route.ts` — GET: resolve tenant, list `seal_proposals` scoped to tenant, optional `?traceId=` filter
-- `apps/kitchen/src/app/api/public/v1/proposals/[proposalId]/route.ts` — GET: resolve tenant, verify proposal belongs to tenant, return proposal with diff and W-delta
+- `apps/memroos/src/app/api/public/v1/eval/route.ts` — POST: resolve tenant, check rate limit, detect format, map to `AgentEvalTrace`, call `scoreAndMaybePersistEvalTrace()` with `tenantId`, return `{runId, w, layers, proposalIds}`
+- `apps/memroos/src/app/api/public/v1/eval/[runId]/route.ts` — GET: resolve tenant, verify run belongs to tenant, return `EvalRunResult`
+- `apps/memroos/src/app/api/public/v1/proposals/route.ts` — GET: resolve tenant, list `seal_proposals` scoped to tenant, optional `?traceId=` filter
+- `apps/memroos/src/app/api/public/v1/proposals/[proposalId]/route.ts` — GET: resolve tenant, verify proposal belongs to tenant, return proposal with diff and W-delta
 
 ### SDK packages
 
@@ -226,7 +226,7 @@ ALTER TABLE agent_tool_routing_policies ADD COLUMN tenant_id TEXT NOT NULL DEFAU
 ### Quickstart doc
 
 `docs/eval-quickstart.md` — five-minute guide with:
-1. Create API key (Kitchen UI `Settings > API Keys`)
+1. Create API key (Memroos UI `Settings > API Keys`)
 2. Install SDK (`pip install memroos` or `npm i @memroos/sdk`)
 3. Copy code snippet that submits a sample trace
 4. Show the W score and layer breakdown printed to console

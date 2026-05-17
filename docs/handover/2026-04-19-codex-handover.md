@@ -1,19 +1,19 @@
-# Agent Kitchen — Codex Handover Report
+# Memroos — Codex Handover Report
 
-**Date:** 2026-04-19  
-**Repo:** `agent-kitchen` — Next.js 16 (App Router), TypeScript, better-sqlite3, Tailwind, Vitest  
-**Branch:** `main`  
-**Test status:** 324/324 passing  
-**Production:** `https://kitchen.example.com` (port 3002, `npm start`)  
+**Date:** 2026-04-19
+**Repo:** `memroos` — Next.js 16 (App Router), TypeScript, better-sqlite3, Tailwind, Vitest
+**Branch:** `main`
+**Test status:** 324/324 passing
+**Production:** `https://memroos.example.com` (port 3002, `npm start`)
 **Dev server:** `http://localhost:3000` (`next dev`)
 
 ---
 
 ## 1. What This Project Is
 
-Agent Kitchen is a **multi-agent coordination dashboard** for a fleet of heterogeneous AI agents (OpenClaw, Hermes, Claude Code CLI, Codex CLI). It provides:
+Memroos is a **multi-agent coordination dashboard** for a fleet of heterogeneous AI agents (OpenClaw, Hermes, Claude Code CLI, Codex CLI). It provides:
 
-- **Kitchen Floor** (`/`) — live agent status grid
+- **Memroos Floor** (`/`) — live agent status grid
 - **The Ledger** (`/ledger`) — memory, conversation history, skill heatmap, model usage
 - **The Dispatch** (`/dispatch`) — send tasks to remote agents, view delegation status, lineage timeline
 - **The Flow** (`/flow`) — conversation flow diagram + voice/chat panel
@@ -78,7 +78,7 @@ hive_actions (
 {
   "to_agent": "sophia",
   "task_summary": "Write a blog post about ...",
-  "from_agent": "kitchen",
+  "from_agent": "memroos",
   "priority": 5,
   "context_id": "<optional-uuid>",
   "task_id": "<optional-uuid>"
@@ -152,7 +152,7 @@ All commits to `main` today (newest first):
 | `335c1db` | Memory Intelligence panel — consolidation model + InfoTooltip |
 | `77a8267` | **VoicePanel rewrite** — streaming chat + voice tabs, agent selector, tests |
 | `2ed6b97` | **Multi-agent ingestion** — Hermes, Qwen, Codex parsers; fix test isolation |
-| `0012713` | `/dispatch` page + sidebar nav + AgentCardsPanel on Kitchen Floor |
+| `0012713` | `/dispatch` page + sidebar nav + AgentCardsPanel on Memroos Floor |
 | `15049d6` | DispatchPanel + AgentCardsPanel components + tests |
 | `836a51f` | LineageDrawer sheet component + tests |
 | `b3f6cb1` | useDelegations, useLineage, useAgentCards hooks |
@@ -213,7 +213,7 @@ Modify `src/app/api/dispatch/route.ts`:
 ### Task 6 — Agent status badges on AgentCardsPanel
 Modify `src/components/dispatch/agent-cards-panel.tsx`:
 - Add colored dot (emerald=reachable, rose=unreachable, slate=unknown) next to agent name
-- Source: `card.extensions.kitchen.reachable` (boolean | null)
+- Source: `card.extensions.memroos.reachable` (boolean | null)
 - Title: "Online · Xms" / "Unreachable" / "Status unknown"
 
 ---
@@ -238,7 +238,7 @@ src/lib/
   content-scanner.ts                — scanContent(text) — content safety
   audit.ts                          — writeAuditLog(severity, action, detail)
 src/app/
-  page.tsx                          — Kitchen Floor (AgentGrid + HiveFeed)
+  page.tsx                          — Memroos Floor (AgentGrid + HiveFeed)
   api/dispatch/route.ts             — POST /api/dispatch
   api/hive/route.ts                 — GET + POST /api/hive
   api/agents/cards/route.ts         — GET /api/agents/cards
@@ -249,8 +249,8 @@ src/components/
     dispatch-panel.tsx              — form + live delegation list
     lineage-drawer.tsx              — task timeline sheet
     agent-cards-panel.tsx           — A2A card grid
-  kitchen/
-    agent-grid.tsx                  — Kitchen Floor grid (supports sections prop)
+  memroos/
+    agent-grid.tsx                  — Memroos Floor grid (supports sections prop)
     hive-feed.tsx                   — color-coded action chip feed (5s poll)
   layout/sidebar.tsx                — nav items incl. "The Dispatch 📡"
 src/types/index.ts                  — Agent, RemoteAgentConfig, AgentPlatform, AgentCard types
@@ -292,7 +292,7 @@ npx playwright test
 ## 9. Codex Task Prompt (copy-paste ready)
 
 ```
-You are working on the `agent-kitchen` Next.js project (branch: main, all 324 tests passing).
+You are working on the `memroos` Next.js project (branch: main, all 324 tests passing).
 
 The project is a multi-agent coordination dashboard. You are implementing Plan 03 of the polyglot dispatch feature. The full plan is at: docs/superpowers/plans/2026-04-19-polyglot-dispatch-plan-03.md
 
@@ -325,7 +325,7 @@ Task 5: Health-gated dispatch in src/app/api/dispatch/route.ts
 
 Task 6: Agent status badges in src/components/dispatch/agent-cards-panel.tsx
 - Add colored dot beside agent name: emerald(reachable=true), rose(reachable=false), slate(null)
-- Source: card.extensions.kitchen.reachable (boolean | null)
+- Source: card.extensions.memroos.reachable (boolean | null)
 
 After all tasks: run npx vitest run (expect 324+ tests passing) and npx tsc --noEmit (expect no errors).
 ```

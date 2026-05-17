@@ -5,9 +5,9 @@ status: verified
 score: 4/4 must-haves verified
 overrides_applied: 0
 human_verification:
-  - test: "Open Kitchen Floor page (localhost:3002) and confirm AgentPeersPanel renders below HiveFeed with live peer data or the empty-state message"
+  - test: "Open Memroos Floor page (localhost:3002) and confirm AgentPeersPanel renders below HiveFeed with live peer data or the empty-state message"
     expected: "Panel shows amber-500 'Agent Peers' header, peer list with agent_id/task/status/last_seen columns (or 'No active peers' if table is empty)"
-    result: "VERIFIED — accessibility snapshot confirms AgentPeersPanel renders on Kitchen Floor with 'Agent Peers' heading"
+    result: "VERIFIED — accessibility snapshot confirms AgentPeersPanel renders on Memroos Floor with 'Agent Peers' heading"
   - test: "Open Library page (localhost:3002/library) and confirm MemoryIntelligencePanel renders under Conversation Memory section"
     expected: "Panel shows 'Memory Intelligence' header, KPI cards, tier stats, and Run Now button"
     result: "VERIFIED — both panels confirmed on Library page below Conversation Memory section"
@@ -33,7 +33,7 @@ human_verification:
 | 1 | Background consolidation engine runs on schedule, batches unconsolidated memories, and writes LLM-extracted meta-insights back to SQLite | VERIFIED | `src/lib/memory-consolidation.ts` exports `runConsolidation()` and `startConsolidationScheduler()`. Engine selects 50 unconsolidated messages, sends to `claude-haiku-4-5`, strips code fences, validates insight_type allowlist, inserts into `memory_meta_insights`, marks messages `consolidated=1`. `src/instrumentation.ts` bootstraps scheduler via NEXT_RUNTIME guard. 7/7 consolidation tests pass. |
 | 2 | Salience decay runs on schedule with 4-tier rates (pinned=0%, high=1%, mid=2%, low=5%/day); frequently accessed memories accumulate access-resistance | VERIFIED | `src/lib/memory-decay.ts` implements DECAY_RATES map (`high:0.01, mid:0.02, low:0.05`), skips pinned tier entirely, uses LOG() probe for access-resistance formula `rate/(1+LOG(1+access_count))` with flat-rate fallback. `MAX(0.0,...)` clamp prevents negative scores. `WHERE date(last_decay_at) < date('now')` prevents double-decay. `src/app/api/recall/route.ts` increments `access_count` and sets `last_accessed` on `memory_salience` for all recalled message IDs (fire-and-forget try/catch). 5/5 decay tests pass, 1 recall access_count test passes. |
 | 3 | Dashboard shows consolidation last-run timestamp, pending unconsolidated count, and per-tier decay stats | VERIFIED | `src/components/ledger/memory-intelligence-panel.tsx` uses `useMemoryStats()` hook (30s poll). `GET /api/memory-stats` queries `memory_consolidation_runs` for lastRun, `COUNT(*) WHERE consolidated=0` for pendingUnconsolidated, and `GROUP BY tier` on `memory_salience` for tierStats. Panel wired into `src/app/ledger/page.tsx` line 10/153. 3/3 memory-stats tests pass, 5/5 component tests pass. |
-| 4 | `GET /api/agent-peers` returns all active agents with current_task, status, and last_seen; dashboard shows a live peer-awareness panel | VERIFIED | `src/app/api/agent-peers/route.ts` queries `hive_actions` with GROUP BY agent_id and strftime ISO window comparison. window param clamped to [1, 1440]. `src/components/kitchen/agent-peers-panel.tsx` uses `useAgentPeers()` hook (5s poll). Panel wired into `src/app/page.tsx` line 6/60. 4/4 agent-peers tests pass, 5/5 component tests pass. |
+| 4 | `GET /api/agent-peers` returns all active agents with current_task, status, and last_seen; dashboard shows a live peer-awareness panel | VERIFIED | `src/app/api/agent-peers/route.ts` queries `hive_actions` with GROUP BY agent_id and strftime ISO window comparison. window param clamped to [1, 1440]. `src/components/memroos/agent-peers-panel.tsx` uses `useAgentPeers()` hook (5s poll). Panel wired into `src/app/page.tsx` line 6/60. 4/4 agent-peers tests pass, 5/5 component tests pass. |
 
 **Score:** 4/4 truths verified
 
@@ -50,7 +50,7 @@ human_verification:
 | `src/app/api/memory-consolidate/route.ts` | Manual consolidation trigger | VERIFIED | Exports `POST`. Calls `runConsolidation()`, returns `{ ok: true, timestamp }`. |
 | `src/app/api/recall/route.ts` | Modified recall route with access_count increment | VERIFIED | Lines 27-40 implement fire-and-forget UPDATE on `memory_salience` using parameterized placeholders. |
 | `src/components/ledger/memory-intelligence-panel.tsx` | MEM-03 consolidation health panel | VERIFIED | Exports `MemoryIntelligencePanel`. Uses `useMemoryStats()`. |
-| `src/components/kitchen/agent-peers-panel.tsx` | MEM-04 peer awareness panel | VERIFIED | Exports `AgentPeersPanel`. Uses `useAgentPeers()`. |
+| `src/components/memroos/agent-peers-panel.tsx` | MEM-04 peer awareness panel | VERIFIED | Exports `AgentPeersPanel`. Uses `useAgentPeers()`. |
 | `src/lib/api-client.ts` | useMemoryStats and useAgentPeers hooks | VERIFIED | `useAgentPeers` at line 267, `useMemoryStats` at line 285. Both use `fetchJSON` + `useQuery` + `refetchInterval` pattern. |
 
 ### Key Link Verification
@@ -63,8 +63,8 @@ human_verification:
 | `src/app/api/agent-peers/route.ts` | `hive_actions` table | GROUP BY query on existing table | WIRED | Line 23: `FROM hive_actions` with GROUP BY agent_id and strftime window filter |
 | `src/app/api/recall/route.ts` | `memory_salience` table | UPDATE access_count after FTS5 recall results | WIRED | Lines 31-36: `UPDATE memory_salience SET access_count = access_count + 1, last_accessed = ...` |
 | `src/components/ledger/memory-intelligence-panel.tsx` | `/api/memory-stats` | `useMemoryStats()` hook | WIRED | Line 6 import + line 27 call |
-| `src/components/kitchen/agent-peers-panel.tsx` | `/api/agent-peers` | `useAgentPeers()` hook | WIRED | Line 3 import + line 72 call |
-| `src/app/page.tsx` | `src/components/kitchen/agent-peers-panel.tsx` | JSX import and render below HiveFeed | WIRED | Line 6: import, line 60: `<AgentPeersPanel />` |
+| `src/components/memroos/agent-peers-panel.tsx` | `/api/agent-peers` | `useAgentPeers()` hook | WIRED | Line 3 import + line 72 call |
+| `src/app/page.tsx` | `src/components/memroos/agent-peers-panel.tsx` | JSX import and render below HiveFeed | WIRED | Line 6: import, line 60: `<AgentPeersPanel />` |
 | `src/app/ledger/page.tsx` | `src/components/ledger/memory-intelligence-panel.tsx` | JSX import and render below SqliteHealthPanel | WIRED | Line 10: import, line 153: `<MemoryIntelligencePanel />` |
 
 ### Data-Flow Trace (Level 4)
@@ -92,7 +92,7 @@ human_verification:
 | MEM-01 | 23-01 | Background consolidation engine batches unconsolidated memories, extracts patterns via LLM, writes meta-insights to SQLite | SATISFIED | `src/lib/memory-consolidation.ts` implements full engine; `memory_meta_insights` table written; 7 tests pass |
 | MEM-02 | 23-01 | 4-tier salience decay with access-resistance | SATISFIED | `src/lib/memory-decay.ts` implements decay with LOG() probe; recall route increments access_count; tests pass |
 | MEM-03 | 23-01, 23-02 | Dashboard shows consolidation stats | SATISFIED | `/api/memory-stats` route + `MemoryIntelligencePanel` wired into Ledger page |
-| MEM-04 | 23-01, 23-02 | `GET /api/agent-peers` + dashboard peer-awareness panel | SATISFIED | `/api/agent-peers` route + `AgentPeersPanel` wired into Kitchen Floor page |
+| MEM-04 | 23-01, 23-02 | `GET /api/agent-peers` + dashboard peer-awareness panel | SATISFIED | `/api/agent-peers` route + `AgentPeersPanel` wired into Memroos Floor page |
 
 ### Anti-Patterns Found
 
@@ -104,7 +104,7 @@ human_verification:
 
 #### 1. AgentPeersPanel Visual Render
 
-**Test:** Open Kitchen Floor page at localhost:3002. Scroll to the bottom below the HiveFeed section.
+**Test:** Open Memroos Floor page at localhost:3002. Scroll to the bottom below the HiveFeed section.
 **Expected:** A section with amber-500 "Agent Peers" header and a divider line. If hive_actions has rows within the last 60 minutes, a list of peers with agent_id, status chip, current_task, and relative last_seen. If the table is empty or has no recent rows, the empty state message "No active peers in the last 60 minutes."
 **Why human:** JSX render correctness and live polling behavior cannot be verified without a running browser.
 

@@ -27,7 +27,7 @@
 | Option | Description | Selected |
 |--------|-------------|----------|
 | Agent-card ingestion into canonical registry | Fetch/receive an A2A agent card, validate it, normalize capabilities, and call Phase 34 `registerAgent()`. | ✓ |
-| Custom register RPC | Invent a Kitchen-specific A2A registration method as the primary registration model. | |
+| Custom register RPC | Invent a Memroos-specific A2A registration method as the primary registration model. | |
 | Manual UI only | Require users to type A2A agent records manually. | |
 
 **User's choice:** User asked for recommendation.
@@ -39,8 +39,8 @@
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Durable thin broker | Kitchen persists task state, enforces auth, exposes A2A methods, and delegates, while Phase 36 owns routing intelligence. | ✓ |
-| Execute everything in Kitchen | Kitchen directly fulfills all A2A tasks first. | |
+| Durable thin broker | Memroos persists task state, enforces auth, exposes A2A methods, and delegates, while Phase 36 owns routing intelligence. | ✓ |
+| Execute everything in Memroos | Memroos directly fulfills all A2A tasks first. | |
 | Full orchestrator now | Build LangGraph-style routing/retry/HIL in Phase 35. | |
 
 **User's choice:** User asked for recommendation.
@@ -80,7 +80,7 @@
 |--------|-------------|----------|
 | Runnable local/LAN fixture | Include a small ADK-style A2A sample that exposes a card, registers, accepts a task, and appears in Flow. | ✓ |
 | Docs-only proof | Document that ADK should work but do not run it. | |
-| Production ADK service | Build and ship a full production ADK service as part of Kitchen startup. | |
+| Production ADK service | Build and ship a full production ADK service as part of Memroos startup. | |
 
 **User's choice:** "No idea"; accepted recommendation.
 **Notes:** Recommended executable proof without making ADK a required production dependency.
@@ -105,7 +105,7 @@
 - Exact route layout and schema/table names.
 - Whether stale `tasks/send` aliases are worth including as compatibility-only helpers.
 - Exact ADK fixture shape, as long as it is executable and does not become required production infrastructure.
-- Whether A2A task state lives in new tables in the main Kitchen DB or another clearly justified location; Phase 36 LangGraph checkpoint DB remains separate.
+- Whether A2A task state lives in new tables in the main Memroos DB or another clearly justified location; Phase 36 LangGraph checkpoint DB remains separate.
 
 ## Deferred Ideas
 

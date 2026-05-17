@@ -111,7 +111,7 @@
 **Remaining:**
 
 1. **Memory-Aware Tool Selection (Phase 30 Plan 02)** — Add similar-task memory signals on top of outcome ranking.
-2. **Kitchen Tool Gateway Operations UI (Phase 31)** — Turn the UI from catalog visibility into an operations console.
+2. **Memroos Tool Gateway Operations UI (Phase 31)** — Turn the UI from catalog visibility into an operations console.
 3. **Gateway Hardening and Lint Cleanup (Phase 32)** — Make full lint enforceable and add CI coverage for the top-level gateway tools.
 
 ---
@@ -122,12 +122,12 @@
 
 **Key accomplishments:**
 
-1. **Monorepo Foundation (Phase 26)** — Kitchen moved to `apps/kitchen`, services moved/imported under `services/`, root scripts delegate to the app, and root-aware runtime paths preserve SQLite/config behavior.
-2. **Progressive MCP Tool Attention (Phase 27)** — Knowledge MCP imported with progressive workspaces, tool-attention workspace actions, curated catalog, outcome logging, Kitchen API, Cookbooks panel, and Flow Tool Gateway node.
-3. **CI + Deploy Hardening (Phase 28)** — Production build and LaunchAgent deployment verified, live health/tool-attention endpoints checked, and monorepo CI added for Kitchen and Python service validation.
+1. **Monorepo Foundation (Phase 26)** — Memroos moved to `apps/memroos`, services moved/imported under `services/`, root scripts delegate to the app, and root-aware runtime paths preserve SQLite/config behavior.
+2. **Progressive MCP Tool Attention (Phase 27)** — Knowledge MCP imported with progressive workspaces, tool-attention workspace actions, curated catalog, outcome logging, Memroos API, Cookbooks panel, and Flow Tool Gateway node.
+3. **CI + Deploy Hardening (Phase 28)** — Production build and LaunchAgent deployment verified, live health/tool-attention endpoints checked, and monorepo CI added for Memroos and Python service validation.
 
 **Requirements satisfied:** 16/16 (all checkboxes marked [x])
-**Verification:** Kitchen tests, Knowledge MCP tests, Python compile smoke, shell syntax checks, production build, and live endpoint checks all passed.
+**Verification:** Memroos tests, Knowledge MCP tests, Python compile smoke, shell syntax checks, production build, and live endpoint checks all passed.
 **Known deferred items:** Existing Library freshness work remains in project active backlog for a later milestone.
 
 ---
@@ -139,11 +139,11 @@
 **Key accomplishments:**
 
 1. **SQLite Conversation Store (Phase 19)** — better-sqlite3 with FTS5, WAL mode, JSONL ingestion engine, recall/ingest/stats API routes, SqliteHealthPanel on Library page
-2. **Hive Mind Coordination (Phase 20)** — Cross-agent action log + task delegation with recovery, /api/hive GET+POST, HiveFeed component with 5-second polling on Kitchen Floor
+2. **Hive Mind Coordination (Phase 20)** — Cross-agent action log + task delegation with recovery, /api/hive GET+POST, HiveFeed component with 5-second polling on Memroos Floor
 3. **Paperclip Fleet Node (Phase 21)** — Collapsible group-paperclip in Flow diagram, PaperclipFleetPanel with per-agent status/autonomy badges, dispatch form and recovery operations
 4. **Voice Server (Phase 22)** — Pipecat Python service (port 7860) with Gemini Live + STT/TTS cascade, transcript persistence to SQLite, VoicePanel on Flow page
 5. **Memory Intelligence (Phase 23)** — LLM consolidation engine (claude-haiku-4-5), 4-tier salience decay (pinned/high/mid/low), useMemoryStats + useAgentPeers hooks, MemoryIntelligencePanel and AgentPeersPanel on dashboard
-6. **Security + Audit (Phase 24)** — 18-pattern content scanner with severity-tiered blocking, SQLite audit_log table, AuditLogPanel on Kitchen Floor
+6. **Security + Audit (Phase 24)** — 18-pattern content scanner with severity-tiered blocking, SQLite audit_log table, AuditLogPanel on Memroos Floor
 7. **Usage Analytics (Phase 25)** — SQLite recall_log table, /api/time-series for 6 metrics x 3 windows, shared TimeSeriesChart component wired into Ledger/Library/Cookbooks pages
 
 **Requirements satisfied:** 55/55 (all checkboxes marked [x])

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "memroos": {
+      "command": "/bin/bash",
+      "args": [
+        "-lc",
+        "exec \"${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh\""
+      ]
+    }
+  }
+}

@@ -16,7 +16,7 @@ function parseArgs() {
 
 function validateWizardInputs(values) {
   const errors = [];
-  if (!profiles.profiles[values.KITCHEN_A2A_PROFILE]) errors.push('Unknown profile');
+  if (!profiles.profiles[values.MEMROOS_A2A_PROFILE]) errors.push('Unknown profile');
   try {
     const qdrantUrl = new URL(values.QDRANT_URL);
     if (!['http:', 'https:'].includes(qdrantUrl.protocol)) errors.push('QDRANT_URL must be an HTTP(S) URL');
@@ -25,8 +25,8 @@ function validateWizardInputs(values) {
   }
   if (!values.QDRANT_API_KEY || values.QDRANT_API_KEY.startsWith('your-')) errors.push('QDRANT_API_KEY is required');
   if (!values.NEO4J_PASSWORD || values.NEO4J_PASSWORD === 'change-me') errors.push('NEO4J_PASSWORD must be changed');
-  if (!values.KITCHEN_OPERATOR_API_KEY || values.KITCHEN_OPERATOR_API_KEY === 'change-me') errors.push('KITCHEN_OPERATOR_API_KEY must be changed');
-  const optionalCapabilities = String(values.KITCHEN_OPTIONAL_CAPABILITIES || '').split(',').map((item) => item.trim()).filter(Boolean);
+  if (!values.MEMROOS_OPERATOR_API_KEY || values.MEMROOS_OPERATOR_API_KEY === 'change-me') errors.push('MEMROOS_OPERATOR_API_KEY must be changed');
+  const optionalCapabilities = String(values.MEMROOS_OPTIONAL_CAPABILITIES || '').split(',').map((item) => item.trim()).filter(Boolean);
   const unsupported = optionalCapabilities.filter((item) => !supportedOptionalCapabilities.has(item));
   if (unsupported.length) errors.push(`Unsupported optional capabilities: ${unsupported.join(', ')}`);
   return errors;
@@ -88,17 +88,17 @@ async function promptForValues() {
     const qdrantUrl = await rl.question('Qdrant Cloud URL: ');
     const qdrantKey = await secretQuestion('Qdrant API key (input hidden): ');
     const neo4jPassword = await secretQuestion('Neo4j password (input hidden): ');
-    const operatorKey = await secretQuestion('Kitchen operator API key (input hidden): ');
+    const operatorKey = await secretQuestion('Memroos operator API key (input hidden): ');
     const geminiKey = await secretQuestion('Gemini API key (optional, input hidden, press Enter to skip): ');
     const optionalCapabilities = await rl.question('Optional capabilities [gitnexus,agent-lightning] (blank to skip): ');
     const firstAgentId = await rl.question('First agent id to prepare (optional): ');
     return {
-      KITCHEN_A2A_PROFILE: profile.trim() || 'private-network',
+      MEMROOS_A2A_PROFILE: profile.trim() || 'private-network',
       QDRANT_URL: qdrantUrl.trim(),
       QDRANT_API_KEY: qdrantKey.trim(),
       NEO4J_PASSWORD: neo4jPassword.trim(),
-      KITCHEN_OPERATOR_API_KEY: operatorKey.trim(),
-      KITCHEN_OPTIONAL_CAPABILITIES: optionalCapabilities.trim(),
+      MEMROOS_OPERATOR_API_KEY: operatorKey.trim(),
+      MEMROOS_OPTIONAL_CAPABILITIES: optionalCapabilities.trim(),
       GEMINI_API_KEY: geminiKey.trim() || 'your-gemini-key-here',
       FIRST_AGENT_ID: firstAgentId.trim(),
     };
@@ -111,12 +111,12 @@ async function main() {
   const args = parseArgs();
   if (args.check) {
     const sample = {
-      KITCHEN_A2A_PROFILE: 'private-network',
+      MEMROOS_A2A_PROFILE: 'private-network',
       QDRANT_URL: 'https://qdrant.example',
       QDRANT_API_KEY: 'dummy-key',
       NEO4J_PASSWORD: 'neo4j-secret',
-      KITCHEN_OPERATOR_API_KEY: 'operator-secret',
-      KITCHEN_OPTIONAL_CAPABILITIES: 'gitnexus,agent-lightning',
+      MEMROOS_OPERATOR_API_KEY: 'operator-secret',
+      MEMROOS_OPTIONAL_CAPABILITIES: 'gitnexus,agent-lightning',
     };
     const errors = validateWizardInputs(sample);
     if (errors.length) throw new Error(errors.join('; '));
@@ -146,7 +146,7 @@ async function main() {
   fs.writeFileSync(envFile, rendered);
   console.log(`Wrote ${envFile}. Next: ./setup.sh`);
   if (values.FIRST_AGENT_ID) {
-    console.log(`After Kitchen starts, register first agent '${values.FIRST_AGENT_ID}' from /agents or POST /api/agents/register.`);
+    console.log(`After Memroos starts, register first agent '${values.FIRST_AGENT_ID}' from /agents or POST /api/agents/register.`);
   }
 }
 

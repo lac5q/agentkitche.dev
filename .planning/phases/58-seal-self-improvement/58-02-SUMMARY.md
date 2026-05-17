@@ -25,7 +25,7 @@ it is not an empirical agent re-execution.
 
 ## What Was Done
 
-- Added `apps/kitchen/src/lib/seal/rescore.ts` for deterministic modeled
+- Added `apps/memroos/src/lib/seal/rescore.ts` for deterministic modeled
   post-apply re-scoring.
 - Added proposal-aware `EvalService.rescoreForProposal` and wired
   `SealService.applyProposal` to use it before falling back to `runForTrace`.
@@ -40,7 +40,7 @@ it is not an empirical agent re-execution.
 
 ## Verification
 
-- `cd apps/kitchen && npm exec -- vitest run src/lib/seal/__tests__/rescore.test.ts src/lib/seal/__tests__/sdk-eval-service.test.ts src/lib/seal/__tests__/seal-substrate.test.ts`
+- `cd apps/memroos && npm exec -- vitest run src/lib/seal/__tests__/rescore.test.ts src/lib/seal/__tests__/sdk-eval-service.test.ts src/lib/seal/__tests__/seal-substrate.test.ts`
   - Result: 3 test files passed, 12 tests passed.
 
 ## Gaps / Deferred

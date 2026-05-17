@@ -4,9 +4,9 @@ MemroOS is available under the [PolyForm Small Business License 1.0.0](LICENSE) 
 
 Use outside that license requires a separate commercial license from Luis Calderon.
 
-## Transition from Agent Kitchen
+## Transition from Memroos
 
-Agent Kitchen versions up to the `agent-kitchen-mit-final` tag were distributed under the MIT License. Those earlier MIT rights remain intact for copies received under those terms.
+Memroos versions up to the `memroos-mit-final` tag were distributed under the MIT License. Those earlier MIT rights remain intact for copies received under those terms.
 
 MemroOS versions after the license-change commit are distributed under the PolyForm Small Business License 1.0.0 unless a separate written commercial license says otherwise.
 

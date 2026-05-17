@@ -1,7 +1,7 @@
 ---
 title: Second Vertical — Healthcare or Legal
 planted_date: 2026-05-16
-trigger_condition: "After Phase 65 (finance reconciliation vertical) ships and first external customer is live on Memoroos"
+trigger_condition: "After Phase 65 (finance reconciliation vertical) ships and first external customer is live on Memroos"
 related_phases: [65]
 ---
 

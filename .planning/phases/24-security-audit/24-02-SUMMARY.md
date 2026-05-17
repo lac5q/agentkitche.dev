@@ -1,13 +1,13 @@
 ---
 phase: 24-security-audit
 plan: 02
-subsystem: kitchen-ui
+subsystem: memroos-ui
 tags: [audit-log, dashboard, react, polling, tdd]
 dependency_graph:
   requires:
     - 24-01  # audit_log table, writeAuditLog helper, GET /api/audit-log
   provides:
-    - AuditLogPanel component wired into Kitchen Floor
+    - AuditLogPanel component wired into Memroos Floor
     - useAuditLog hook in api-client.ts
   affects:
     - src/app/page.tsx
@@ -20,8 +20,8 @@ tech_stack:
     - formatRelativeTime helper (copied verbatim from hive-feed.tsx)
 key_files:
   created:
-    - src/components/kitchen/audit-log-panel.tsx
-    - src/components/kitchen/__tests__/audit-log-panel.test.tsx
+    - src/components/memroos/audit-log-panel.tsx
+    - src/components/memroos/__tests__/audit-log-panel.test.tsx
   modified:
     - src/lib/api-client.ts
     - src/app/page.tsx
@@ -37,24 +37,24 @@ metrics:
 
 # Phase 24 Plan 02: AuditLogPanel UI Summary
 
-AuditLogPanel React component wired to useAuditLog hook, rendering audit trail entries with severity-colored chips on the Kitchen Floor page.
+AuditLogPanel React component wired to useAuditLog hook, rendering audit trail entries with severity-colored chips on the Memroos Floor page.
 
 ## What Was Built
 
 **useAuditLog hook** (`src/lib/api-client.ts`): Appended after `useAgentPeers`. Calls `GET /api/audit-log?limit=${limit}`, polls every 5000ms via `POLL_INTERVALS.hive`, returns typed entries array.
 
-**AuditLogPanel component** (`src/components/kitchen/audit-log-panel.tsx`): Mirrors HiveFeed structure exactly — loading spinner, "No audit events yet." empty state, and a list view with actor (truncated), action chip (severity-colored), target, and relative timestamp columns. Severity color map: info=slate, medium=amber, high=rose. Unknown severities fall back to slate.
+**AuditLogPanel component** (`src/components/memroos/audit-log-panel.tsx`): Mirrors HiveFeed structure exactly — loading spinner, "No audit events yet." empty state, and a list view with actor (truncated), action chip (severity-colored), target, and relative timestamp columns. Severity color map: info=slate, medium=amber, high=rose. Unknown severities fall back to slate.
 
-**Component tests** (`src/components/kitchen/__tests__/audit-log-panel.test.tsx`): 8 tests covering loading state, empty state, list rendering with 3 items, actor/action/target/timestamp content, all three severity color classes, and section header text.
+**Component tests** (`src/components/memroos/__tests__/audit-log-panel.test.tsx`): 8 tests covering loading state, empty state, list rendering with 3 items, actor/action/target/timestamp content, all three severity color classes, and section header text.
 
-**Kitchen Floor page** (`src/app/page.tsx`): Added import and `<AuditLogPanel />` immediately below `<AgentPeersPanel />`.
+**Memroos Floor page** (`src/app/page.tsx`): Added import and `<AuditLogPanel />` immediately below `<AgentPeersPanel />`.
 
 ## Tasks Completed
 
 | Task | Commit | Files |
 |------|--------|-------|
-| Task 1: useAuditLog hook + AuditLogPanel component + tests (TDD) | 1aaedde | src/lib/api-client.ts, src/components/kitchen/audit-log-panel.tsx, src/components/kitchen/__tests__/audit-log-panel.test.tsx |
-| Task 2: Wire AuditLogPanel into Kitchen Floor page | 3881d26 | src/app/page.tsx |
+| Task 1: useAuditLog hook + AuditLogPanel component + tests (TDD) | 1aaedde | src/lib/api-client.ts, src/components/memroos/audit-log-panel.tsx, src/components/memroos/__tests__/audit-log-panel.test.tsx |
+| Task 2: Wire AuditLogPanel into Memroos Floor page | 3881d26 | src/app/page.tsx |
 
 ## Verification Results
 
@@ -76,8 +76,8 @@ None — all threat surface was accounted for in the plan's threat model (T-24-0
 
 ## Self-Check: PASSED
 
-- src/components/kitchen/audit-log-panel.tsx: FOUND
-- src/components/kitchen/__tests__/audit-log-panel.test.tsx: FOUND
+- src/components/memroos/audit-log-panel.tsx: FOUND
+- src/components/memroos/__tests__/audit-log-panel.test.tsx: FOUND
 - src/lib/api-client.ts (useAuditLog appended): FOUND
 - src/app/page.tsx (AuditLogPanel rendered): FOUND
 - Commit 1aaedde: FOUND

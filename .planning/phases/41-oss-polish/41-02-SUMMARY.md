@@ -8,8 +8,8 @@ Make the public repo continuously verifiable so future agent workflow memory cha
 
 ## Shipped
 
-- Added root and Kitchen `typecheck` scripts.
-- Added `apps/kitchen/tsconfig.typecheck.json` for production-source typechecking.
+- Added root and Memroos `typecheck` scripts.
+- Added `apps/memroos/tsconfig.typecheck.json` for production-source typechecking.
 - Expanded `.github/workflows/ci.yml` with typecheck, lint, tests, build, Python service tests, and Docker compose config smoke.
 - Added `scripts/docker-compose-smoke.sh` with CI-safe `--config-only` mode.
 

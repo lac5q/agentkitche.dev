@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-KITCHEN_DIR="$SCRIPT_DIR/apps/kitchen"
+MEMROOS_DIR="$SCRIPT_DIR/apps/memroos"
 VOICE_DIR="$SCRIPT_DIR/services/voice-server"
 NEXTJS_PORT=3002
 PIPECAT_PORT=7860
@@ -54,9 +54,9 @@ fi
 
 # ── Start Next.js (production) ────────────────────────────────────────────────
 echo "Starting Next.js on port $NEXTJS_PORT..."
-NEXT_BIN="$KITCHEN_DIR/node_modules/.bin/next"
+NEXT_BIN="$MEMROOS_DIR/node_modules/.bin/next"
 if [ ! -x "$NEXT_BIN" ]; then
   NEXT_BIN="$SCRIPT_DIR/node_modules/.bin/next"
 fi
-cd "$KITCHEN_DIR"
+cd "$MEMROOS_DIR"
 exec "$NEXT_BIN" start --port "$NEXTJS_PORT"

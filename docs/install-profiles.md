@@ -2,7 +2,7 @@
 
 MemroOS supports multiple operating profiles so teams can start locally and grow into multi-machine or cloud deployments without rewriting code.
 
-Profiles live in `config/operating-profiles.json` and are selected with `KITCHEN_A2A_PROFILE`.
+Profiles live in `config/operating-profiles.json` and are selected with `MEMROOS_A2A_PROFILE`.
 
 ## Quick Profile Table
 
@@ -11,7 +11,7 @@ Profiles live in `config/operating-profiles.json` and are selected with `KITCHEN
 | `local-dev` | One developer laptop | `localhost` | Loopback writes allowed if no operator key is set |
 | `single-host` | One server or VM | Host-local/private | Operator key required |
 | `private-network` | Startup multi-machine default | Tailscale or LAN | Operator key required |
-| `cloud-https` | Internet-reachable Kitchen | HTTPS | Operator key required |
+| `cloud-https` | Internet-reachable Memroos | HTTPS | Operator key required |
 | `custom` | Non-standard topology | Operator-defined | Operator-defined |
 
 ## Recommended Startup Setup
@@ -19,10 +19,10 @@ Profiles live in `config/operating-profiles.json` and are selected with `KITCHEN
 Use `private-network` when agents run on different machines.
 
 ```env
-KITCHEN_A2A_PROFILE=private-network
-KITCHEN_PUBLIC_BASE_URL=http://kitchen.tailnet:3000
-KITCHEN_A2A_ENDPOINT_BASE_URL=http://kitchen.tailnet:3000
-KITCHEN_OPERATOR_API_KEY=<strong-random-secret>
+MEMROOS_A2A_PROFILE=private-network
+MEMROOS_PUBLIC_BASE_URL=http://memroos.tailnet:3000
+MEMROOS_A2A_ENDPOINT_BASE_URL=http://memroos.tailnet:3000
+MEMROOS_OPERATOR_API_KEY=<strong-random-secret>
 ```
 
 Run:
@@ -37,29 +37,29 @@ Run:
 Use `local-dev` when everything is on one machine.
 
 ```env
-KITCHEN_A2A_PROFILE=local-dev
-KITCHEN_PUBLIC_BASE_URL=http://localhost:3000
-KITCHEN_A2A_ENDPOINT_BASE_URL=http://localhost:3000
+MEMROOS_A2A_PROFILE=local-dev
+MEMROOS_PUBLIC_BASE_URL=http://localhost:3000
+MEMROOS_A2A_ENDPOINT_BASE_URL=http://localhost:3000
 ```
 
-Local loopback can register agents without `KITCHEN_OPERATOR_API_KEY`, but setting one is still safer and closer to production.
+Local loopback can register agents without `MEMROOS_OPERATOR_API_KEY`, but setting one is still safer and closer to production.
 
 ## Cloud HTTPS
 
-Use `cloud-https` when Kitchen is reachable from the public internet.
+Use `cloud-https` when Memroos is reachable from the public internet.
 
 ```env
-KITCHEN_A2A_PROFILE=cloud-https
-KITCHEN_PUBLIC_BASE_URL=https://kitchen.example.com
-KITCHEN_A2A_ENDPOINT_BASE_URL=https://kitchen.example.com
-KITCHEN_OPERATOR_API_KEY=<strong-random-secret>
+MEMROOS_A2A_PROFILE=cloud-https
+MEMROOS_PUBLIC_BASE_URL=https://memroos.example.com
+MEMROOS_A2A_ENDPOINT_BASE_URL=https://memroos.example.com
+MEMROOS_OPERATOR_API_KEY=<strong-random-secret>
 ```
 
-Put Kitchen behind a reverse proxy or tunnel that terminates HTTPS. Do not expose a cloud deployment without an operator key.
+Put Memroos behind a reverse proxy or tunnel that terminates HTTPS. Do not expose a cloud deployment without an operator key.
 
 ## Required Services
 
-- Kitchen Next.js app
+- Memroos Next.js app
 - mem0 service
 - Qdrant Cloud
 - Neo4j
@@ -95,10 +95,10 @@ The healthcheck reads `services/memory/.env` when present. Configure `TELEGRAM_B
 
 ## Optional Progressive Capabilities
 
-Kitchen can also check bundled-but-optional capabilities during setup:
+Memroos can also check bundled-but-optional capabilities during setup:
 
 ```env
-KITCHEN_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
+MEMROOS_OPTIONAL_CAPABILITIES=gitnexus,agent-lightning
 ```
 
 Supported v1 values are `gitnexus` and `agent-lightning`. These checks only warn; they do not make setup fail. GitNexus stays discoverable through `.mcp.json` as `mcp-server:gitnexus`, and Agent Lightning/APO is surfaced as `capability:agent-lightning` in the progressive tool catalog.
@@ -122,18 +122,18 @@ Keep GitNexus as its own MCP server:
 }
 ```
 
-MemroOS reads that registration and advertises `mcp-server:gitnexus` through tool-attention. This keeps code graph indexing, stale-index checks, and repo intelligence in GitNexus while Kitchen stays the progressive discovery and operator-control layer.
+MemroOS reads that registration and advertises `mcp-server:gitnexus` through tool-attention. This keeps code graph indexing, stale-index checks, and repo intelligence in GitNexus while Memroos stays the progressive discovery and operator-control layer.
 
 ### Agent Lightning Boundary
 
-Agent Lightning/APO remains a human-gated proposal workflow. Kitchen surfaces it as `capability:agent-lightning`, reads proposal/log paths from the existing APO environment variables, and uses the existing worker command:
+Agent Lightning/APO remains a human-gated proposal workflow. Memroos surfaces it as `capability:agent-lightning`, reads proposal/log paths from the existing APO environment variables, and uses the existing worker command:
 
 ```bash
-npm --prefix apps/kitchen run apo:worker -- --executor qwen
+npm --prefix apps/memroos run apo:worker -- --executor qwen
 ```
 
 Approving proposals and processing the approved queue remain explicit operator actions.
 
 ## Common Confusion: Registry Has Fewer Agents Than Expected
 
-The `/agents` page shows canonical registry agents only. Older `agents.config.json` entries are legacy remote poll targets. To make those agents first-class in Kitchen, register them through `/api/agents/register` or ingest their A2A card through `/api/a2a/agents/register`.
+The `/agents` page shows canonical registry agents only. Older `agents.config.json` entries are legacy remote poll targets. To make those agents first-class in Memroos, register them through `/api/agents/register` or ingest their A2A card through `/api/a2a/agents/register`.

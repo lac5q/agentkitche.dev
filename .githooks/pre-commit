@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Agent Kitchen — Pre-commit hook
+# Memroos — Pre-commit hook
 # Install: git config core.hooksPath .githooks
 #
 # Blocks commits that contain:

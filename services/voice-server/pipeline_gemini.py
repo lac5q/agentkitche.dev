@@ -31,7 +31,7 @@ from transcript_proc_helper import build_transcript_proc
 
 
 AGENT_INSTRUCTIONS: dict[str, str] = {
-    "kitchen": (
+    "memroos": (
         "You are the MemroOS engagement assistant embedded in the MemroOS dashboard. "
         "You have deep knowledge of the agents, skills, knowledge collections, and metrics visible on the dashboard. "
         "Help the user understand what's happening across their agent fleet, interpret metrics, and navigate their knowledge base. "
@@ -50,14 +50,14 @@ AGENT_INSTRUCTIONS: dict[str, str] = {
 }
 
 
-def build_gemini_pipeline(transport, session_id: str, agent: str = "kitchen") -> Pipeline:
+def build_gemini_pipeline(transport, session_id: str, agent: str = "memroos") -> Pipeline:
     """
     Build a Gemini Live speech-to-speech pipeline.
 
     Args:
         transport:  WebsocketServerTransport instance (provides input/output)
         session_id: UUID string for the current voice session
-        agent:      Agent ID — selects the system instruction ("kitchen", "flow", "general")
+        agent:      Agent ID — selects the system instruction ("memroos", "flow", "general")
 
     Returns:
         Pipeline ready to be wrapped in PipelineTask

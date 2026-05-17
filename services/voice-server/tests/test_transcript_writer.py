@@ -16,7 +16,7 @@ def test_write_inserts_row(in_memory_db):
     """TranscriptWriter.write() inserts a row into the messages table."""
     session_id = str(uuid.uuid4())
     writer = TranscriptWriter(db_path=in_memory_db, session_id=session_id)
-    writer.write(role="user", content="Hello, kitchen!")
+    writer.write(role="user", content="Hello, memroos!")
 
     conn = sqlite3.connect(in_memory_db)
     rows = conn.execute("SELECT * FROM messages").fetchall()
@@ -38,7 +38,7 @@ def test_write_sets_correct_fields(in_memory_db):
     conn.close()
 
     assert row[0] == session_id
-    assert row[1] == "agent-kitchen"
+    assert row[1] == "memroos"
     assert row[2] == "voice"
     assert row[3] == "assistant"
     assert row[4] == "How can I help?"

@@ -1,4 +1,4 @@
-# Project: Memoroos
+# Project: Memroos
 
 *Last updated: 2026-05-17 — v2.5 archived; v3 compliance platform queued*
 
@@ -6,7 +6,7 @@
 
 ## Current Product Goal
 
-`agentkitchen.dev` is the control plane where AI-native teams retain what agents learn, retrieve the right context at runtime, dispatch work to the right agent, and turn repeated work into reusable skills.
+`memroos.dev` is the control plane where AI-native teams retain what agents learn, retrieve the right context at runtime, dispatch work to the right agent, and turn repeated work into reusable skills.
 
 See `.planning/GOAL.md` for the full development goal and workflow loop.
 
@@ -66,13 +66,13 @@ v1.5 complete — 7 phases (19-25), 15 plans, 55/55 requirements satisfied. Shar
 
 ## What This Is
 
-An open-source A2A protocol hub and agent operations dashboard. Kitchen speaks Google's Agent-to-Agent (A2A) protocol natively — any A2A-compatible agent (Google ADK, Claude Code, LangChain, CrewAI, AutoGen) plugs in automatically; non-A2A agents get a thin REST shim. It ships with a unified three-tier memory architecture (vector via Qdrant Cloud, graph via Neo4j, episodic via SQLite) and a Next.js dashboard that makes every agent, knowledge system, and skill visible, connected, and self-improving.
+An open-source A2A protocol hub and agent operations dashboard. Memroos speaks Google's Agent-to-Agent (A2A) protocol natively — any A2A-compatible agent (Google ADK, Claude Code, LangChain, CrewAI, AutoGen) plugs in automatically; non-A2A agents get a thin REST shim. It ships with a unified three-tier memory architecture (vector via Qdrant Cloud, graph via Neo4j, episodic via SQLite) and a Next.js dashboard that makes every agent, knowledge system, and skill visible, connected, and self-improving.
 
-Kitchen should operate like a product with a recommended install path, not a personal repo full of hidden assumptions. The default profile should be excellent for local development, while `single-host`, `private-network`, `cloud-https`, and `custom` profiles let operators adapt ports, paths, service URLs, public base URLs, auth mode, and machine layout without changing source.
+Memroos should operate like a product with a recommended install path, not a personal repo full of hidden assumptions. The default profile should be excellent for local development, while `single-host`, `private-network`, `cloud-https`, and `custom` profiles let operators adapt ports, paths, service URLs, public base URLs, auth mode, and machine layout without changing source.
 
 ## Core Value
 
-Any agent framework plugs into Kitchen — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
+Any agent framework plugs into Memroos — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
 
 ---
 
@@ -80,7 +80,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 
 ### Validated
 
-- ✓ Canonical monorepo layout with Kitchen in `apps/kitchen` and services in `services/` — v1.6 (MONO-01/02)
+- ✓ Canonical monorepo layout with Memroos in `apps/memroos` and services in `services/` — v1.6 (MONO-01/02)
 - ✓ Root script delegation and root-aware runtime paths — v1.6 (MONO-03/04/05)
 - ✓ Memory and Knowledge MCP configured from root `.mcp.json` — v1.6 (MCP-01/02)
 - ✓ Progressive Knowledge MCP workspace surface — v1.6 (MCP-03)
@@ -90,7 +90,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - ✓ Top-level progressive tool gateway MCP tools (`tool_catalog`, `tool_discover`, `tool_load`, `tool_record_outcome`, `tool_stats`) — v1.7 (TOOLGW-01/02)
 - ✓ Outcome-aware Tool Attention stats and discovery ranking — v1.7 (MEMGW-01/02)
 - ✓ Similar-task memory recommendations via contextMatchSignal (Python→TypeScript port) — v1.7 (MEMGW-03)
-- ✓ Kitchen Tool Gateway ops UI: SimilarTaskPanel, outcome score badges, context filters — v1.7 (UIGW-01/02/03)
+- ✓ Memroos Tool Gateway ops UI: SimilarTaskPanel, outcome score badges, context filters — v1.7 (UIGW-01/02/03)
 - ✓ tool_discover category field + pytest coverage 11→18 tests + lint enforced in CI — v1.7 (TOOLGW-03/OPSGW-01/02/03)
 - ✓ Knowledge base collections browsable with doc counts and freshness — v1.1
 - ✓ Live agent heartbeat visible in Flow diagram — v1.2
@@ -110,7 +110,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - ✓ SQLite FTS5 conversation store with recall/ingest/stats API — v1.5 (SQLDB-01/02/03)
 - ✓ SqliteHealthPanel on Library page — v1.5 (SQLDB-04, DASH-01)
 - ✓ Hive mind coordination (action log + task delegation + recovery) — v1.5 (HIVE-01/02/03)
-- ✓ HiveFeed live polling component on Kitchen Floor — v1.5 (HIVE-04, DASH-02)
+- ✓ HiveFeed live polling component on Memroos Floor — v1.5 (HIVE-04, DASH-02)
 - ✓ Paperclip fleet node in Flow + fleet panel — v1.5 (PAPER-01/02/03/04, HIVE-05)
 - ✓ Pipecat voice server (Gemini Live + STT/TTS cascade) — v1.5 (VOICE-01/02/03)
 - ✓ Voice transcripts written to SQLite — v1.5 (VOICE-04)
@@ -118,7 +118,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - ✓ Memory consolidation engine + LLM pattern extraction — v1.5 (MEM-01)
 - ✓ 4-tier salience decay with access-resistance — v1.5 (MEM-02)
 - ✓ MemoryIntelligencePanel on Library page — v1.5 (MEM-03)
-- ✓ AgentPeersPanel on Kitchen Floor + /api/agent-peers — v1.5 (MEM-04)
+- ✓ AgentPeersPanel on Memroos Floor + /api/agent-peers — v1.5 (MEM-04)
 - ✓ 18-pattern content scanner with severity blocking — v1.5 (SEC-01)
 - ✓ SQLite audit_log table + AuditLogPanel — v1.5 (SEC-02/03, DASH-03)
 - ✓ Usage analytics (6 metrics, 3 windows) on Ledger/Library/Cookbooks — v1.5 (ANA-01/02/03/04)
@@ -134,7 +134,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 - [ ] Unified memory: `/api/memory/*` API covering vector + graph + episodic tiers
 - [ ] Operating profiles: default local install plus customizable `single-host`, `private-network`, `cloud-https`, and `custom` topologies
 - [ ] Env-driven config: `.env.example` covering all ports, paths, keys, URLs, backends, and profile-specific values
-- [ ] Docker full-stack: Kitchen + Knowledge MCP + mem0 + Neo4j (Qdrant stays cloud)
+- [ ] Docker full-stack: Memroos + Knowledge MCP + mem0 + Neo4j (Qdrant stays cloud)
 - [ ] Developer setup: `setup.sh`, prereq detection, first-run wizard
 - [ ] Documentation: README rewrite, architecture diagram, per-framework integration guides
 - [ ] OSS polish: MIT license, CONTRIBUTING.md, security policy, issue templates, public CI
@@ -153,12 +153,12 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 
 ### Deferred (v2.5+ candidates)
 
-- [ ] Flow trigger button — kick off `qmd update` pipeline from Kitchen UI
+- [ ] Flow trigger button — kick off `qmd update` pipeline from Memroos UI
 - [ ] Library freshness — show QMD index recency timestamp vs file mtime
 - [ ] LLM-powered recall scoring — semantic/embedding upgrade to BM25 lexical recall
 - [ ] Cross-project recall — similar-task recommendations across multiple local repos
-- [ ] Voice meeting bot — Pipecat meeting participant writing transcripts to SQLite with Kitchen highlights panel
-- [ ] ClaudeClaw-inspired Chat tab — dedicated command/chat workspace for CLIs, Paperclip project agents, runtime subagents, and Kitchen system identities, separate from Flow
+- [ ] Voice meeting bot — Pipecat meeting participant writing transcripts to SQLite with Memroos highlights panel
+- [ ] ClaudeClaw-inspired Chat tab — dedicated command/chat workspace for CLIs, Paperclip project agents, runtime subagents, and Memroos system identities, separate from Flow
 - [ ] Memory search surface — unified search across SQLite recall, mem0/vector memory, Neo4j graph memory, and knowledge files with filters for agent, project, source, date, and tier
 - [ ] Schedules and routines console — visible recurring jobs, cron health, standing delegations, maintenance routines, and approval-required automations
 - [ ] Hivemind Obsidian view — graph/canvas exploration of agents, memories, tasks, proposals, skills, backlinks, and relationships inspired by Obsidian/ClaudeClaw
@@ -178,9 +178,9 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 
 ## Context
 
-**Tech stack:** Next.js (App Router), React Flow, TypeScript, Tailwind, Vitest  
-**Codebase:** ~21,800 LOC TypeScript/TSX + Python across `apps/kitchen/src/` and `services/`  
-**Production:** Port 3002, `npm start`, LaunchAgent auto-start, Cloudflare tunnel  
+**Tech stack:** Next.js (App Router), React Flow, TypeScript, Tailwind, Vitest
+**Codebase:** ~21,800 LOC TypeScript/TSX + Python across `apps/memroos/src/` and `services/`
+**Production:** Port 3002, `npm start`, LaunchAgent auto-start, Cloudflare tunnel
 **Known debt:**
 - GitNexus embeddings partial (285/473) — crash bug upstream
 - Library freshness indicator reflects file mtime, not QMD index recency
@@ -208,7 +208,7 @@ Any agent framework plugs into Kitchen — and every agent, knowledge system, an
 | TimeSeriesChart as pure presentational component | ✓ No hook calls inside, powered by useTimeSeries | v1.5 |
 | Keep private Knowledge Hub content outside the monorepo | ✓ Only service/runtime code imported | v1.6 |
 | Tool Attention as progressive discovery layer | ✓ No blanket runtime dependency on mcp-agent | v1.6 |
-| Monorepo CI validates Kitchen and Python service surfaces | ✓ Added CI workflow | v1.6 |
+| Monorepo CI validates Memroos and Python service surfaces | ✓ Added CI workflow | v1.6 |
 | Tool gateway is callable directly from MCP clients | ✓ Top-level `tool_*` tools added | v1.7 |
 | contextMatchSignal algorithm ported Python→TypeScript | ✓ Exact multipliers (task_type×2, repo×2, agent_id×1, tags×1); task field never read | v1.7 |
 | SimilarTaskPanel on Cookbooks page | ✓ Context-ranked recommendations below ToolAttentionPanel | v1.7 |

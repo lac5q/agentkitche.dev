@@ -23,10 +23,10 @@ The right immediate execution target is still minimal Phase 41 OSS hygiene, but 
 
 ## Stack Fit
 
-- Root package delegates to the Kitchen workspace in `apps/kitchen`.
-- Kitchen is Next.js App Router, React 19, TypeScript, Tailwind, Vitest, and Playwright.
+- Root package delegates to the Memroos workspace in `apps/memroos`.
+- Memroos is Next.js App Router, React 19, TypeScript, Tailwind, Vitest, and Playwright.
 - Python services live under `services/`: `knowledge-mcp`, `memory`, `orchestration`, and `voice-server`.
-- Docker compose already defines Kitchen, mem0, Neo4j, orchestration, voice, and Knowledge MCP.
+- Docker compose already defines Memroos, mem0, Neo4j, orchestration, voice, and Knowledge MCP.
 - GitHub Actions already has baseline CI and secret guard workflows, but it does not yet satisfy the Phase 41 public CI contract.
 
 ## Current OSS Gap
@@ -36,7 +36,7 @@ The right immediate execution target is still minimal Phase 41 OSS hygiene, but 
 - `SECURITY.md` is missing.
 - `.github/ISSUE_TEMPLATE/` is missing.
 - `.github/workflows/ci.yml` runs tests and build, but not explicit lint/typecheck or Docker compose smoke.
-- `apps/kitchen/package.json` has no explicit `typecheck` script; Next build performs type validation, but Phase 41 asks for typecheck as a named CI gate.
+- `apps/memroos/package.json` has no explicit `typecheck` script; Next build performs type validation, but Phase 41 asks for typecheck as a named CI gate.
 
 ## Roadmap Hygiene Notes
 

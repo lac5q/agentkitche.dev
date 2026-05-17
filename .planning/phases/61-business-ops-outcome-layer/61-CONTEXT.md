@@ -23,7 +23,7 @@ Phase 61 closes the L3 layer of composite `W` with real post-hoc business signal
   - Finance: **QuickBooks** (live, OAuth2) + NetSuite (mock fixture)
 - L3 scorers that read from `business_outcome_events` at scoring time; they stay synchronous and implement the Phase 57 `EvalScorer` contract.
 - Per-company L3 KPI weighting: new top-level `companies:` block in `memroos.eval.yaml` with `{l3_sub_weights: {completion_rate, escalation_rate, ttr_p50, operator_approval_rate, cost_per_task}}`. Soft tenant key at Phase 61; Phase 62 reconciles `company_id` with authenticated `tenant_id`.
-- `/business-ops` page in Kitchen UI: per-agent `W` timeline with L1/L2/L3 sparkline breakdown, click-through to source trace, and click-through to the originating business-system record URL (stored on `business_outcome_events.source_url`).
+- `/business-ops` page in Memroos UI: per-agent `W` timeline with L1/L2/L3 sparkline breakdown, click-through to source trace, and click-through to the originating business-system record URL (stored on `business_outcome_events.source_url`).
 
 ### Out of scope for Phase 61
 
@@ -47,19 +47,19 @@ Resolution: two stages.
 
 **Stage 2 (scorer read):** L3 scorers read from `business_outcome_events` at scoring time synchronously. If no rows exist yet for a `correlation_id`, L3 scores are computed as `null` / not-yet-observed and excluded from composite `W` until events arrive. This prevents premature L3 penalty for in-flight tasks.
 
-Adapter file layout: `apps/kitchen/src/lib/business-ops/adapters/{hubspot,salesforce,intercom,zendesk,quickbooks,netsuite}.ts`. Each implements the `BusinessSystemAdapter` interface exported from `apps/kitchen/src/lib/business-ops/adapter-interface.ts`.
+Adapter file layout: `apps/memroos/src/lib/business-ops/adapters/{hubspot,salesforce,intercom,zendesk,quickbooks,netsuite}.ts`. Each implements the `BusinessSystemAdapter` interface exported from `apps/memroos/src/lib/business-ops/adapter-interface.ts`.
 
 ### Decision 2 — Correlation ID strategy
 
-Phase 36 (ORCH-05) ships end-to-end `correlation_id` attached at task ingress and carried through all hops (Kitchen → LangGraph → agents). The `eval_runs` table's `trace_id` field is the correlation ID surface already present in Phase 57 — traces submitted to the eval engine carry the same `trace_id` that originated in orchestration.
+Phase 36 (ORCH-05) ships end-to-end `correlation_id` attached at task ingress and carried through all hops (Memroos → LangGraph → agents). The `eval_runs` table's `trace_id` field is the correlation ID surface already present in Phase 57 — traces submitted to the eval engine carry the same `trace_id` that originated in orchestration.
 
-Phase 61 adapters key `business_outcome_events` on `correlation_id = eval_runs.trace_id`. No new correlation scheme is introduced. Adapters store the `correlation_id` as a field they receive in the external-system payload (e.g. Intercom conversation metadata, HubSpot deal property) — operators must configure the external-system field name that carries the Kitchen `correlation_id`. This is a documented setup requirement, not an automated linkage.
+Phase 61 adapters key `business_outcome_events` on `correlation_id = eval_runs.trace_id`. No new correlation scheme is introduced. Adapters store the `correlation_id` as a field they receive in the external-system payload (e.g. Intercom conversation metadata, HubSpot deal property) — operators must configure the external-system field name that carries the Memroos `correlation_id`. This is a documented setup requirement, not an automated linkage.
 
 Configuration surface in `memroos.eval.yaml`:
 ```yaml
 business_ops:
   poll_interval_seconds: 300
-  correlation_id_field: "kitchen_correlation_id"   # external system field name
+  correlation_id_field: "memroos_correlation_id"   # external system field name
 ```
 
 ### Decision 3 — Per-company L3 weights as a new top-level `companies:` block
@@ -97,21 +97,21 @@ L3 outcome data is an operational reporting surface for business owners, not a c
 
 ### Decision 7 — L3 scorer null handling
 
-When `business_outcome_events` has no rows for a `correlation_id` (task still in-flight, adapter not yet pulled), L3 sub-scorers return `null`. The composite `W` engine in Phase 57 must handle null L3 gracefully. Mitigation: add an explicit null-L3 path in `apps/kitchen/src/lib/evals/engine.ts`: if all L3 scorers return null, L3 contribution is excluded and `W` is recomputed over the available layers with normalized weights. This is additive to Phase 57's engine and is tested separately.
+When `business_outcome_events` has no rows for a `correlation_id` (task still in-flight, adapter not yet pulled), L3 sub-scorers return `null`. The composite `W` engine in Phase 57 must handle null L3 gracefully. Mitigation: add an explicit null-L3 path in `apps/memroos/src/lib/evals/engine.ts`: if all L3 scorers return null, L3 contribution is excluded and `W` is recomputed over the available layers with normalized weights. This is additive to Phase 57's engine and is tested separately.
 </decisions>
 
 <code_context>
 ## Existing Code Insights
 
-- `apps/kitchen/src/lib/db-schema.ts` owns additive SQLite schema initialization. `initSchema` is CRITICAL (reached by all DB-backed routes). Phase 61 adds one new table: `business_outcome_events`. Run `gitnexus_impact({target: "initSchema", direction: "upstream"})` before editing.
-- `apps/kitchen/src/lib/evals/types.ts` defines `AgentEvalTrace` (with `outcome` field) and `EvalScorer` interface. L3 scorers implement `EvalScorer`. The `outcome` field on `AgentEvalTrace` already carries `completed`, `escalated`, `ttrMs`, `operatorApproved`, `costUsd` — these map directly to the canonical KPI set.
-- `apps/kitchen/src/lib/evals/engine.ts` computes composite `W` — Phase 61 adds null-L3 handling as an additive path here.
-- `apps/kitchen/src/lib/evals/scorers.ts` is where existing L1/L2 scorers live. L3 scorers are added in Phase 61 as a new file: `apps/kitchen/src/lib/business-ops/l3-scorers.ts`.
-- `apps/kitchen/src/lib/evals/config.ts` parses `memroos.eval.yaml`. Phase 61 extends it to parse the new `companies:` and `business_ops:` top-level blocks.
-- `apps/kitchen/src/lib/api-client.ts` is the centralized TanStack Query client. Phase 61 adds `useBusinessOpsTimeline()` and `useBusinessOutcomeEvents()` hooks.
+- `apps/memroos/src/lib/db-schema.ts` owns additive SQLite schema initialization. `initSchema` is CRITICAL (reached by all DB-backed routes). Phase 61 adds one new table: `business_outcome_events`. Run `gitnexus_impact({target: "initSchema", direction: "upstream"})` before editing.
+- `apps/memroos/src/lib/evals/types.ts` defines `AgentEvalTrace` (with `outcome` field) and `EvalScorer` interface. L3 scorers implement `EvalScorer`. The `outcome` field on `AgentEvalTrace` already carries `completed`, `escalated`, `ttrMs`, `operatorApproved`, `costUsd` — these map directly to the canonical KPI set.
+- `apps/memroos/src/lib/evals/engine.ts` computes composite `W` — Phase 61 adds null-L3 handling as an additive path here.
+- `apps/memroos/src/lib/evals/scorers.ts` is where existing L1/L2 scorers live. L3 scorers are added in Phase 61 as a new file: `apps/memroos/src/lib/business-ops/l3-scorers.ts`.
+- `apps/memroos/src/lib/evals/config.ts` parses `memroos.eval.yaml`. Phase 61 extends it to parse the new `companies:` and `business_ops:` top-level blocks.
+- `apps/memroos/src/lib/api-client.ts` is the centralized TanStack Query client. Phase 61 adds `useBusinessOpsTimeline()` and `useBusinessOutcomeEvents()` hooks.
 - API route convention: `Response.json(...)` + `export const dynamic = "force-dynamic"`.
-- `apps/kitchen/src/components/layout/sidebar.tsx` owns navigation entries — Phase 61 adds a Business Ops entry.
-- Golden sets live at `golden-sets/` in the repo root (not under `apps/kitchen/`). The Phase 57 config reader resolves paths relative to the repo root.
+- `apps/memroos/src/components/layout/sidebar.tsx` owns navigation entries — Phase 61 adds a Business Ops entry.
+- Golden sets live at `golden-sets/` in the repo root (not under `apps/memroos/`). The Phase 57 config reader resolves paths relative to the repo root.
 - `eval_runs.trace_id` is the correlation ID that Phase 61 adapters key off of. No new correlation scheme required.
 </code_context>
 
@@ -120,7 +120,7 @@ When `business_outcome_events` has no rows for a `correlation_id` (task still in
 
 ### New library modules
 
-`apps/kitchen/src/lib/business-ops/`
+`apps/memroos/src/lib/business-ops/`
 - `adapter-interface.ts` — `BusinessSystemAdapter` interface (`pull`, `name`, `category`), `BusinessOutcomeEvent` type, `BusinessOutcomeCategory` enum (`crm` / `helpdesk` / `finance`)
 - `event-store.ts` — `writeOutcomeEvents(events: BusinessOutcomeEvent[]): void`, `getEventsForCorrelationId(correlationId: string): BusinessOutcomeEvent[]`, `getEventsForAgent(agentId: string, since?: string): BusinessOutcomeEvent[]`
 - `extractor.ts` — `extractKpis(trace: AgentEvalTrace, events: BusinessOutcomeEvent[]): CanonicalKpiSet` where `CanonicalKpiSet = { completionRate, escalationRate, ttrP50Ms, operatorApprovalRate, costUsd }`
@@ -133,7 +133,7 @@ When `business_outcome_events` has no rows for a `correlation_id` (task still in
 - `adapters/quickbooks.ts` — live QuickBooks finance adapter; pulls transaction-posted, reconciled
 - `adapters/netsuite.ts` — NetSuite mock fixture (marked `@fixture`)
 
-### Schema addition in `apps/kitchen/src/lib/db-schema.ts`
+### Schema addition in `apps/memroos/src/lib/db-schema.ts`
 
 ```sql
 -- business_outcome_events: Phase 61 adapter pull sink
@@ -161,7 +161,7 @@ CREATE INDEX IF NOT EXISTS boe_tenant      ON business_outcome_events(tenant_id,
 ```yaml
 business_ops:
   poll_interval_seconds: 300
-  correlation_id_field: "kitchen_correlation_id"
+  correlation_id_field: "memroos_correlation_id"
 
 companies:
   default:
@@ -175,17 +175,17 @@ companies:
 
 ### API routes
 
-- `apps/kitchen/src/app/api/business-ops/timeline/route.ts` — GET: per-agent W timeline with L1/L2/L3 breakdown, date-range params
-- `apps/kitchen/src/app/api/business-ops/events/route.ts` — GET: list `business_outcome_events` (filter: agent_id, correlation_id, source, since); POST: trigger an adapter poll for a list of correlation IDs
-- `apps/kitchen/src/app/api/business-ops/kpis/[correlationId]/route.ts` — GET: computed `CanonicalKpiSet` for a specific correlation ID
+- `apps/memroos/src/app/api/business-ops/timeline/route.ts` — GET: per-agent W timeline with L1/L2/L3 breakdown, date-range params
+- `apps/memroos/src/app/api/business-ops/events/route.ts` — GET: list `business_outcome_events` (filter: agent_id, correlation_id, source, since); POST: trigger an adapter poll for a list of correlation IDs
+- `apps/memroos/src/app/api/business-ops/kpis/[correlationId]/route.ts` — GET: computed `CanonicalKpiSet` for a specific correlation ID
 
 ### UI
 
-- `apps/kitchen/src/app/business-ops/page.tsx` — `/business-ops` page with two panels
-- `apps/kitchen/src/components/business-ops/WTimeline.tsx` — per-agent W timeline: sparkline chart (recharts, consistent with existing UI) with toggle for L1/L2/L3 layer breakdown; click-through to `/evals` run detail
-- `apps/kitchen/src/components/business-ops/OutcomeEventFeed.tsx` — table of recent `business_outcome_events` rows: adapter badge, event type, correlation_id (links to trace), source_url (external link), observed_at
-- Add Business Ops navigation entry to `apps/kitchen/src/components/layout/sidebar.tsx`
-- Add TanStack Query hooks `useBusinessOpsTimeline(agentId, dateRange)`, `useBusinessOutcomeEvents(filter)`, `useKpisForCorrelation(correlationId)` to `apps/kitchen/src/lib/api-client.ts`
+- `apps/memroos/src/app/business-ops/page.tsx` — `/business-ops` page with two panels
+- `apps/memroos/src/components/business-ops/WTimeline.tsx` — per-agent W timeline: sparkline chart (recharts, consistent with existing UI) with toggle for L1/L2/L3 layer breakdown; click-through to `/evals` run detail
+- `apps/memroos/src/components/business-ops/OutcomeEventFeed.tsx` — table of recent `business_outcome_events` rows: adapter badge, event type, correlation_id (links to trace), source_url (external link), observed_at
+- Add Business Ops navigation entry to `apps/memroos/src/components/layout/sidebar.tsx`
+- Add TanStack Query hooks `useBusinessOpsTimeline(agentId, dateRange)`, `useBusinessOutcomeEvents(filter)`, `useKpisForCorrelation(correlationId)` to `apps/memroos/src/lib/api-client.ts`
 
 ### Tests
 

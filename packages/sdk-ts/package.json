@@ -1,5 +1,5 @@
 {
-  "name": "@memoroos/eval-sdk",
+  "name": "@memroos/eval-sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for the MemroOS Public Eval API",
   "main": "dist/index.js",

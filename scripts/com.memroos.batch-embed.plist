@@ -8,7 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/lcalderon/github/memoroos/scripts/batch-embed.sh</string>
+        <string>/Users/lcalderon/github/memroos/scripts/batch-embed.sh</string>
     </array>
     
     <key>StartCalendarInterval</key>
@@ -28,10 +28,10 @@
     </array>
     
     <key>StandardOutPath</key>
-    <string>/Users/lcalderon/github/memoroos/services/memory/logs/batch-embed.log</string>
+    <string>/Users/lcalderon/github/memroos/services/memory/logs/batch-embed.log</string>
     
     <key>StandardErrorPath</key>
-    <string>/Users/lcalderon/github/memoroos/services/memory/logs/batch-embed-error.log</string>
+    <string>/Users/lcalderon/github/memroos/services/memory/logs/batch-embed-error.log</string>
     
     <key>EnvironmentVariables</key>
     <dict>

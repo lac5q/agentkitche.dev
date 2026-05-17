@@ -1,12 +1,12 @@
-# Goal: agentkitchen.dev as Agent Workflow Memory Infrastructure
+# Goal: memroos.dev as Agent Workflow Memory Infrastructure
 
 *Created: 2026-05-11*
 
 ## North Star
 
-Make `agentkitchen.dev` the control plane where AI-native teams retain what their agents learn, retrieve the right context at runtime, dispatch work to the right agent, and turn repeated work into reusable skills.
+Make `memroos.dev` the control plane where AI-native teams retain what their agents learn, retrieve the right context at runtime, dispatch work to the right agent, and turn repeated work into reusable skills.
 
-The product name stays `agentkitchen.dev` for now. The positioning shifts from kitchen metaphor to agent memory and workflow infrastructure.
+The product name stays `memroos.dev` for now. The positioning shifts from memroos metaphor to agent memory and workflow infrastructure.
 
 ## Primary Users
 
@@ -91,7 +91,7 @@ Status: completed 2026-05-11.
 
 The execution block was **Phase 41, Phases 42-45, and Phases 46-49**. Treat this as one coherent release-readiness arc:
 
-1. **Phase 41 closes v2.0** by making `agentkitchen.dev` safe to publish, fork, contribute to, and continuously verify.
+1. **Phase 41 closes v2.0** by making `memroos.dev` safe to publish, fork, contribute to, and continuously verify.
 2. **Phases 42-45 close the security gap** created by open agent surfaces: A2A, REST registration, dispatch, memory writes, and tool use must have pre-flight scanning, capability policy, audit visibility, and progressive security modes.
 3. **Phases 46-49 close the quality gap** created by multi-model agent work: model selection should be telemetry-backed, recommendation-driven, evaluated by task class, and explainable in the dashboard.
 
@@ -143,7 +143,7 @@ Every GSD phase is complete only when:
 
 ### Final Completion Definition
 
-The full GSD program is complete when `agentkitchen.dev` can be shipped as a memory-backed agent workflow hub with:
+The full GSD program is complete when `memroos.dev` can be shipped as a memory-backed agent workflow hub with:
 
 - Public-ready OSS hygiene.
 - Permissioned and auditable agent execution.
@@ -154,7 +154,7 @@ The full GSD program is complete when `agentkitchen.dev` can be shipped as a mem
 
 ## Success Criteria
 
-- A user can open `agentkitchen.dev` and immediately understand that the product is about memory-backed agent workflows.
+- A user can open `memroos.dev` and immediately understand that the product is about memory-backed agent workflows.
 - Product, sales, and engineering use cases are visible without explanation.
 - Memory retention and memory consumption are represented in the UI.
 - Dispatch makes transport limitations explicit instead of pretending work was pushed when it was only queued.

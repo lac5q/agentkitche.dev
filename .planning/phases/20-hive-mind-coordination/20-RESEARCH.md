@@ -12,9 +12,9 @@ Phase 20 adds a shared coordination layer on top of the SQLite DB singleton buil
 
 Real-time delivery follows the established codebase pattern exactly: tanstack react-query with `refetchInterval`, no SSE or WebSocket. A single API route at `/api/hive` handles GET (query/filter) and POST (write action or delegation). Agents write by POSTing to that endpoint over HTTP — no shared library is needed, since HTTP is the only interface that works across heterogeneous agent processes (Claude Code sessions, Paperclip fleet, future voice agents).
 
-The dashboard feed component (DASH-02) is a standalone `HiveFeed` component backed by a `useHiveFeed()` hook, following the `SqliteHealthPanel` pattern. Placement on the Kitchen Floor main page is recommended since Ledger is for cost analytics.
+The dashboard feed component (DASH-02) is a standalone `HiveFeed` component backed by a `useHiveFeed()` hook, following the `SqliteHealthPanel` pattern. Placement on the Memroos Floor main page is recommended since Ledger is for cost analytics.
 
-**Primary recommendation:** Two-table schema with FTS5; polling at 5 s; single HTTP route; `HiveFeed` component on Kitchen Floor.
+**Primary recommendation:** Two-table schema with FTS5; polling at 5 s; single HTTP route; `HiveFeed` component on Memroos Floor.
 
 ---
 
@@ -28,7 +28,7 @@ The dashboard feed component (DASH-02) is a standalone `HiveFeed` component back
 | HIVE-03 | Agent delegates a task with priority, status tracking, and step-level checkpoint resume | `hive_delegations` table with status enum, priority int, checkpoint JSON; GET/POST delegation sub-resource |
 | HIVE-04 | Dashboard shows live hive mind activity feed — last N actions across all agents, real-time | `useHiveFeed()` hook with 5 s refetchInterval; `HiveFeed` component |
 | HIVE-05 | Paperclip fleet writes to hive as `agent_id="paperclip"` and appears in feed | No special schema work — agent_id column is free text; same POST endpoint |
-| DASH-02 | Hive mind activity feed component with agent, action_type, summary, timestamp | `HiveFeed` component wired into Kitchen Floor page |
+| DASH-02 | Hive mind activity feed component with agent, action_type, summary, timestamp | `HiveFeed` component wired into Memroos Floor page |
 </phase_requirements>
 
 ---
@@ -64,8 +64,8 @@ Phase 20 needs zero new npm packages. All capabilities (SQLite schema, FTS5, HTT
 src/
 ├── app/api/hive/
 │   └── route.ts                # GET (query) + POST (write action or delegation)
-├── components/kitchen/
-│   └── hive-feed.tsx           # HiveFeed component — goes on Kitchen Floor
+├── components/memroos/
+│   └── hive-feed.tsx           # HiveFeed component — goes on Memroos Floor
 └── lib/
     ├── db-schema.ts            # ADD: hive_actions + hive_delegations DDL here
     └── api-client.ts           # ADD: useHiveFeed() hook
@@ -284,7 +284,7 @@ export function useHiveFeed(limit = 20) {
 
 The `SqliteHealthPanel` in `src/components/ledger/sqlite-health-panel.tsx` is the closest reference: standalone component, own hook, dark card with amber section header, uses `KpiCard` or similar for summary, scrollable list for detail. [VERIFIED: codebase read]
 
-File: `src/components/kitchen/hive-feed.tsx` (new file)
+File: `src/components/memroos/hive-feed.tsx` (new file)
 
 ```typescript
 "use client";
@@ -339,7 +339,7 @@ export function HiveFeed({ limit = 20 }: { limit?: number }) {
 }
 ```
 
-Wire into `src/app/page.tsx` (Kitchen Floor) below `<AgentGrid agents={allAgents} />`.
+Wire into `src/app/page.tsx` (Memroos Floor) below `<AgentGrid agents={allAgents} />`.
 
 ### Anti-Patterns to Avoid
 
@@ -347,7 +347,7 @@ Wire into `src/app/page.tsx` (Kitchen Floor) below `<AgentGrid agents={allAgents
 - **Single merged table for actions + delegations:** Actions are immutable; delegations mutate. One table forces nullable columns and confusing discriminator logic.
 - **Free-text action_type without CHECK constraint:** Without the constraint, any agent can write arbitrary strings, breaking the CodeMachine vocabulary contract across future phases.
 - **Shared library for agent writes:** Agents are heterogeneous processes (Node.js, Python, shell scripts). HTTP POST to `/api/hive` is the only universal write path.
-- **Putting HiveFeed on Ledger page:** Ledger is for RTK token/cost analytics. The Hive feed belongs on Kitchen Floor (the agent status board).
+- **Putting HiveFeed on Ledger page:** Ledger is for RTK token/cost analytics. The Hive feed belongs on Memroos Floor (the agent status board).
 
 ---
 
@@ -499,7 +499,7 @@ SKIPPED — Phase 20 is pure code/config changes. No new external tools, service
 
 ### Wave 0 Gaps
 - [ ] `src/app/api/hive/__tests__/route.test.ts` — covers HIVE-01, HIVE-02, HIVE-03, HIVE-05
-- [ ] `src/components/kitchen/__tests__/hive-feed.test.tsx` — covers DASH-02
+- [ ] `src/components/memroos/__tests__/hive-feed.test.tsx` — covers DASH-02
 - [ ] Check `src/lib/db.ts` for `busy_timeout` pragma — add in Wave 0 if absent
 
 ---
@@ -528,7 +528,7 @@ SKIPPED — Phase 20 is pure code/config changes. No new external tools, service
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
 | A1 | Production server runs on port 3002 | Agent Write Path | Agents posting to wrong port; HTTP examples use wrong URL |
-| A2 | Kitchen Floor is the correct placement for HiveFeed (not Ledger, not a new /hive page) | Architecture Patterns | Component created in wrong page |
+| A2 | Memroos Floor is the correct placement for HiveFeed (not Ledger, not a new /hive page) | Architecture Patterns | Component created in wrong page |
 | A3 | `artifacts` field is schema-free JSON with no fixed structure required by Phase 21 or Phase 24 | Schema | Paperclip fleet or audit log may need specific artifact fields; could require migration |
 | A4 | `busy_timeout` pragma is NOT already set in Phase 19's `getDb()` | Common Pitfalls | If already set, Wave 0 task is a no-op (harmless); if missing, concurrent writes will fail |
 
@@ -540,9 +540,9 @@ SKIPPED — Phase 20 is pure code/config changes. No new external tools, service
    - What we know: HIVE-01 says "artifacts JSON" with no further specification
    - Resolution: Keep schema-free TEXT column storing JSON.stringify'd value. Agents may add a `_type` key convention (e.g., `"_type": "file-list"`) so consumers can detect structure without a migration. No fixed schema required by Phase 21 or Phase 24 at this time.
 
-2. **Dashboard placement: Kitchen Floor vs. dedicated /hive page** (RESOLVED: Kitchen Floor)
+2. **Dashboard placement: Memroos Floor vs. dedicated /hive page** (RESOLVED: Memroos Floor)
    - What we know: DASH-02 says "hive mind activity feed component"; Ledger is for cost analytics
-   - Resolution: HiveFeed placed on Kitchen Floor (main page) below AgentGrid. Extract to `/hive` route only if feed complexity warrants it in a later phase.
+   - Resolution: HiveFeed placed on Memroos Floor (main page) below AgentGrid. Extract to `/hive` route only if feed complexity warrants it in a later phase.
 
 3. **busy_timeout pragma placement** (RESOLVED: add in Task 1 of Plan 20-01)
    - What we know: `getDb()` currently sets `journal_mode` and `synchronous` pragmas
@@ -559,7 +559,7 @@ SKIPPED — Phase 20 is pure code/config changes. No new external tools, service
 - `src/lib/api-client.ts` — react-query hook pattern, POLL_INTERVALS convention [VERIFIED: codebase read]
 - `src/components/ledger/sqlite-health-panel.tsx` — standalone panel component pattern [VERIFIED: codebase read]
 - `.planning/REQUIREMENTS.md` — HIVE-01 through HIVE-05, CodeMachine vocabulary [VERIFIED: codebase read]
-- `src/app/page.tsx` — Kitchen Floor composition pattern [VERIFIED: codebase read]
+- `src/app/page.tsx` — Memroos Floor composition pattern [VERIFIED: codebase read]
 
 ### Secondary (MEDIUM confidence)
 - better-sqlite3 `busy_timeout` pragma: standard SQLite PRAGMA supported by better-sqlite3 `pragma()` method [ASSUMED — standard SQLite feature, universally supported in all SQLite builds]

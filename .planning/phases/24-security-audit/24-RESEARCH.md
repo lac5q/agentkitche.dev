@@ -14,7 +14,7 @@ The existing architecture already provides everything needed: `better-sqlite3` s
 
 The scanner must be a pure utility module (`src/lib/content-scanner.ts`), not Next.js middleware. Next.js Edge middleware cannot import `better-sqlite3` or any Node.js-only module. The scanner is called explicitly inside the API route handlers that produce outbound agent content.
 
-**Primary recommendation:** Implement the scanner as a pure function with a severity-tiered approach (HIGH-confidence patterns block, MEDIUM patterns flag but pass), call it in `POST /api/hive`, write results to the new `audit_log` SQLite table, and surface the last 20 entries in a new `AuditLogPanel` on the Kitchen Floor page alongside `HiveFeed`.
+**Primary recommendation:** Implement the scanner as a pure function with a severity-tiered approach (HIGH-confidence patterns block, MEDIUM patterns flag but pass), call it in `POST /api/hive`, write results to the new `audit_log` SQLite table, and surface the last 20 entries in a new `AuditLogPanel` on the Memroos Floor page alongside `HiveFeed`.
 
 ---
 
@@ -72,7 +72,7 @@ src/
 │       └── __tests__/
 │           └── route.test.ts
 ├── components/
-│   └── kitchen/
+│   └── memroos/
 │       └── audit-log-panel.tsx  # NEW — mirrors HiveFeed pattern
 └── lib/
     ├── db-schema.ts             # MODIFIED: additive audit_log table
@@ -321,11 +321,11 @@ export async function GET(req: NextRequest) {
 
 ## Dashboard Placement
 
-**Page:** Kitchen Floor (`src/app/page.tsx` or root page — where `HiveFeed` and `AgentPeersPanel` already render)
+**Page:** Memroos Floor (`src/app/page.tsx` or root page — where `HiveFeed` and `AgentPeersPanel` already render)
 
-**Component:** `src/components/kitchen/audit-log-panel.tsx`
+**Component:** `src/components/memroos/audit-log-panel.tsx`
 
-**Why Kitchen Floor:** This is the operational page. `HiveFeed` is already here showing cross-agent actions. The audit panel is the security-focused companion feed. Keeping both on the same page lets operators see the full picture without navigation. [VERIFIED: hive-feed.tsx lives in `src/components/kitchen/`]
+**Why Memroos Floor:** This is the operational page. `HiveFeed` is already here showing cross-agent actions. The audit panel is the security-focused companion feed. Keeping both on the same page lets operators see the full picture without navigation. [VERIFIED: hive-feed.tsx lives in `src/components/memroos/`]
 
 **Component structure:** Mirror `HiveFeed` exactly:
 - Same section header pattern (`text-xs font-medium uppercase tracking-wide` with amber divider)
@@ -430,7 +430,7 @@ Step 2.6: SKIPPED — Phase 24 introduces no external dependencies. `better-sqli
 | SEC-02 | POST /api/hive writes audit_log row with correct actor/action/target/severity | unit | `npx vitest run src/app/api/hive/__tests__/route.test.ts` | Yes (extend existing) |
 | SEC-02 | POST /api/recall/ingest writes `ingest_run` audit row | unit | `npx vitest run src/app/api/recall/__tests__/route.test.ts` | Yes (extend existing) |
 | SEC-02 | GET /api/audit-log returns last 20 entries ordered by timestamp DESC | unit | `npx vitest run src/app/api/audit-log/__tests__/route.test.ts` | No — Wave 0 |
-| SEC-03 | AuditLogPanel renders entries with actor/action/timestamp; shows empty state when no entries | unit | `npx vitest run src/components/kitchen/__tests__/audit-log-panel.test.tsx` | No — Wave 0 |
+| SEC-03 | AuditLogPanel renders entries with actor/action/timestamp; shows empty state when no entries | unit | `npx vitest run src/components/memroos/__tests__/audit-log-panel.test.tsx` | No — Wave 0 |
 
 ### Sampling Rate
 - **Per task commit:** `npx vitest run src/lib/__tests__/content-scanner.test.ts src/app/api/audit-log/__tests__/route.test.ts`
@@ -440,7 +440,7 @@ Step 2.6: SKIPPED — Phase 24 introduces no external dependencies. `better-sqli
 ### Wave 0 Gaps
 - [ ] `src/lib/__tests__/content-scanner.test.ts` — covers SEC-01 (all 18 patterns, severity tiering, ReDoS guard, null-coalesce, global flag safety)
 - [ ] `src/app/api/audit-log/__tests__/route.test.ts` — covers SEC-02/SEC-03 API surface (limit param, ordering, schema columns)
-- [ ] `src/components/kitchen/__tests__/audit-log-panel.test.tsx` — covers SEC-03 component (loading/empty/list states, severity chip colors)
+- [ ] `src/components/memroos/__tests__/audit-log-panel.test.tsx` — covers SEC-03 component (loading/empty/list states, severity chip colors)
 
 ---
 
@@ -485,7 +485,7 @@ Step 2.6: SKIPPED — Phase 24 introduces no external dependencies. `better-sqli
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
 | A1 | 18 regex patterns listed cover the required leak categories for this threat model | Regex Patterns | Could under-scan; planner should review and extend if needed |
-| A2 | AuditLogPanel belongs on Kitchen Floor (root page) alongside HiveFeed | Dashboard Placement | Minor UX misplacement; easy to move |
+| A2 | AuditLogPanel belongs on Memroos Floor (root page) alongside HiveFeed | Dashboard Placement | Minor UX misplacement; easy to move |
 | A3 | `writeAuditLog` helper should be a standalone exported function, not a method on a class | Architecture | Style choice; no functional impact |
 | A4 | Content length cap of 4096 chars is sufficient | Pitfalls | If agents write very long summaries, scan is skipped; cap may need tuning |
 | A5 | Only POST /api/recall/ingest and POST /api/memory-consolidate warrant audit log writes beyond /api/hive | Significant Actions | Other routes may also warrant auditing; planner should review all POST routes |
@@ -513,7 +513,7 @@ Step 2.6: SKIPPED — Phase 24 introduces no external dependencies. `better-sqli
 - `src/lib/db-schema.ts` — existing SQLite schema conventions, table/trigger patterns [VERIFIED]
 - `src/lib/db.ts` — DB singleton, WAL/NORMAL/busy_timeout pragmas [VERIFIED]
 - `src/app/api/hive/route.ts` — API route structure, validation, parameterized queries [VERIFIED]
-- `src/components/kitchen/hive-feed.tsx` — component pattern, color map, relative time helper [VERIFIED]
+- `src/components/memroos/hive-feed.tsx` — component pattern, color map, relative time helper [VERIFIED]
 - `src/lib/api-client.ts` — hook pattern, useQuery, fetchJSON, refetchInterval [VERIFIED]
 - `.planning/phases/20-hive-mind-coordination/20-01-SUMMARY.md` — threat mitigations T-20-01 through T-20-03, vi.mock factory pitfall [VERIFIED]
 - `.planning/phases/23-memory-intelligence/23-01-SUMMARY.md` — instrumentation pattern, additive migrations [VERIFIED]

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # launchd entrypoint for MemroOS.
 # Runs the real Next server as the launchd-tracked process. Avoid npm wrapper
-# chains here: if next-server exits but npm survives, launchd thinks Kitchen is
+# chains here: if next-server exits but npm survives, launchd thinks Memroos is
 # still healthy while nothing is listening on :3002.
 
 set -u
@@ -9,7 +9,7 @@ PORT="${PORT:-3002}"
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$REPO_DIR/logs"
 mkdir -p "$LOG_DIR"
-NODE_BIN="${KITCHEN_NODE_BIN:-}"
+NODE_BIN="${MEMROOS_NODE_BIN:-}"
 if [ -z "$NODE_BIN" ]; then
   if [ -x /opt/homebrew/opt/node@22/bin/node ]; then
     NODE_BIN=/opt/homebrew/opt/node@22/bin/node
@@ -19,12 +19,12 @@ if [ -z "$NODE_BIN" ]; then
 fi
 
 # Preflight 1: stale scheduler lock.
-# instrumentation.ts uses an O_EXCL lockfile to ensure only one kitchen process
+# instrumentation.ts uses an O_EXCL lockfile to ensure only one memroos process
 # runs the in-process schedulers. The release handler is on `process.on('exit')`,
 # which does NOT fire on SIGKILL (used by the watchdog when the event loop wedges).
 # A stale lock owned by a long-dead pid blocks new boots from starting schedulers,
 # and in observed incidents has correlated with full boot wedges. Reap it here.
-LOCK_PATH="${KITCHEN_SCHEDULER_LOCK:-$HOME/.agent-kitchen/run/scheduler.lock}"
+LOCK_PATH="${MEMROOS_SCHEDULER_LOCK:-$HOME/.memroos/run/scheduler.lock}"
 if [ -f "$LOCK_PATH" ]; then
   lock_pid=$(cat "$LOCK_PATH" 2>/dev/null | tr -d '[:space:]')
   if [ -n "$lock_pid" ] && ! kill -0 "$lock_pid" 2>/dev/null; then
@@ -53,4 +53,4 @@ printf '[%s] preflight: clean — exec next start on port %s\n' \
   "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$PORT" >> "$LOG_DIR/launchd.log"
 
 cd "$REPO_DIR"
-exec "$NODE_BIN" "$REPO_DIR/node_modules/next/dist/bin/next" start "$REPO_DIR/apps/kitchen" --port "$PORT"
+exec "$NODE_BIN" "$REPO_DIR/node_modules/next/dist/bin/next" start "$REPO_DIR/apps/memroos" --port "$PORT"

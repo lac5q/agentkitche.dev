@@ -11,7 +11,7 @@ requirements: [INFRA-01, INFRA-02]
 
 ## Outcome
 
-Memoroos now has an explicit self-hosted compliance posture: data-residency mode
+Memroos now has an explicit self-hosted compliance posture: data-residency mode
 fails closed for external judge providers, local Ollama/vLLM/OpenAI-compatible
 judge endpoints are accepted, compliance controls are visible under Settings,
 and admin changes write immutable audit evidence.
@@ -34,11 +34,11 @@ and admin changes write immutable audit evidence.
 
 ## Verification
 
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/compliance src/app/api/admin/compliance --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/compliance src/app/api/admin/compliance --run`
   - 2 files, 8 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run test -- src/lib/evals src/lib/compliance src/app/api/admin/compliance --run`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run test -- src/lib/evals src/lib/compliance src/app/api/admin/compliance --run`
   - 4 files, 22 tests passed
-- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/kitchen run typecheck`
+- `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npm --prefix apps/memroos run typecheck`
   - passed
 - `START_SERVICES=0 SKIP_QDRANT_CHECK=1 INSTALL_MEMORY_RESILIENCE=0 ./setup.sh`
   - blocked by pre-existing Qdrant env guard: `Required env QDRANT_API_KEY is not configured in .env`

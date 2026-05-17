@@ -1,8 +1,8 @@
 """Optional Google ADK-style A2A sample for MemroOS.
 
-This file is intentionally not imported by Kitchen startup. It is a tiny local
+This file is intentionally not imported by Memroos startup. It is a tiny local
 fixture operators can adapt when proving that a Google ADK A2A agent can be
-registered in Kitchen and receive delegated tasks over HTTP.
+registered in Memroos and receive delegated tasks over HTTP.
 """
 
 try:

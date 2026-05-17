@@ -4,10 +4,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LABEL="${AGENT_KITCHEN_MCP_LABEL:-com.agentkitchen.chatgpt-mcp}"
-PORT="${KITCHEN_MCP_PORT:-8765}"
-HOST="${KITCHEN_MCP_HOST:-0.0.0.0}"
-PUBLIC_BASE_URL="${KITCHEN_MCP_PUBLIC_BASE_URL:-http://localhost:${PORT}}"
+LABEL="${MEMROOS_MCP_LABEL:-com.memroos.chatgpt-mcp}"
+PORT="${MEMROOS_MCP_PORT:-8765}"
+HOST="${MEMROOS_MCP_HOST:-0.0.0.0}"
+PUBLIC_BASE_URL="${MEMROOS_MCP_PUBLIC_BASE_URL:-http://localhost:${PORT}}"
 ACTION="install"
 
 usage() {
@@ -15,7 +15,7 @@ usage() {
 Usage: scripts/install-chatgpt-mcp-launchd.sh [install|status|uninstall] [options]
 
 Options:
-  --public-base-url URL   Public URL ChatGPT should cite, e.g. https://kitchen.example
+  --public-base-url URL   Public URL ChatGPT should cite, e.g. https://memroos.example
   --host HOST             Bind host for the MCP server, default ${HOST}
   --port PORT             Bind port for the MCP server, default ${PORT}
   --label LABEL           LaunchAgent label, default ${LABEL}
@@ -23,7 +23,7 @@ Options:
 
 Examples:
   scripts/install-chatgpt-mcp-launchd.sh
-  scripts/install-chatgpt-mcp-launchd.sh --public-base-url https://kitchen.example
+  scripts/install-chatgpt-mcp-launchd.sh --public-base-url https://memroos.example
   scripts/install-chatgpt-mcp-launchd.sh status
   scripts/install-chatgpt-mcp-launchd.sh uninstall
 HELP
@@ -65,21 +65,21 @@ done
 
 PLIST_DIR="$HOME/Library/LaunchAgents"
 PLIST_PATH="$PLIST_DIR/${LABEL}.plist"
-LOG_PATH="/tmp/agentkitchen-chatgpt-mcp.log"
+LOG_PATH="/tmp/memroos-chatgpt-mcp.log"
 DOMAIN="gui/$(id -u)"
-TOKEN_FILE="$HOME/.agent-kitchen/${LABEL}.env"
+TOKEN_FILE="$HOME/.memroos/${LABEL}.env"
 
 shell_quote() {
   printf "%q" "$1"
 }
 
 ensure_token_file() {
-  mkdir -p "$HOME/.agent-kitchen"
-  chmod 700 "$HOME/.agent-kitchen"
+  mkdir -p "$HOME/.memroos"
+  chmod 700 "$HOME/.memroos"
 
-  local token="${KITCHEN_MCP_BEARER_TOKEN:-}"
+  local token="${MEMROOS_MCP_BEARER_TOKEN:-}"
   if [[ -z "$token" && -f "$TOKEN_FILE" ]]; then
-    token="$(sed -n 's/^KITCHEN_MCP_BEARER_TOKEN=//p' "$TOKEN_FILE" | tail -1)"
+    token="$(sed -n 's/^MEMROOS_MCP_BEARER_TOKEN=//p' "$TOKEN_FILE" | tail -1)"
   fi
   if [[ -z "$token" ]]; then
     token="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
@@ -87,14 +87,14 @@ ensure_token_file() {
 
   umask 077
   {
-    printf 'KITCHEN_MCP_BEARER_TOKEN=%s\n' "$token"
+    printf 'MEMROOS_MCP_BEARER_TOKEN=%s\n' "$token"
   } > "$TOKEN_FILE"
   chmod 600 "$TOKEN_FILE"
 }
 
 status() {
   if launchctl print "${DOMAIN}/${LABEL}" >/dev/null 2>&1; then
-    launchctl print "${DOMAIN}/${LABEL}" | sed 's/KITCHEN_MCP_BEARER_TOKEN => .*/KITCHEN_MCP_BEARER_TOKEN => [redacted]/' | sed -n '1,80p'
+    launchctl print "${DOMAIN}/${LABEL}" | sed 's/MEMROOS_MCP_BEARER_TOKEN => .*/MEMROOS_MCP_BEARER_TOKEN => [redacted]/' | sed -n '1,80p'
   else
     echo "${LABEL} is not loaded"
     return 1
@@ -116,7 +116,7 @@ write_plist() {
   quoted_root="$(shell_quote "$ROOT")"
   quoted_host="$(shell_quote "$HOST")"
   quoted_port="$(shell_quote "$PORT")"
-  local launch_command="set -a; if [ -f ${quoted_token_file} ]; then . ${quoted_token_file}; fi; set +a; exec ${quoted_root}/scripts/agentkitchen-mcp.sh --http --host ${quoted_host} --port ${quoted_port}"
+  local launch_command="set -a; if [ -f ${quoted_token_file} ]; then . ${quoted_token_file}; fi; set +a; exec ${quoted_root}/scripts/memroos-mcp.sh --http --host ${quoted_host} --port ${quoted_port}"
 
   cat > "$PLIST_PATH" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -133,9 +133,9 @@ write_plist() {
     </array>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>AGENT_KITCHEN_ROOT</key>
+        <key>MEMROOS_ROOT</key>
         <string>${ROOT}</string>
-        <key>KITCHEN_MCP_PUBLIC_BASE_URL</key>
+        <key>MEMROOS_MCP_PUBLIC_BASE_URL</key>
         <string>${PUBLIC_BASE_URL}</string>
         <key>PATH</key>
         <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>

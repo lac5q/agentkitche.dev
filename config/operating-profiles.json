@@ -19,34 +19,34 @@
     },
     "private-network": {
       "description": "Recommended startup deployment for multiple machines on Tailscale/LAN.",
-      "publicBaseUrl": "http://kitchen.tailnet:3000",
-      "a2aEndpointBaseUrl": "http://kitchen.tailnet:3000",
+      "publicBaseUrl": "http://memroos.tailnet:3000",
+      "a2aEndpointBaseUrl": "http://memroos.tailnet:3000",
       "remoteAgentNetworkPolicy": "tailscale-or-lan",
       "requiresHttps": false,
       "operatorAuth": "required-key"
     },
     "cloud-https": {
       "description": "Internet-reachable deployment behind HTTPS reverse proxy or tunnel.",
-      "publicBaseUrl": "https://kitchen.example.com",
-      "a2aEndpointBaseUrl": "https://kitchen.example.com",
+      "publicBaseUrl": "https://memroos.example.com",
+      "a2aEndpointBaseUrl": "https://memroos.example.com",
       "remoteAgentNetworkPolicy": "https-only",
       "requiresHttps": true,
       "operatorAuth": "required-key"
     },
     "custom": {
       "description": "Operator-supplied topology. All topology-specific values must come from environment/config.",
-      "publicBaseUrl": "${KITCHEN_PUBLIC_BASE_URL}",
-      "a2aEndpointBaseUrl": "${KITCHEN_A2A_ENDPOINT_BASE_URL}",
+      "publicBaseUrl": "${MEMROOS_PUBLIC_BASE_URL}",
+      "a2aEndpointBaseUrl": "${MEMROOS_A2A_ENDPOINT_BASE_URL}",
       "remoteAgentNetworkPolicy": "custom",
       "requiresHttps": null,
       "operatorAuth": "operator-defined"
     }
   },
   "requiredConfigKeys": [
-    "KITCHEN_A2A_PROFILE",
-    "KITCHEN_PUBLIC_BASE_URL",
-    "KITCHEN_A2A_ENDPOINT_BASE_URL",
-    "KITCHEN_OPERATOR_API_KEY",
+    "MEMROOS_A2A_PROFILE",
+    "MEMROOS_PUBLIC_BASE_URL",
+    "MEMROOS_A2A_ENDPOINT_BASE_URL",
+    "MEMROOS_OPERATOR_API_KEY",
     "MEM0_URL",
     "QDRANT_URL",
     "QDRANT_API_KEY",

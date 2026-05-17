@@ -92,7 +92,7 @@ Verified files:
 
 Current behavior:
 - API hooks follow a consistent `useQuery + fetchJSON + refetchInterval` pattern
-- Kitchen Floor and Flow Page load data at page level, then pass typed props down
+- Memroos Floor and Flow Page load data at page level, then pass typed props down
 
 Implication for Phase 21:
 - Add `usePaperclipFleet()` to `src/lib/api-client.ts`

@@ -8,7 +8,7 @@ Make safe repeated dashboard and API reads faster without adding Redis or local 
 
 ## Shipped
 
-- Added `apps/kitchen/src/lib/response-cache.ts`.
+- Added `apps/memroos/src/lib/response-cache.ts`.
 - Added in-memory LRU caching with TTLs, tag invalidation, stats, and purge.
 - Added `/api/cache/stats`, `/api/cache/purge`, and `/api/cache/prewarm`.
 - Added cached security report and model-routing recommendation responses.
@@ -17,7 +17,7 @@ Make safe repeated dashboard and API reads faster without adding Redis or local 
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/lib/__tests__/response-cache.test.ts src/app/api/cache/__tests__/route.test.ts` passed.
+- `npm --prefix apps/memroos run test -- src/lib/__tests__/response-cache.test.ts src/app/api/cache/__tests__/route.test.ts` passed.
 - Browser check confirmed `/library` renders `Cache Health`.
 
 ## Risk Notes

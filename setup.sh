@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROFILE="${KITCHEN_A2A_PROFILE:-local-dev}"
+PROFILE="${MEMROOS_A2A_PROFILE:-local-dev}"
 START_SERVICES="${START_SERVICES:-1}"
 ENV_FILE="${ENV_FILE:-.env}"
 ENV_CREATED=0
@@ -46,7 +46,7 @@ require_env() {
 validate_profile() {
   node scripts/validate-operating-profiles.mjs
   if ! node -e "const p=require('./config/operating-profiles.json'); process.exit(p.profiles['$PROFILE'] ? 0 : 1)"; then
-    echo "Unknown KITCHEN_A2A_PROFILE=$PROFILE" >&2
+    echo "Unknown MEMROOS_A2A_PROFILE=$PROFILE" >&2
     exit 1
   fi
 }
@@ -77,7 +77,7 @@ PY
 }
 
 validate_optional_capabilities() {
-  if [[ -z "${KITCHEN_OPTIONAL_CAPABILITIES:-}" ]]; then
+  if [[ -z "${MEMROOS_OPTIONAL_CAPABILITIES:-}" ]]; then
     return
   fi
   node scripts/optional-capabilities.mjs
@@ -118,7 +118,7 @@ main() {
   if [[ -n "$INSTALL_MEMORY_RESILIENCE_OVERRIDE" ]]; then
     INSTALL_MEMORY_RESILIENCE="$INSTALL_MEMORY_RESILIENCE_OVERRIDE"
   fi
-  PROFILE="${KITCHEN_A2A_PROFILE:-$PROFILE}"
+  PROFILE="${MEMROOS_A2A_PROFILE:-$PROFILE}"
   validate_profile
   validate_optional_capabilities
   validate_qdrant

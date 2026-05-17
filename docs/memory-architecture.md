@@ -8,34 +8,34 @@ MemroOS uses three memory tiers so agents can store the right kind of knowledge 
 | --- | --- | --- | --- |
 | Vector | mem0 + Qdrant Cloud | Semantic recall, similar situations, fuzzy knowledge | `/api/memory/add`, `/api/memory/search` |
 | Graph | mem0 + Neo4j | People, agents, entities, relationships, dependencies | `/api/memory/add`, `/api/memory/graph` |
-| Episodic | Kitchen SQLite | Operational events, reports, audit-like memory writes | `/api/memory/add`, `/api/memory/health` |
+| Episodic | Memroos SQLite | Operational events, reports, audit-like memory writes | `/api/memory/add`, `/api/memory/health` |
 
 ## Write Path
 
 ```mermaid
 sequenceDiagram
   participant Agent
-  participant Kitchen
+  participant Memroos
   participant Registry
   participant Mem0
   participant Qdrant
   participant Neo4j
   participant SQLite
 
-  Agent->>Kitchen: POST /api/memory/add with bearer key
-  Kitchen->>Registry: authenticate agent key
-  Kitchen->>Kitchen: resolve memory tier
+  Agent->>Memroos: POST /api/memory/add with bearer key
+  Memroos->>Registry: authenticate agent key
+  Memroos->>Memroos: resolve memory tier
   alt vector
-    Kitchen->>Mem0: /memory/add
+    Memroos->>Mem0: /memory/add
     Mem0->>Qdrant: store embedding
   else graph
-    Kitchen->>Mem0: /memory/add with graph metadata
+    Memroos->>Mem0: /memory/add with graph metadata
     Mem0->>Neo4j: store relationship context
   else episodic
-    Kitchen->>Mem0: optional normalized write
+    Memroos->>Mem0: optional normalized write
   end
-  Kitchen->>SQLite: record agent_memory_writes row
-  Kitchen-->>Agent: ok + tier + backend result
+  Memroos->>SQLite: record agent_memory_writes row
+  Memroos-->>Agent: ok + tier + backend result
 ```
 
 ## Routing Rules
@@ -56,7 +56,7 @@ Use:
 - `graph` for relationships between people, agents, repos, tasks, services, or dependencies.
 - `episodic` for event-like records where timestamp and provenance matter most.
 
-If no tier is supplied, Kitchen normalizes metadata and chooses the safest default for the current payload.
+If no tier is supplied, Memroos normalizes metadata and chooses the safest default for the current payload.
 
 ## Progressive Capability Boundaries
 
@@ -70,7 +70,7 @@ Do not store generated GitNexus code graphs, full impact reports, APO proposal b
 
 Good memory examples:
 
-- "GitNexus helped with impact analysis for agent-kitchen refactors."
+- "GitNexus helped with impact analysis for memroos refactors."
 - "Agent Lightning approval workflow is preferred for recurring skill fixes."
 
 Bad memory examples:
@@ -89,7 +89,7 @@ All memory read endpoints require operator authorization because memory can cont
 
 ## Neo4j Schema Guidance
 
-Kitchen does not force one global ontology yet. Use a small, stable vocabulary:
+Memroos does not force one global ontology yet. Use a small, stable vocabulary:
 
 - `(:Agent {id, name, platform})`
 - `(:Person {name})`
@@ -112,7 +112,7 @@ Prefer stable IDs in metadata so graph writes can be deduplicated later.
 ## Operational Checks
 
 ```bash
-curl -H 'x-kitchen-operator-key: <operator-key>' \
+curl -H 'x-memroos-operator-key: <operator-key>' \
   'http://localhost:3000/api/memory/health'
 ```
 
@@ -120,7 +120,7 @@ Healthy deployments should show:
 
 - Vector tier up when mem0 and Qdrant Cloud are reachable.
 - Graph tier up when Neo4j is reachable.
-- Episodic tier up when Kitchen SQLite is writable.
+- Episodic tier up when Memroos SQLite is writable.
 
 ## Recall Quality Evals
 
@@ -128,12 +128,12 @@ Tier health only proves that backends respond. Recall evals prove that agents ca
 
 The canonical eval suite lives in `evals/memory-recall/cases.json`. Each case declares the scenario, target agent, task prompt, seed fixtures, expected facts or memory IDs, expected tiers, required recall timing, and scoring thresholds.
 
-Run the suite through Kitchen:
+Run the suite through Memroos:
 
 ```bash
-npm --prefix apps/kitchen run eval:memory
-npm --prefix apps/kitchen run eval:memory -- --canary
-npm --prefix apps/kitchen run eval:memory -- --full
+npm --prefix apps/memroos run eval:memory
+npm --prefix apps/memroos run eval:memory -- --canary
+npm --prefix apps/memroos run eval:memory -- --full
 ```
 
 The API surface is:
@@ -141,7 +141,7 @@ The API surface is:
 - `GET /api/memory/evals/latest` for the latest persisted run.
 - `POST /api/memory/evals/run?mode=canary|gold|full` for an on-demand run.
 
-Results are stored in Kitchen SQLite tables created lazily by the eval subsystem:
+Results are stored in Memroos SQLite tables created lazily by the eval subsystem:
 
 - `memory_eval_runs`
 - `memory_eval_cases`

@@ -1,17 +1,17 @@
 # Claude Code Integration
 
-Claude Code-style agents should use Kitchen through A2A when they can expose a card, or through the REST shim when they only need reporting.
+Claude Code-style agents should use Memroos through A2A when they can expose a card, or through the REST shim when they only need reporting.
 
 ## Recommended Path: A2A
 
 1. Run the Claude Code agent on the same host, Tailscale, or trusted LAN.
 2. Expose an A2A card at `/.well-known/agent-card.json`.
-3. Register the card with Kitchen.
+3. Register the card with Memroos.
 
 ```bash
 curl -X POST http://localhost:3000/api/a2a/agents/register \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "cardUrl": "http://claude-agent.tailnet:8787/.well-known/agent-card.json",
     "source": "a2a",
@@ -26,7 +26,7 @@ If the agent does not expose A2A yet, register it as REST:
 ```bash
 curl -X POST http://localhost:3000/api/agents/register \
   -H 'Content-Type: application/json' \
-  -H 'x-kitchen-operator-key: <operator-key>' \
+  -H 'x-memroos-operator-key: <operator-key>' \
   -d '{
     "id": "claude-worker",
     "name": "Claude Worker",

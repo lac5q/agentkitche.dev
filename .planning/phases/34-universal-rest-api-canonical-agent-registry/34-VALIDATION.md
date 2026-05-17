@@ -11,7 +11,7 @@ Phase 34 passes only when the registry model is canonical, the REST write endpoi
 
 ### Service Tests
 
-- `apps/kitchen/src/lib/__tests__/agent-registry.test.ts`
+- `apps/memroos/src/lib/__tests__/agent-registry.test.ts`
 - Cover register/upsert, list/get, deregister, API key hash/verify, heartbeat status derivation, capability persistence, and compatibility DTO mapping.
 
 ### Route Tests
@@ -32,17 +32,17 @@ Phase 34 passes only when the registry model is canonical, the REST write endpoi
 
 ### Static And Integration Checks
 
-- `rg -n "KEY_AGENT_IDS|AGENT_ICONS|alba|gwen|sophia|maria|lucia" apps/kitchen/src/components/flow apps/kitchen/src/app/flow apps/kitchen/src/app/page.tsx`
-- Expected: no hardcoded agent roster identifiers remain in Flow/Kitchen roster construction.
+- `rg -n "KEY_AGENT_IDS|AGENT_ICONS|alba|gwen|sophia|maria|lucia" apps/memroos/src/components/flow apps/memroos/src/app/flow apps/memroos/src/app/page.tsx`
+- Expected: no hardcoded agent roster identifiers remain in Flow/Memroos roster construction.
 - Curl-like flow: register agent, POST heartbeat with returned key, GET `/api/agents`, confirm the agent appears active.
 
 ## Final Verification Commands
 
 ```bash
-npm --prefix apps/kitchen run test
-npm --prefix apps/kitchen run lint
-npm --prefix apps/kitchen run build
-rg -n "KEY_AGENT_IDS|AGENT_ICONS" apps/kitchen/src/components/flow apps/kitchen/src/app/flow
+npm --prefix apps/memroos run test
+npm --prefix apps/memroos run lint
+npm --prefix apps/memroos run build
+rg -n "KEY_AGENT_IDS|AGENT_ICONS" apps/memroos/src/components/flow apps/memroos/src/app/flow
 ```
 
 ## Acceptance Criteria

@@ -2,7 +2,7 @@
 phase: 20-hive-mind-coordination
 plan: "02"
 subsystem: hive-mind-ui
-tags: [react, react-query, tailwind, tdd, kitchen-floor, hive-feed]
+tags: [react, react-query, tailwind, tdd, memroos-floor, hive-feed]
 dependency_graph:
   requires:
     - "20-01 (GET /api/hive route, hive_actions schema)"
@@ -10,7 +10,7 @@ dependency_graph:
     - "POLL_INTERVALS.hive = 5000 in constants.ts"
     - "useHiveFeed() hook in api-client.ts"
     - "HiveFeed component with color-coded action chips, loading/empty states"
-    - "HiveFeed wired into Kitchen Floor below AgentGrid"
+    - "HiveFeed wired into Memroos Floor below AgentGrid"
   affects:
     - "src/lib/constants.ts (new poll interval)"
     - "src/lib/api-client.ts (new hook export)"
@@ -24,8 +24,8 @@ tech_stack:
     - "ACTION_COLORS map for Tailwind chip styling per action_type"
 key_files:
   created:
-    - src/components/kitchen/hive-feed.tsx
-    - src/components/kitchen/__tests__/hive-feed.test.tsx
+    - src/components/memroos/hive-feed.tsx
+    - src/components/memroos/__tests__/hive-feed.test.tsx
   modified:
     - src/lib/constants.ts
     - src/lib/api-client.ts
@@ -48,7 +48,7 @@ metrics:
 
 # Phase 20 Plan 02: Hive Mind UI Layer Summary
 
-**One-liner:** HiveFeed React component with color-coded action chips (6 types), 5-second polling via useHiveFeed hook, wired below AgentGrid on Kitchen Floor — 5 tests passing.
+**One-liner:** HiveFeed React component with color-coded action chips (6 types), 5-second polling via useHiveFeed hook, wired below AgentGrid on Memroos Floor — 5 tests passing.
 
 ## What Was Built
 
@@ -56,7 +56,7 @@ metrics:
 
 **`src/lib/api-client.ts`** — Added `useHiveFeed(limit = 20)` hook: calls `GET /api/hive?limit=N`, returns typed response with `actions[]` and `timestamp`, polls every 5 seconds via `refetchInterval: POLL_INTERVALS.hive`.
 
-**`src/components/kitchen/hive-feed.tsx`** — Client component:
+**`src/components/memroos/hive-feed.tsx`** — Client component:
 - `ACTION_COLORS` map: continue=sky, loop=violet, checkpoint=emerald, trigger=amber, stop=slate, error=rose (text, bg, border Tailwind classes)
 - `formatRelativeTime(iso)` inline helper: just now / Xm ago / Xh ago / Xd ago with try/catch fallback
 - Loading state: centered `animate-spin` spinner (amber border)
@@ -71,7 +71,7 @@ metrics:
 |------|------|-------------|
 | ad0be5f | feat | Add POLL_INTERVALS.hive and useHiveFeed hook |
 | 4966986 | test | Add failing tests for HiveFeed component (TDD RED) |
-| e660225 | feat | Implement HiveFeed component and wire into Kitchen Floor |
+| e660225 | feat | Implement HiveFeed component and wire into Memroos Floor |
 
 ## Test Results
 
@@ -93,7 +93,7 @@ All 5 tests pass:
 - **Found during:** TDD GREEN — first test run
 - **Issue:** `getByText("hermes")` throws because sample data has two hermes actions (id=3 checkpoint, id=6 error); testing-library raises "multiple elements found" error
 - **Fix:** Changed to `getAllByText("hermes").length > 0` — semantically equivalent, handles duplicates
-- **Files modified:** `src/components/kitchen/__tests__/hive-feed.test.tsx`
+- **Files modified:** `src/components/memroos/__tests__/hive-feed.test.tsx`
 - **Commit:** e660225
 
 ## Known Stubs
@@ -108,8 +108,8 @@ None. HiveFeed renders `action.summary` as text content (not innerHTML), so XSS 
 
 - [x] `src/lib/constants.ts` — `hive: 5000` present
 - [x] `src/lib/api-client.ts` — `useHiveFeed` exported
-- [x] `src/components/kitchen/hive-feed.tsx` — created, exports `HiveFeed`
-- [x] `src/components/kitchen/__tests__/hive-feed.test.tsx` — created, 5 tests
+- [x] `src/components/memroos/hive-feed.tsx` — created, exports `HiveFeed`
+- [x] `src/components/memroos/__tests__/hive-feed.test.tsx` — created, 5 tests
 - [x] `src/app/page.tsx` — imports and renders `<HiveFeed />`
 - [x] Commits ad0be5f, 4966986, e660225 confirmed in git log
 - [x] vitest run — 5/5 tests pass

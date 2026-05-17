@@ -1,5 +1,5 @@
 """
-Unit tests for memoroos_eval_sdk.MemroosClient.
+Unit tests for memroos_eval_sdk.MemroosClient.
 Uses respx to mock HTTP calls without a live server.
 """
 
@@ -7,7 +7,7 @@ import pytest
 import httpx
 import respx
 
-from memoroos_eval_sdk import MemroosClient, MemroosApiError
+from memroos_eval_sdk import MemroosClient, MemroosApiError
 
 BASE_URL = "http://localhost:3000"
 API_KEY = "test-api-key-abc123"

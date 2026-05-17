@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "memoroos-eval-sdk"
+name = "memroos-eval-sdk"
 version = "0.1.0"
 description = "Python SDK for the MemroOS Public Eval API"
 readme = "README.md"
@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["memoroos_eval_sdk"]
+packages = ["memroos_eval_sdk"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -3,12 +3,12 @@
 ## Choices Made
 
 1. **Keep mem0 as the vector/search facade.**
-   Why: Phase 23/34 already use mem0, and v2.0 fixed the memory stack as mem0 + Qdrant Cloud + Neo4j + SQLite. Kitchen should not write directly to Qdrant.
+   Why: Phase 23/34 already use mem0, and v2.0 fixed the memory stack as mem0 + Qdrant Cloud + Neo4j + SQLite. Memroos should not write directly to Qdrant.
 
 2. **Route writes by explicit tier.**
    Why: `type`/`metadata.tier` is auditable and avoids surprising heuristics. Legacy aliases map to stable tiers: `semantic/fact -> vector`, `relationship/entity -> graph`, `event/conversation/note -> episodic`.
 
-3. **Use Neo4j HTTP transaction API for Kitchen graph reads.**
+3. **Use Neo4j HTTP transaction API for Memroos graph reads.**
    Why: It avoids adding a Node driver before Phase 38 Docker/profile work and works well for read-only graph inspection with parameterized Cypher.
 
 4. **Treat Qdrant as cloud-only.**

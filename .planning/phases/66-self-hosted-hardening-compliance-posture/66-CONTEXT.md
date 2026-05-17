@@ -9,7 +9,7 @@ source: ROADMAP v3.0
 
 ## Product Intent
 
-Memoroos should be credible for self-hosted and regulated deployments. Operators
+Memroos should be credible for self-hosted and regulated deployments. Operators
 need a clear data-residency mode, local judge model configuration, a compose
 stack that does not require external data egress, and admin controls for users,
 API keys, audit retention, and adapter enablement.

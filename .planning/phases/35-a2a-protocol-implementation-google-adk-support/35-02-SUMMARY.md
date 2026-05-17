@@ -6,7 +6,7 @@ tags: [a2a, agent-card, registry, ssrf, adk]
 
 requires:
   - phase: 35-01-a2a-foundation
-    provides: A2A config, types, errors, and Kitchen agent-card foundation
+    provides: A2A config, types, errors, and Memroos agent-card foundation
 provides:
   - A2A agent-card validation and safe fetch policy
   - Deterministic A2A registry IDs derived from card URL hashes
@@ -23,10 +23,10 @@ tech-stack:
 
 key-files:
   created:
-    - apps/kitchen/src/lib/a2a/card-ingestion.ts
-    - apps/kitchen/src/lib/a2a/__tests__/card-ingestion.test.ts
-    - apps/kitchen/src/app/api/a2a/agents/register/route.ts
-    - apps/kitchen/src/app/api/a2a/agents/__tests__/register-route.test.ts
+    - apps/memroos/src/lib/a2a/card-ingestion.ts
+    - apps/memroos/src/lib/a2a/__tests__/card-ingestion.test.ts
+    - apps/memroos/src/app/api/a2a/agents/register/route.ts
+    - apps/memroos/src/app/api/a2a/agents/__tests__/register-route.test.ts
   modified: []
 
 key-decisions:
@@ -46,7 +46,7 @@ completed: 2026-05-05
 
 # Phase 35 Plan 02: A2A Agent-Card Ingestion And Canonical Registration Summary
 
-**SSRF-aware A2A agent-card ingestion that registers ADK and generic A2A agents through Kitchen's canonical roster**
+**SSRF-aware A2A agent-card ingestion that registers ADK and generic A2A agents through Memroos's canonical roster**
 
 ## Performance
 
@@ -77,15 +77,15 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 
-- `apps/kitchen/src/lib/a2a/card-ingestion.ts` - Remote A2A card validation, fetch policy, ADK detection, capability normalization, metadata allowlisting, and canonical registry registration.
-- `apps/kitchen/src/lib/a2a/__tests__/card-ingestion.test.ts` - Service tests for validation, unsafe URL rejection, canonical registry writes, metadata keys, and deterministic IDs.
-- `apps/kitchen/src/app/api/a2a/agents/register/route.ts` - Operator-auth-gated A2A registration adapter route.
-- `apps/kitchen/src/app/api/a2a/agents/__tests__/register-route.test.ts` - Route tests proving missing body handling, unsafe URL safety, ADK registration, and canonical registry visibility.
+- `apps/memroos/src/lib/a2a/card-ingestion.ts` - Remote A2A card validation, fetch policy, ADK detection, capability normalization, metadata allowlisting, and canonical registry registration.
+- `apps/memroos/src/lib/a2a/__tests__/card-ingestion.test.ts` - Service tests for validation, unsafe URL rejection, canonical registry writes, metadata keys, and deterministic IDs.
+- `apps/memroos/src/app/api/a2a/agents/register/route.ts` - Operator-auth-gated A2A registration adapter route.
+- `apps/memroos/src/app/api/a2a/agents/__tests__/register-route.test.ts` - Route tests proving missing body handling, unsafe URL safety, ADK registration, and canonical registry visibility.
 
 ## Decisions Made
 
 - Kept A2A registration as a thin adapter around `registerAgent()` so Phase 34 remains the single registry source of truth.
-- Used deterministic IDs of `a2a_${sha256(cardUrl).slice(0, 12)}` when a remote card does not expose a stable Kitchen ID.
+- Used deterministic IDs of `a2a_${sha256(cardUrl).slice(0, 12)}` when a remote card does not expose a stable Memroos ID.
 - Stored only allowlisted card metadata under `metadata.a2a`: card URL, endpoint URL, version, security schemes, input/output modes, validation status, card hash, fetch time, and source.
 - Reused the Phase 34 operator authorization gate on the registration route to avoid adding another unauthenticated key-minting surface.
 
@@ -97,8 +97,8 @@ Each task was committed atomically:
 - **Found during:** Task C plan-level build verification
 - **Issue:** `validateA2aAgentCard()` narrowed `securitySchemes` to `Record<string, unknown>`, which passed runtime tests but failed Next.js TypeScript build.
 - **Fix:** Cast the guarded record to `A2aAgentCard["securitySchemes"]` after `isRecord()` validation.
-- **Files modified:** `apps/kitchen/src/lib/a2a/card-ingestion.ts`
-- **Verification:** `npm --prefix apps/kitchen run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/app/api/a2a/agents/__tests__/register-route.test.ts` and `npm --prefix apps/kitchen run build`
+- **Files modified:** `apps/memroos/src/lib/a2a/card-ingestion.ts`
+- **Verification:** `npm --prefix apps/memroos run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/app/api/a2a/agents/__tests__/register-route.test.ts` and `npm --prefix apps/memroos run build`
 - **Committed in:** `9929a053`
 
 ---
@@ -108,17 +108,17 @@ Each task was committed atomically:
 
 ## Issues Encountered
 
-- `npm --prefix apps/kitchen run typecheck` is listed in the plan but the app has no `typecheck` script. Used `npm --prefix apps/kitchen run build` for TypeScript verification.
+- `npm --prefix apps/memroos run typecheck` is listed in the plan but the app has no `typecheck` script. Used `npm --prefix apps/memroos run build` for TypeScript verification.
 - Build still emits the known pre-existing Turbopack NFT warning through `/api/apo`; build exits successfully after the warning.
 - Lint still reports 12 pre-existing warnings unrelated to this plan.
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/lib/__tests__/agent-registry.test.ts` - passed, 12 tests.
-- `npm --prefix apps/kitchen run test -- src/app/api/a2a/agents/__tests__/register-route.test.ts src/app/api/agents/__tests__/registry-route.test.ts` - passed, 6 tests.
-- `npm --prefix apps/kitchen run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/app/api/a2a/agents/__tests__/register-route.test.ts src/app/api/agents/__tests__/registry-route.test.ts` - passed, 12 tests.
-- `npm --prefix apps/kitchen run lint` - passed with 12 pre-existing warnings.
-- `npm --prefix apps/kitchen run build` - passed with known pre-existing Turbopack NFT warning.
+- `npm --prefix apps/memroos run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/lib/__tests__/agent-registry.test.ts` - passed, 12 tests.
+- `npm --prefix apps/memroos run test -- src/app/api/a2a/agents/__tests__/register-route.test.ts src/app/api/agents/__tests__/registry-route.test.ts` - passed, 6 tests.
+- `npm --prefix apps/memroos run test -- src/lib/a2a/__tests__/card-ingestion.test.ts src/app/api/a2a/agents/__tests__/register-route.test.ts src/app/api/agents/__tests__/registry-route.test.ts` - passed, 12 tests.
+- `npm --prefix apps/memroos run lint` - passed with 12 pre-existing warnings.
+- `npm --prefix apps/memroos run build` - passed with known pre-existing Turbopack NFT warning.
 
 ## User Setup Required
 

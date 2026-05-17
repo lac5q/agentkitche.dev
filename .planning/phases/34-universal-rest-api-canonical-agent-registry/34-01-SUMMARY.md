@@ -25,7 +25,7 @@ The canonical agent registry foundation is now SQLite-backed. Agents can be regi
 
 ### Task A — Registry service tests
 
-Added `apps/kitchen/src/lib/__tests__/agent-registry.test.ts` covering:
+Added `apps/memroos/src/lib/__tests__/agent-registry.test.ts` covering:
 
 - registration with capabilities
 - one-time API key issue
@@ -40,7 +40,7 @@ The tests were red before implementation with `registerAgent is not a function`,
 
 ### Task B — Canonical registry tables
 
-Added additive SQLite tables in `apps/kitchen/src/lib/db-schema.ts`:
+Added additive SQLite tables in `apps/memroos/src/lib/db-schema.ts`:
 
 - `registered_agents`
 - `agent_api_keys`
@@ -53,7 +53,7 @@ The existing DB schema remains untouched; new tables use `CREATE TABLE IF NOT EX
 
 ### Task C — Registry service implementation
 
-Replaced `apps/kitchen/src/lib/agent-registry.ts` with DB-backed service methods:
+Replaced `apps/memroos/src/lib/agent-registry.ts` with DB-backed service methods:
 
 - `registerAgent`
 - `listRegisteredAgents`
@@ -69,23 +69,23 @@ Replaced `apps/kitchen/src/lib/agent-registry.ts` with DB-backed service methods
 - `pollRemoteAgent`
 - `pollAllRemoteAgents`
 
-Added registry types in `apps/kitchen/src/types/index.ts` for protocol, canonical agent DTOs, registration input, registration result, and heartbeat input.
+Added registry types in `apps/memroos/src/types/index.ts` for protocol, canonical agent DTOs, registration input, registration result, and heartbeat input.
 
 ## Verification
 
-- `npm --prefix apps/kitchen run test -- src/lib/__tests__/agent-registry.test.ts` — **6 passed**
-- `npm --prefix apps/kitchen run test -- src/lib/__tests__/db.test.ts src/lib/__tests__/agent-registry.test.ts` — **12 passed**
-- `npm --prefix apps/kitchen run lint -- src/lib/agent-registry.ts src/lib/db-schema.ts src/types/index.ts src/lib/__tests__/agent-registry.test.ts` — **passed**
+- `npm --prefix apps/memroos run test -- src/lib/__tests__/agent-registry.test.ts` — **6 passed**
+- `npm --prefix apps/memroos run test -- src/lib/__tests__/db.test.ts src/lib/__tests__/agent-registry.test.ts` — **12 passed**
+- `npm --prefix apps/memroos run lint -- src/lib/agent-registry.ts src/lib/db-schema.ts src/types/index.ts src/lib/__tests__/agent-registry.test.ts` — **passed**
 - `gitnexus impact initSchema` — **CRITICAL blast radius**, mitigated by additive-only schema changes and DB regression tests
 - `gitnexus impact getRemoteAgents` — **HIGH blast radius**, mitigated by preserving the export and compatibility DTO shape
 - `gitnexus detect_changes` — **medium risk**, affected registry/dispatch remote-agent flows as expected
 
 ## Files Changed
 
-- `apps/kitchen/src/lib/db-schema.ts` — adds canonical registry and audit tables
-- `apps/kitchen/src/lib/agent-registry.ts` — DB-backed registry service and remote compatibility wrapper
-- `apps/kitchen/src/types/index.ts` — registry DTO and request types
-- `apps/kitchen/src/lib/__tests__/agent-registry.test.ts` — service coverage for registry lifecycle and keys
+- `apps/memroos/src/lib/db-schema.ts` — adds canonical registry and audit tables
+- `apps/memroos/src/lib/agent-registry.ts` — DB-backed registry service and remote compatibility wrapper
+- `apps/memroos/src/types/index.ts` — registry DTO and request types
+- `apps/memroos/src/lib/__tests__/agent-registry.test.ts` — service coverage for registry lifecycle and keys
 
 ## Decisions Made
 
@@ -100,7 +100,7 @@ None - plan executed exactly as written.
 
 ## Issues Encountered
 
-- The first test command used a repo-root path while `npm --prefix apps/kitchen` runs Vitest from the app directory. Re-ran with `src/lib/__tests__/agent-registry.test.ts`, which correctly found the test file.
+- The first test command used a repo-root path while `npm --prefix apps/memroos` runs Vitest from the app directory. Re-ran with `src/lib/__tests__/agent-registry.test.ts`, which correctly found the test file.
 
 ## User Setup Required
 
