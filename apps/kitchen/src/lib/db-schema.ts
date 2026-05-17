@@ -750,4 +750,186 @@ export function initSchema(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS inv_token ON team_invitations(token_hash, used_at);
   `);
+
+  // Phase 64: audit_entries unified immutable log (AUDIT-01)
+  // Two-layer immutability: SQLite triggers + service code convention (no UPDATE/DELETE exports).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_entries (
+      id            TEXT PRIMARY KEY,
+      tenant_id     TEXT NOT NULL DEFAULT 'default-tenant'
+                    REFERENCES tenants(id),
+      actor_id      TEXT NOT NULL,
+      actor_role    TEXT NOT NULL,
+      event_type    TEXT NOT NULL,
+      entity_type   TEXT NOT NULL,
+      entity_id     TEXT NOT NULL,
+      reason        TEXT,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
+      created_at    TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS audit_entries_created
+      ON audit_entries(created_at DESC);
+    CREATE INDEX IF NOT EXISTS audit_entries_entity
+      ON audit_entries(entity_type, entity_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS audit_entries_event_type
+      ON audit_entries(event_type, created_at DESC);
+    CREATE INDEX IF NOT EXISTS audit_entries_actor
+      ON audit_entries(actor_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS audit_entries_tenant
+      ON audit_entries(tenant_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS audit_entries_tenant_event
+      ON audit_entries(tenant_id, event_type, created_at DESC);
+
+    CREATE TRIGGER IF NOT EXISTS audit_entries_no_update
+      BEFORE UPDATE ON audit_entries
+    BEGIN
+      SELECT RAISE(ABORT, 'audit_entries is append-only: UPDATE is not permitted');
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS audit_entries_no_delete
+      BEFORE DELETE ON audit_entries
+    BEGIN
+      SELECT RAISE(ABORT, 'audit_entries is append-only: DELETE is not permitted');
+    END;
+  `);
+
+  // Phase 64: hil_escalations — mutable open-work-item state (AUDIT-04)
+  // Each lifecycle event (created/resolved/sla_breached) writes to audit_entries.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS hil_escalations (
+      id              TEXT PRIMARY KEY,
+      tenant_id       TEXT NOT NULL DEFAULT 'default-tenant'
+                      REFERENCES tenants(id),
+      entity_type     TEXT NOT NULL,
+      entity_id       TEXT NOT NULL,
+      escalation_type TEXT NOT NULL
+                      CHECK(escalation_type IN ('agent_escalate','seal_approval','eval_below_threshold')),
+      sla_seconds     INTEGER NOT NULL,
+      sla_deadline    TEXT NOT NULL,
+      status          TEXT NOT NULL DEFAULT 'open'
+                      CHECK(status IN ('open','resolved','sla_breached')),
+      assigned_to     TEXT REFERENCES users(id),
+      opened_by       TEXT NOT NULL,
+      resolved_by     TEXT REFERENCES users(id),
+      resolution_note TEXT,
+      resolved_at     TEXT,
+      created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
+    );
+    CREATE INDEX IF NOT EXISTS hil_status_deadline
+      ON hil_escalations(status, sla_deadline ASC);
+    CREATE INDEX IF NOT EXISTS hil_tenant_status
+      ON hil_escalations(tenant_id, status, sla_deadline ASC);
+    CREATE INDEX IF NOT EXISTS hil_entity
+      ON hil_escalations(entity_type, entity_id);
+  `);
+
+  // Phase 64: one-shot backfill migration (AUDIT-01)
+  // Guarded by meta flag; maps legacy seal_audit_log + audit_log rows into audit_entries.
+  const backfillDone = db
+    .prepare(`SELECT value FROM meta WHERE key = 'audit_entries_backfill_done'`)
+    .get() as { value: string } | undefined;
+  if (!backfillDone) {
+    const sealEventMap: Record<string, string> = {
+      proposed: "seal.proposed",
+      approved: "seal.approved",
+      rejected: "seal.rejected",
+      apply_started: "seal.apply_started",
+      apply_succeeded: "seal.apply_succeeded",
+      apply_failed: "seal.apply_failed",
+      rolled_back: "seal.rolled_back",
+    };
+
+    type SealAuditRow = {
+      id: string;
+      proposal_id: string;
+      event: string;
+      baseline_w: number | null;
+      post_apply_w: number | null;
+      delta_l1: number | null;
+      delta_l2: number | null;
+      delta_l3: number | null;
+      delta_composite: number | null;
+      detail_json: string;
+      timestamp: string;
+      tenant_id?: string;
+    };
+
+    const sealTableExists = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='seal_audit_log'`)
+      .get();
+    if (sealTableExists) {
+      const sealRows = db.prepare("SELECT * FROM seal_audit_log").all() as SealAuditRow[];
+      const insertSeal = db.prepare(
+        "INSERT OR IGNORE INTO audit_entries (id, tenant_id, actor_id, actor_role, event_type, entity_type, entity_id, metadata_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      const sealBackfill = db.transaction(() => {
+        for (const row of sealRows) {
+          const eventType = sealEventMap[row.event] ?? `seal.${row.event}`;
+          const metadata = JSON.stringify({
+            baseline_w: row.baseline_w,
+            post_apply_w: row.post_apply_w,
+            delta_l1: row.delta_l1,
+            delta_l2: row.delta_l2,
+            delta_l3: row.delta_l3,
+            delta_composite: row.delta_composite,
+            ...JSON.parse(row.detail_json || "{}"),
+          });
+          insertSeal.run(
+            `seal-backfill-${row.id}`,
+            row.tenant_id ?? "default-tenant",
+            "system",
+            "system",
+            eventType,
+            "seal_proposal",
+            `seal_proposal:${row.proposal_id}`,
+            metadata,
+            row.timestamp
+          );
+        }
+      });
+      sealBackfill();
+    }
+
+    type AuditLogRow = {
+      id: number;
+      actor: string;
+      action: string;
+      target: string;
+      detail: string | null;
+      severity: string;
+      timestamp: string;
+    };
+    const auditTableExists = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='audit_log'`)
+      .get();
+    if (auditTableExists) {
+      const auditRows = db.prepare("SELECT * FROM audit_log").all() as AuditLogRow[];
+      const insertAudit = db.prepare(
+        "INSERT OR IGNORE INTO audit_entries (id, tenant_id, actor_id, actor_role, event_type, entity_type, entity_id, metadata_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      const auditBackfill = db.transaction(() => {
+        for (const row of auditRows) {
+          const metadata = JSON.stringify({
+            severity: row.severity,
+            legacy_action: row.action,
+            legacy_detail: row.detail,
+          });
+          insertAudit.run(
+            `audit-backfill-${row.id}`,
+            "default-tenant",
+            row.actor,
+            "system",
+            `agent.${row.action}`,
+            "agent",
+            `agent:${row.target}`,
+            metadata,
+            row.timestamp
+          );
+        }
+      });
+      auditBackfill();
+    }
+
+    db.prepare(`INSERT OR REPLACE INTO meta(key,value) VALUES('audit_entries_backfill_done','1')`).run();
+  }
 }
