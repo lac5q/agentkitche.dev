@@ -79,6 +79,9 @@ describe("/api/admin/compliance", () => {
         dataResidencyEnabled: true,
         auditRetentionDays: 730,
         enabledAdapters: ["quickbooks", "bank_reconciliation"],
+        judgeProvider: "ollama",
+        judgeLocalEndpoint: "http://localhost:11434/v1",
+        judgeModelFamily: "local",
       }),
     });
 
@@ -87,6 +90,8 @@ describe("/api/admin/compliance", () => {
 
     expect(res.status).toBe(200);
     expect(body.compliance.dataResidencyEnabled).toBe(true);
+    expect(body.compliance.judgeProvider).toBe("ollama");
+    expect(body.compliance.judgeEndpointLocal).toBe(true);
     expect(body.compliance.auditRetentionDays).toBe(730);
     expect(body.compliance.enabledAdapters).toEqual(["quickbooks", "bank_reconciliation"]);
 

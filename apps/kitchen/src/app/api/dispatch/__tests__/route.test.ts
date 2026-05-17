@@ -2,7 +2,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/lib/db", () => ({ getDb: vi.fn() }));
-vi.mock("@/lib/agent-registry", () => ({ getRemoteAgents: vi.fn(), listRegisteredAgents: vi.fn() }));
+vi.mock("@/lib/agent-registry", () => ({
+  authenticateAgentHeaders: vi.fn(),
+  getRemoteAgents: vi.fn(),
+  listRegisteredAgents: vi.fn(),
+}));
 vi.mock("@/lib/audit", () => ({ writeAuditLog: vi.fn() }));
 vi.mock("@/lib/content-scanner", () => ({ scanContent: vi.fn() }));
 vi.mock("@/lib/iris-scanner", () => ({ scanIrisPreflight: vi.fn() }));
@@ -13,7 +17,7 @@ vi.mock("@/lib/dispatch/adapter-factory", () => ({ selectAdapter: vi.fn() }));
 
 const { POST } = await import("../route");
 const { getDb } = await import("@/lib/db");
-const { getRemoteAgents, listRegisteredAgents } = await import("@/lib/agent-registry");
+const { authenticateAgentHeaders, getRemoteAgents, listRegisteredAgents } = await import("@/lib/agent-registry");
 const { writeAuditLog } = await import("@/lib/audit");
 const { scanContent } = await import("@/lib/content-scanner");
 const { scanIrisPreflight } = await import("@/lib/iris-scanner");
@@ -21,6 +25,7 @@ const { checkDispatchPolicy } = await import("@/lib/security-policy");
 const { selectAdapter } = await import("@/lib/dispatch/adapter-factory");
 
 const mockGetDb = vi.mocked(getDb);
+const mockAuthenticateAgentHeaders = vi.mocked(authenticateAgentHeaders);
 const mockGetRemoteAgents = vi.mocked(getRemoteAgents);
 const mockListRegisteredAgents = vi.mocked(listRegisteredAgents);
 const mockWriteAuditLog = vi.mocked(writeAuditLog);
@@ -58,6 +63,7 @@ const hivePollStub = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetDb.mockReturnValue(makeDb() as any);
+  mockAuthenticateAgentHeaders.mockReturnValue(null);
   mockGetRemoteAgents.mockReturnValue([sophiaAgent]);
   mockListRegisteredAgents.mockReturnValue([{
     ...sophiaAgent,
@@ -86,6 +92,14 @@ function makeRequest(body: object) {
   return new Request("http://localhost/api/dispatch", {
     method: "POST",
     headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+function makeRemoteRequest(body: object, headers: Record<string, string> = {}) {
+  return new Request("https://memroos.com/api/dispatch", {
+    method: "POST",
+    headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -249,6 +263,47 @@ describe("POST /api/dispatch", () => {
     expect(mockWriteAuditLog).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       actor: "evil-client",
     }));
+  });
+
+  it("401 — rejects spoofed x-agent-id without a valid agent API key", async () => {
+    const res = await POST(makeRemoteRequest(
+      { to_agent: "sophia", task_summary: "Draft blog post" },
+      { "x-agent-id": "sophia" }
+    ) as any);
+    const body = await res.json();
+
+    expect(res.status).toBe(401);
+    expect(body.code).toBe("AUTH_REQUIRED");
+    expect(mockAuthenticateAgentHeaders).toHaveBeenCalled();
+    expect(mockSelectAdapter).not.toHaveBeenCalled();
+  });
+
+  it("derives from_agent from a valid agent API key", async () => {
+    mockAuthenticateAgentHeaders.mockReturnValue({
+      ...sophiaAgent,
+      protocol: "rest",
+      status: "active",
+      currentTask: null,
+      lastHeartbeat: null,
+      lessonsCount: 0,
+      todayMemoryCount: 0,
+      isRemote: true,
+      latencyMs: null,
+      capabilities: [],
+      metadata: {},
+      tunnelUrl: null,
+      createdAt: "2026-04-19T10:00:00Z",
+      updatedAt: "2026-04-19T10:00:00Z",
+      deregisteredAt: null,
+    });
+
+    const res = await POST(makeRemoteRequest(
+      { to_agent: "sophia", task_summary: "Draft blog post", from_agent: "evil-client" },
+      { "x-agent-id": "sophia", authorization: "Bearer agent-key" }
+    ) as any);
+
+    expect(res.status).toBe(200);
+    expect(mockCheckDispatchPolicy).toHaveBeenCalledWith("agent:sophia", expect.anything());
   });
 
   it("502 ADAPTER_REJECTED — adapter returns accepted:false", async () => {

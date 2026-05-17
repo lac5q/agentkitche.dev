@@ -55,6 +55,24 @@ describe("finance reconciliation parsing", () => {
     expect(events[1].status).toBe("mismatched");
   });
 
+  it("canonicalizes common camelCase CSV headers", () => {
+    const csv = [
+      "transactionId,correlationId,tenantId,agentId,amount,expectedAmount,status,confidence,occurredAt",
+      "txn-camel,corr-camel,tenant-camel,agent-camel,120.00,100.00,mismatched,0.61,2026-05-17T10:01:00Z",
+    ].join("\n");
+
+    const [event] = parseTransactionCsv(csv);
+
+    expect(event).toMatchObject({
+      transactionId: "txn-camel",
+      correlationId: "corr-camel",
+      tenantId: "tenant-camel",
+      agentId: "agent-camel",
+      expectedAmount: 100,
+      occurredAt: "2026-05-17T10:01:00Z",
+    });
+  });
+
   it("normalizes webhook payloads without trusting extra fields", () => {
     const event = normalizeWebhookTransaction({
       transaction_id: "txn-webhook",

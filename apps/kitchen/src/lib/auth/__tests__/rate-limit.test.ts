@@ -1,9 +1,12 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { checkAuthRateLimit, clearAuthRateLimit } from "../rate-limit";
 
-afterEach(() => clearAuthRateLimit());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  clearAuthRateLimit();
+});
 
 describe("auth rate limiting", () => {
   it("allows requests up to the configured limit", () => {
@@ -25,5 +28,31 @@ describe("auth rate limiting", () => {
 
     expect(res?.status).toBe(429);
     expect(await res?.json()).toMatchObject({ code: "AUTH_RATE_LIMITED" });
+  });
+
+  it("ignores spoofed forwarding headers unless explicitly trusted", async () => {
+    const first = new Request("http://localhost/api/auth/login", {
+      headers: { "x-forwarded-for": "203.0.113.10" },
+    });
+    const second = new Request("http://localhost/api/auth/login", {
+      headers: { "x-forwarded-for": "203.0.113.11" },
+    });
+
+    expect(checkAuthRateLimit(first, "login", 1)).toBeNull();
+    expect(checkAuthRateLimit(second, "login", 1)?.status).toBe(429);
+  });
+
+  it("uses forwarding headers only behind a trusted proxy", () => {
+    vi.stubEnv("AUTH_TRUST_PROXY_HEADERS", "true");
+
+    const first = new Request("http://localhost/api/auth/login", {
+      headers: { "x-forwarded-for": "203.0.113.10" },
+    });
+    const second = new Request("http://localhost/api/auth/login", {
+      headers: { "x-forwarded-for": "203.0.113.11" },
+    });
+
+    expect(checkAuthRateLimit(first, "login", 1)).toBeNull();
+    expect(checkAuthRateLimit(second, "login", 1)).toBeNull();
   });
 });

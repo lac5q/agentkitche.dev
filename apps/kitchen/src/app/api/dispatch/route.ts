@@ -7,7 +7,7 @@ import { scanIrisPreflight } from "@/lib/iris-scanner";
 import { authorizeRegistryWrite } from "@/lib/operator-auth";
 import { checkDispatchPolicy } from "@/lib/security-policy";
 import { writeAuditLog } from "@/lib/audit";
-import { getRemoteAgents, listRegisteredAgents } from "@/lib/agent-registry";
+import { authenticateAgentHeaders, getRemoteAgents, listRegisteredAgents } from "@/lib/agent-registry";
 import { selectAdapter } from "@/lib/dispatch/adapter-factory";
 import type { DispatchTask } from "@/lib/dispatch/types";
 import type { RegisteredAgent, RemoteAgentConfig } from "@/types";
@@ -26,8 +26,8 @@ async function deriveDispatchActor(req: NextRequest | Request): Promise<
     return { ok: true, actorId: `user:${session.userId}` };
   }
 
-  const agentId = req.headers?.get("x-agent-id");
-  if (agentId) return { ok: true, actorId: `agent:${agentId}` };
+  const agent = authenticateAgentHeaders(req.headers, req.headers?.get("x-agent-id") ?? undefined);
+  if (agent) return { ok: true, actorId: `agent:${agent.id}` };
 
   if (authorizeRegistryWrite(req)) return { ok: true, actorId: "kitchen" };
 

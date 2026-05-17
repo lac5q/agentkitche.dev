@@ -8,6 +8,7 @@ interface ComplianceSummary {
   dataResidencyEnabled: boolean;
   judgeProvider: string;
   judgeModel: string;
+  judgeModelFamily: string;
   judgeEndpoint: string | null;
   judgeEndpointLocal: boolean;
   auditRetentionDays: number;
@@ -29,6 +30,9 @@ async function updateCompliance(input: {
   dataResidencyEnabled: boolean;
   auditRetentionDays: number;
   enabledAdapters: string[];
+  judgeProvider: string;
+  judgeLocalEndpoint: string;
+  judgeModelFamily: string;
 }): Promise<ComplianceResponse> {
   const res = await fetch("/api/admin/compliance", {
     method: "PUT",
@@ -48,6 +52,9 @@ export default function ComplianceSettingsPage() {
   const [dataResidencyEnabled, setDataResidencyEnabled] = useState(false);
   const [auditRetentionDays, setAuditRetentionDays] = useState(365);
   const [enabledAdapters, setEnabledAdapters] = useState("hubspot, intercom, quickbooks, bank_reconciliation");
+  const [judgeProvider, setJudgeProvider] = useState("ollama");
+  const [judgeLocalEndpoint, setJudgeLocalEndpoint] = useState("http://localhost:11434/v1");
+  const [judgeModelFamily, setJudgeModelFamily] = useState("local");
 
   const { data, error, isLoading } = useQuery({
     queryKey: ["admin", "compliance"],
@@ -60,6 +67,9 @@ export default function ComplianceSettingsPage() {
     setDataResidencyEnabled(loaded.dataResidencyEnabled);
     setAuditRetentionDays(loaded.auditRetentionDays);
     setEnabledAdapters(loaded.enabledAdapters.join(", "));
+    setJudgeProvider(loaded.judgeProvider);
+    setJudgeLocalEndpoint(loaded.judgeEndpoint ?? "");
+    setJudgeModelFamily(loaded.judgeModelFamily);
   }, [loaded]);
 
   const mutation = useMutation({
@@ -122,6 +132,9 @@ export default function ComplianceSettingsPage() {
                 dataResidencyEnabled,
                 auditRetentionDays,
                 enabledAdapters: adapterList,
+                judgeProvider,
+                judgeLocalEndpoint,
+                judgeModelFamily,
               });
             }}
           >
@@ -146,6 +159,50 @@ export default function ComplianceSettingsPage() {
                 value={auditRetentionDays}
                 onChange={(event) => setAuditRetentionDays(Number(event.target.value))}
                 className="w-40 rounded-sm border border-[#c9c9c2] bg-white px-2 py-1.5 text-sm text-[#0f0f0e]"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-2">
+                <label className="text-sm font-medium text-[#0f0f0e]" htmlFor="judge-provider">
+                  Judge provider
+                </label>
+                <select
+                  id="judge-provider"
+                  value={judgeProvider}
+                  onChange={(event) => setJudgeProvider(event.target.value)}
+                  className="rounded-sm border border-[#c9c9c2] bg-white px-2 py-1.5 text-sm text-[#0f0f0e]"
+                >
+                  <option value="ollama">Ollama</option>
+                  <option value="vllm">vLLM</option>
+                  <option value="openai-compatible">OpenAI-compatible local</option>
+                  <option value="anthropic">Anthropic</option>
+                </select>
+              </div>
+
+              <div className="grid gap-2 md:col-span-2">
+                <label className="text-sm font-medium text-[#0f0f0e]" htmlFor="judge-endpoint">
+                  Local judge endpoint
+                </label>
+                <input
+                  id="judge-endpoint"
+                  value={judgeLocalEndpoint}
+                  onChange={(event) => setJudgeLocalEndpoint(event.target.value)}
+                  placeholder="http://localhost:11434/v1"
+                  className="w-full rounded-sm border border-[#c9c9c2] bg-white px-2 py-1.5 text-sm text-[#0f0f0e]"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-[#0f0f0e]" htmlFor="judge-model-family">
+                Judge model family
+              </label>
+              <input
+                id="judge-model-family"
+                value={judgeModelFamily}
+                onChange={(event) => setJudgeModelFamily(event.target.value)}
+                className="w-full rounded-sm border border-[#c9c9c2] bg-white px-2 py-1.5 text-sm text-[#0f0f0e]"
               />
             </div>
 

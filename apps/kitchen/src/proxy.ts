@@ -39,6 +39,14 @@ const ADMIN_ROUTES: Array<{ method?: string; pattern: RegExp }> = [
   { method: "POST", pattern: /^\/api\/auth\/invite$/ },
 ];
 
+const ROUTE_LOCAL_AUTH_API_ROUTES: Array<{ method?: string; pattern: RegExp }> = [
+  { method: "POST", pattern: /^\/api\/dispatch$/ },
+];
+
+function hasRouteLocalAuth(pathname: string, method: string): boolean {
+  return ROUTE_LOCAL_AUTH_API_ROUTES.some((rule) => rule.pattern.test(pathname) && (!rule.method || rule.method === method));
+}
+
 function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http://localhost:* ws://localhost:*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
   response.headers.set("X-Frame-Options", "DENY");
@@ -72,6 +80,10 @@ async function enforceAuth(req: NextRequest): Promise<NextResponse> {
 
   // 3. For all other /api/* routes: require valid JWT
   if (pathname.startsWith("/api/")) {
+    if (hasRouteLocalAuth(pathname, req.method)) {
+      return NextResponse.next();
+    }
+
     const token = getTokenFromRequest(req);
     if (!token) {
       return NextResponse.json({ error: "authentication required" }, { status: 401 });

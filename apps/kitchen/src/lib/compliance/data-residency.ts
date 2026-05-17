@@ -14,6 +14,7 @@ export interface CompliancePostureSummary {
   dataResidencyEnabled: boolean;
   judgeProvider: string;
   judgeModel: string;
+  judgeModelFamily: string;
   judgeEndpoint: string | null;
   judgeEndpointLocal: boolean;
   auditRetentionDays: number;
@@ -60,6 +61,7 @@ export function summarizeCompliancePosture(config: EvalConfig): CompliancePostur
     dataResidencyEnabled: config.compliance.dataResidency.enabled,
     judgeProvider: config.judgeModel.provider,
     judgeModel: config.judgeModel.model,
+    judgeModelFamily: config.judgeModel.modelFamily,
     judgeEndpoint: config.judgeModel.localEndpoint ?? null,
     judgeEndpointLocal: isLocalEndpoint(
       config.judgeModel.localEndpoint,

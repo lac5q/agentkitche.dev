@@ -114,6 +114,20 @@ function stringField(value: unknown, fallback = ""): string {
   return text || fallback;
 }
 
+function normalizeCsvHeader(header: string): string {
+  const compact = header.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  const aliases: Record<string, string> = {
+    transactionid: "transaction_id",
+    correlationid: "correlation_id",
+    tenantid: "tenant_id",
+    agentid: "agent_id",
+    expectedamount: "expected_amount",
+    occurredat: "occurred_at",
+    sourcerowid: "source_row_id",
+  };
+  return aliases[compact] ?? header.trim().toLowerCase();
+}
+
 export function normalizeWebhookTransaction(payload: Record<string, unknown>): TransactionReconciliationEvent {
   const transactionId = stringField(payload.transaction_id ?? payload.transactionId, crypto.randomUUID());
   const correlationId = stringField(payload.correlation_id ?? payload.correlationId, transactionId);
@@ -139,7 +153,7 @@ export function normalizeWebhookTransaction(payload: Record<string, unknown>): T
 
 export function parseTransactionCsv(csv: string): TransactionReconciliationEvent[] {
   const [headers = [], ...rows] = parseCsvRows(csv);
-  const normalizedHeaders = headers.map((header) => header.trim().toLowerCase());
+  const normalizedHeaders = headers.map(normalizeCsvHeader);
 
   return rows.map((cells, index) => {
     const payload: Record<string, unknown> = {};

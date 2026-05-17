@@ -7,9 +7,14 @@ const WINDOW_MS = 60_000;
 const DEFAULT_LIMIT = 10;
 const buckets = new Map<string, Bucket>();
 
+function trustsProxyHeaders(): boolean {
+  return ["1", "true", "yes", "on"].includes((process.env.AUTH_TRUST_PROXY_HEADERS ?? "").toLowerCase());
+}
+
 function keyFor(req: Request, scope: string): string {
-  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const ip = forwarded || req.headers.get("x-real-ip") || "unknown";
+  const forwarded = trustsProxyHeaders() ? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() : null;
+  const realIp = trustsProxyHeaders() ? req.headers.get("x-real-ip") : null;
+  const ip = forwarded || realIp || "unknown";
   return `${scope}:${ip}`;
 }
 
