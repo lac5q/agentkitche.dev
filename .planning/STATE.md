@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Orchestration Depth + Intelligence Uplift
 status: planning
-last_updated: "2026-05-17T16:09:32.473Z"
+last_updated: "2026-05-17T17:00:00.000Z"
 last_activity: 2026-05-17
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,29 +20,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-04 for v2.0)
 
 **Core value:** Any agent framework plugs into Memroos — and every agent, knowledge system, and skill becomes visible, connected, and self-improving.
-**Current focus:** Phase 69 — Context Source Contracts + Runtime Resilience
+**Current focus:** Phase 70 — Foundation + Engine Core
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 70 — Foundation + Engine Core (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-05-17 — Milestone v4.0 started
+Status: Roadmap created — ready for /gsd:plan-phase 70
+Last activity: 2026-05-17 — v4.0 roadmap created (Phases 70-72)
 
-## Roadmap Summary (v2.0)
+## Roadmap Summary (v4.0)
 
 | Phase | Goal | Requirements |
 |-------|------|--------------|
-| 34 | Universal REST API + canonical agent registry | REST-01..06, REG-00..03 (10) — COMPLETE |
-| 35 | A2A protocol + Google ADK support | A2A-01..08 (8) — COMPLETE |
-| 36 | LangGraph orchestration (Python) + HIL | ORCH-01..07 (7) — COMPLETE |
-| 37 | Unified memory — mem0 graph + Neo4j | MEM-01..05 (5) — COMPLETE |
-| 38 | Env config audit + Docker full-stack | INFRA-01..04 + PROFILE-01..04 — COMPLETE |
-| 39 | Developer setup experience | DEV-01..02 + PROFILE-01,02,04 — COMPLETE |
-| 40 | Documentation + architecture diagrams | DOCS-01..08 + PROFILE-02,03,04 — COMPLETE |
-| 41 | OSS polish (license, CI, security, templates) | OSS-01..05 (5) |
+| 70 | Foundation + Engine Core — HIL edit-and-continue, multi-hop retry/rollback, memory adapter interface (incl. WAL pragma fix) | HIL-01..03, ORCH-08..10, MEM-06..08 (9) |
+| 71 | Recall + HIL SLA + Voice — LLM semantic recall, SLA escalation timers, Daily.co meeting bot | RECALL-01..02, HIL-04..06, VOICE-06..08 (8) |
+| 72 | Cross-Project Recall + Behavioral W-lift + UI + Skills | RECALL-03..04, SEAL-04..06, UI-05..06, SKILL-01..04 (11) |
 
-**Completed so far:** Phase 34 through Phase 56.
+**Coverage:** 28/28 v4.0 requirements mapped, no orphans.
+**Completed so far:** Phase 34 through Phase 69 (v2.0–v3.1 shipped).
 
 ## Performance Metrics
 
