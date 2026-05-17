@@ -86,6 +86,7 @@ describe("SEAL API routes", () => {
       jsonRequest(`http://localhost/api/seal/proposals/${reflected.proposals[0].id}`, {
         action: "approve",
         reasoning: "ready",
+        operator: "test-user-id",
       }) as any,
       { params: Promise.resolve({ id: reflected.proposals[0].id }) } as any
     );
