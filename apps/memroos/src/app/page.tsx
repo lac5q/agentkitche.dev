@@ -560,13 +560,13 @@ function LandingPage() {
               A 64-second animated product demo with voiceover, logo intro, QR links, and a custom electronic score, starting with memory as the core value prop and moving through context packs, teams, skills, trust, and runtime.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link
+              <a
                 href="/demo/memroos-demo.mp4"
                 className="inline-flex items-center gap-2 bg-[#0f0f0e] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-[#a8392c]"
               >
                 Open video
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+              </a>
               <Link
                 href="https://github.com/lac5q/memroos"
                 className="inline-flex items-center border border-[#0f0f0e] px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0f0f0e] transition hover:bg-[#0f0f0e] hover:text-white"
