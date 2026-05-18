@@ -68,6 +68,13 @@ const STATUS_STYLES: Record<string, string> = {
   blocked: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
+const STATUS_ORDER: Record<RegisteredAgent["status"], number> = {
+  active: 0,
+  idle: 1,
+  dormant: 2,
+  error: 3,
+};
+
 function formatAgent(agent: RegisteredAgent): string {
   const platform = PLATFORM_LABELS[agent.platform] ?? agent.platform;
   return `${platform} - ${agent.name}`;
@@ -145,8 +152,16 @@ export function AgentEngagementConsole() {
   const { data: delegationsData } = useDelegations(8);
   const agents = useMemo(() => (agentsData?.agents ?? []) as RegisteredAgent[], [agentsData?.agents]);
   const activeAgents = useMemo(() => agents.filter((agent) => agent.status === "active"), [agents]);
-  const roster = useMemo(() => activeAgents.length > 0 ? activeAgents : agents, [activeAgents, agents]);
-  const defaultAgentId = roster[0]?.id ?? "";
+  const roster = useMemo(
+    () =>
+      [...agents].sort((a, b) => {
+        const statusDelta = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+        return statusDelta || a.name.localeCompare(b.name);
+      }),
+    [agents]
+  );
+  const defaultRoomIds = activeAgents.length > 0 ? activeAgents.map((agent) => agent.id) : roster.map((agent) => agent.id);
+  const defaultAgentId = activeAgents[0]?.id ?? roster[0]?.id ?? "";
 
   const [mode, setMode] = useState<Mode>("chat");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -171,15 +186,15 @@ export function AgentEngagementConsole() {
   );
   const selectedId = selectedAgent?.id ?? "";
   const selectedLabel = selectedAgent ? formatAgent(selectedAgent) : "No agent selected";
-  const roomParticipantIds = participants ?? roster.map((agent) => agent.id);
+  const roomParticipantIds = participants ?? defaultRoomIds;
   const roomParticipantLabel = `${roomParticipantIds.length} agent${roomParticipantIds.length === 1 ? "" : "s"}`;
   const recentDelegations = delegationsData?.delegations ?? [];
 
   function toggleParticipant(agentId: string) {
     setParticipants((current) =>
-      (current ?? roster.map((agent) => agent.id)).includes(agentId)
-        ? (current ?? roster.map((agent) => agent.id)).filter((id) => id !== agentId)
-        : [...(current ?? roster.map((agent) => agent.id)), agentId]
+      (current ?? defaultRoomIds).includes(agentId)
+        ? (current ?? defaultRoomIds).filter((id) => id !== agentId)
+        : [...(current ?? defaultRoomIds), agentId]
     );
   }
 
@@ -455,10 +470,10 @@ export function AgentEngagementConsole() {
         <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-[0_16px_48px_rgba(15,23,42,0.05)]">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center text-sm font-semibold text-slate-950">
-              Active Agents
-              <InfoTip text="Agents marked active are shown first. If none are active, the full registered roster is shown." />
+              Agent roster
+              <InfoTip text="All registered agents are visible. Active agents are shown first and selected for the room by default." />
             </h2>
-            <Pill value={`${roster.length}`} />
+            <Pill value={`${activeAgents.length} active / ${roster.length} registered`} />
           </div>
           {agentsLoading && <p className="text-sm text-stone-500">Loading agents...</p>}
           <div className="max-h-[34rem] space-y-2 overflow-y-auto pr-1">
@@ -560,6 +575,22 @@ export function AgentEngagementConsole() {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setParticipants(defaultRoomIds)}
+                        disabled={busy || defaultRoomIds.length === 0}
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-cyan-300 bg-white px-3 py-2 text-sm font-semibold text-cyan-900 transition hover:bg-cyan-100 disabled:opacity-40"
+                      >
+                        Use active
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setParticipants(roster.map((agent) => agent.id))}
+                        disabled={busy || roster.length === 0}
+                        className="inline-flex items-center justify-center gap-2 rounded-md border border-cyan-300 bg-white px-3 py-2 text-sm font-semibold text-cyan-900 transition hover:bg-cyan-100 disabled:opacity-40"
+                      >
+                        Use all
+                      </button>
                       <button
                         type="button"
                         onClick={runStandup}

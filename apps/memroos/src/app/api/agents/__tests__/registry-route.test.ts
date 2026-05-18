@@ -8,9 +8,12 @@ import path from "path";
 const TEST_DB_DIR = path.join(os.tmpdir(), `agents-route-${crypto.randomUUID()}`);
 const TEST_DB_PATH = path.join(TEST_DB_DIR, "routes.db");
 
-async function loadRoutes() {
+async function loadRoutes(localRuntime = { activeCliCount: 0, byPlatform: {}, scannedAt: "2026-05-07T07:45:00.000Z" }) {
   process.env.SQLITE_DB_PATH = TEST_DB_PATH;
   vi.resetModules();
+  vi.doMock("@/lib/local-agent-runtime", () => ({
+    getLocalAgentRuntime: () => localRuntime,
+  }));
   const agentsRoute = await import("../route");
   const registerRoute = await import("../register/route");
   const agentRoute = await import("../[id]/route");
@@ -141,6 +144,48 @@ describe("agent registry routes", () => {
       status: "active",
       currentTask: "Recent checkpoint",
       metadata: expect.objectContaining({ derivedActivity: "recent_hive_action" }),
+    });
+  });
+
+  it("derives active status from live non-Paperclip local runtimes", async () => {
+    const { agentsRoute, registerRoute } = await loadRoutes({
+      activeCliCount: 2,
+      byPlatform: { hermes: 1, openclaw: 1 },
+      scannedAt: "2026-05-07T07:45:00.000Z",
+    });
+
+    for (const agent of [
+      { id: "alba", name: "Alba", platform: "hermes" },
+      { id: "sophia", name: "Sophia", platform: "openclaw" },
+      { id: "codex-persona", name: "Codex Persona", platform: "codex" },
+    ]) {
+      await registerRoute.POST(
+        new Request("http://localhost/api/agents/register", {
+          method: "POST",
+          body: JSON.stringify({
+            ...agent,
+            role: "Runtime participant",
+            protocol: "rest",
+            issueApiKey: false,
+          }),
+        })
+      );
+    }
+
+    const listResponse = await agentsRoute.GET();
+    const agents = (await listResponse.json()).agents;
+    expect(agents.find((agent: { id: string }) => agent.id === "alba")).toMatchObject({
+      status: "active",
+      currentTask: "Local hermes runtime detected",
+      metadata: expect.objectContaining({ derivedActivity: "local_runtime_process" }),
+    });
+    expect(agents.find((agent: { id: string }) => agent.id === "sophia")).toMatchObject({
+      status: "active",
+      currentTask: "Local openclaw runtime detected",
+      metadata: expect.objectContaining({ derivedActivity: "local_runtime_process" }),
+    });
+    expect(agents.find((agent: { id: string }) => agent.id === "codex-persona")).toMatchObject({
+      status: "dormant",
     });
   });
 

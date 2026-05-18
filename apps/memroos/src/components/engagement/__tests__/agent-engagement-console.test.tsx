@@ -97,6 +97,14 @@ describe("AgentEngagementConsole", () => {
     expect(screen.getAllByText("Claude Sonnet Engineer").length).toBeGreaterThan(0);
   });
 
+  it("keeps dormant registered agents visible when active agents exist", () => {
+    render(<AgentEngagementConsole />);
+
+    expect(screen.getAllByText("Claude Sonnet Engineer").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Codex CLI").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 active / 2 registered")).toBeInTheDocument();
+  });
+
   it("runs diagnostics for active agents", async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
       json: async () => ({

@@ -57,6 +57,7 @@ function isDirectExecutable(command: string, names: string[]): boolean {
 function detectCliPlatform(command: string): AgentPlatform | null {
   if (!isDirectCliProcess(command)) return null;
   if (/\bhermes_cli\.main\b|(?:^|\s)(?:\S*\/)?hermes(?:\s|$)/i.test(command)) return "hermes";
+  if (/\bopenclaw\/dist\/index\.js\b|\/node_modules\/openclaw\//i.test(command)) return "openclaw";
   if (isDirectExecutable(command, ["qwen"])) return "qwen";
   if (isDirectExecutable(command, ["claude"])) return "claude";
   if (isDirectExecutable(command, ["codex"])) return "codex";

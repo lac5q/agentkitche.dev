@@ -6,12 +6,13 @@ import type { AgentPlatform, RegisteredAgent } from "@/types";
 export const dynamic = "force-dynamic";
 
 const RECENT_ACTIVITY_WINDOW_MS = 30 * 60 * 1000;
-const CLI_AGENT_BY_PLATFORM: Partial<Record<AgentPlatform, string>> = {
+const SINGLETON_CLI_AGENT_BY_PLATFORM: Partial<Record<AgentPlatform, string>> = {
   claude: "claude-sonnet-engineer",
   codex: "codex-cli-agent",
   gemini: "gemini-senior-engineer",
   qwen: "qwen-engineer",
 };
+const PLATFORM_RUNTIME_AGENTS = new Set<AgentPlatform>(["hermes", "openclaw", "opencode"]);
 
 interface RecentHiveActionRow {
   agent_id: string;
@@ -40,7 +41,7 @@ function recentHiveActivityByAgent(): Map<string, RecentHiveActionRow> {
 function withDerivedActivity(agents: RegisteredAgent[], localRuntime: ReturnType<typeof getLocalAgentRuntime>): RegisteredAgent[] {
   const recentActivity = recentHiveActivityByAgent();
   const activeCliAgentIds = new Set(
-    Object.entries(CLI_AGENT_BY_PLATFORM)
+    Object.entries(SINGLETON_CLI_AGENT_BY_PLATFORM)
       .filter(([platform]) => (localRuntime.byPlatform[platform as AgentPlatform] ?? 0) > 0)
       .map(([, agentId]) => agentId)
       .filter((agentId): agentId is string => Boolean(agentId))
@@ -48,7 +49,10 @@ function withDerivedActivity(agents: RegisteredAgent[], localRuntime: ReturnType
 
   return agents.map((agent) => {
     const latestAction = recentActivity.get(agent.id);
-    const localCliActive = activeCliAgentIds.has(agent.id);
+    const platformRuntimeActive =
+      PLATFORM_RUNTIME_AGENTS.has(agent.platform) &&
+      (localRuntime.byPlatform[agent.platform] ?? 0) > 0;
+    const localCliActive = activeCliAgentIds.has(agent.id) || platformRuntimeActive;
     if (!latestAction && !localCliActive) return agent;
 
     const derivedTimestamp = latestAction?.timestamp ?? localRuntime.scannedAt;
