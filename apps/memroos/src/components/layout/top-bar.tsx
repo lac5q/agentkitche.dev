@@ -10,18 +10,19 @@ interface TopBarProps {
   onMenuClick?: () => void;
 }
 
+function formatClock() {
+  return new Date().toLocaleString("en-US", {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 function useClock() {
-  const [now, setNow] = useState<string>("");
+  const [now, setNow] = useState(formatClock);
   useEffect(() => {
-    const fmt = () =>
-      new Date().toLocaleString("en-US", {
-        weekday: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-    setNow(fmt());
-    const id = window.setInterval(() => setNow(fmt()), 30_000);
+    const id = window.setInterval(() => setNow(formatClock()), 30_000);
     return () => window.clearInterval(id);
   }, []);
   return now;

@@ -116,7 +116,7 @@ describe("AgentRegistryPage", () => {
   it("lists registered agents with capabilities, status, heartbeat, and protocol", () => {
     render(<AgentRegistryPage />);
 
-    expect(screen.getByText("Agents")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Agents" })).toBeInTheDocument();
     expect(screen.getByText("REST Agent")).toBeInTheDocument();
     expect(screen.getAllByText("rest").length).toBeGreaterThan(0);
     expect(screen.getAllByText("active").length).toBeGreaterThan(0);

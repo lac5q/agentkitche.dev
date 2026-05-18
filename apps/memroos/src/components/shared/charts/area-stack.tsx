@@ -21,26 +21,33 @@ function AreaStack({ series, labels, w = 640, h = 200 }: AreaStackProps) {
   const px = (i: number) => (i / (n - 1)) * (w - 40) + 32;
   const py = (v: number) => h - 28 - (v / max) * (h - 48);
 
-  let cumulative = labels.map(() => 0);
-  const paths = series.map((s) => {
-    const top = s.values.map(
-      (v, i) => [px(i), py(cumulative[i] + v)] as const,
-    );
-    const bot = s.values
-      .map((_, i) => [px(i), py(cumulative[i])] as const)
-      .reverse();
-    const d = [
-      ...top.map(([x, y], i) =>
-        i
-          ? `L${x.toFixed(1)} ${y.toFixed(1)}`
-          : `M${x.toFixed(1)} ${y.toFixed(1)}`,
-      ),
-      ...bot.map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`),
-      "Z",
-    ].join(" ");
-    cumulative = cumulative.map((c, i) => c + s.values[i]);
-    return { d, color: s.color };
-  });
+  const { paths } = series.reduce<{
+    cumulative: number[];
+    paths: Array<{ d: string; color: string }>;
+  }>(
+    (acc, s) => {
+      const top = s.values.map(
+        (v, i) => [px(i), py(acc.cumulative[i] + v)] as const,
+      );
+      const bot = s.values
+        .map((_, i) => [px(i), py(acc.cumulative[i])] as const)
+        .reverse();
+      const d = [
+        ...top.map(([x, y], i) =>
+          i
+            ? `L${x.toFixed(1)} ${y.toFixed(1)}`
+            : `M${x.toFixed(1)} ${y.toFixed(1)}`,
+        ),
+        ...bot.map(([x, y]) => `L${x.toFixed(1)} ${y.toFixed(1)}`),
+        "Z",
+      ].join(" ");
+      return {
+        cumulative: acc.cumulative.map((c, i) => c + s.values[i]),
+        paths: [...acc.paths, { d, color: s.color }],
+      };
+    },
+    { cumulative: labels.map(() => 0), paths: [] },
+  );
 
   return (
     <svg

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Sidebar } from "../sidebar";
 
@@ -27,30 +27,19 @@ describe("Sidebar", () => {
 
     expect(screen.getAllByText("MemroOS").length).toBeGreaterThan(0);
     expect(screen.getByText("Memory OS for agent workflows")).toBeTruthy();
-    expect(screen.getByText("Home")).toBeTruthy();
-    expect(screen.getByText("MemroOS landing")).toBeTruthy();
+    expect(screen.getByText("Operations")).toBeTruthy();
+    expect(screen.getByText("NOC · efficiency · anomalies")).toBeTruthy();
     expect(screen.getByText("Memory")).toBeTruthy();
-    expect(screen.getByText("Retained context")).toBeTruthy();
-    expect(screen.getByText("Knowledge")).toBeTruthy();
-    expect(screen.getByText("Source corpus")).toBeTruthy();
+    expect(screen.getByText("Memory · Knowledge · Notebooks")).toBeTruthy();
     expect(screen.getByText("Skills")).toBeTruthy();
-    expect(screen.getByText("Procedural playbooks")).toBeTruthy();
+    expect(screen.getByText("Cookbooks · lifecycle")).toBeTruthy();
   });
 
-  it("scrolls to governance when the hash link is clicked from the library page", () => {
+  it("routes governance to the consolidated governance group", () => {
     mockPathname = "/library";
-    window.history.pushState(null, "", "/library#governance");
-
-    const target = document.createElement("section");
-    target.id = "governance";
-    target.scrollIntoView = vi.fn();
-    document.body.appendChild(target);
 
     render(<Sidebar />);
-    vi.mocked(target.scrollIntoView).mockClear();
 
-    fireEvent.click(screen.getByRole("link", { name: /Governance/ }));
-
-    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
+    expect(screen.getByRole("link", { name: /Governance/ })).toHaveAttribute("href", "/audit");
   });
 });

@@ -143,7 +143,7 @@ Phase 61 introduces `tenant_id TEXT NOT NULL DEFAULT 'default-tenant'` on `busin
 - `apps/memroos/src/lib/api-client.ts` handles internal TanStack Query hooks. Phase 62 does not add hooks to this file (SDK callers use the SDK, not internal API client).
 - `apps/memroos/src/lib/seal/apply.ts` is the Phase 58 module that calls `EvalService.runForTrace()` — this is one of the callers to refactor for dogfood (task 9).
 - Golden sets live at `golden-sets/` in the repo root. Phase 62's quickstart sample re-uses the existing `golden-sets/business-ops-50.jsonl`.
-- `packages/` directory exists at repo root (monorepo workspace) — confirm with `ls /Users/lcalderon/github/memroos/packages/` before creating SDK packages.
+- `packages/` directory exists at repo root (monorepo workspace) — confirm with `ls <repo-root>/packages/` before creating SDK packages.
 - Rate limiting middleware location: check for existing `apps/memroos/src/middleware.ts` before creating; extend if present.
 </code_context>
 

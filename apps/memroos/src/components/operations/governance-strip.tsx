@@ -1,6 +1,6 @@
 "use client";
 
-import { NOC, NOC_FONT_MONO } from "@/lib/noc-theme";
+import { NOC } from "@/lib/noc-theme";
 import { MOCK_GOVERNANCE } from "@/lib/noc-mock-data";
 import { NocCard, NocPanelHeader, Eyebrow, Mono } from "./noc-primitives";
 

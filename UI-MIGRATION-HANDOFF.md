@@ -269,7 +269,7 @@ useSealProposals()    // SEAL proposals
 ## Design bundle (if needed)
 The original Claude Design bundle is cached at:
 ```
-/Users/lcalderon/.claude/projects/-Users-lcalderon-github-memroos/5c965b72-3a55-4eb7-87ee-a97bab2e12d0/tool-results/webfetch-1779052829538-j0eye1.bin
+<local-claude-cache>/projects/<repo-cache-key>/5c965b72-3a55-4eb7-87ee-a97bab2e12d0/tool-results/webfetch-1779052829538-j0eye1.bin
 ```
 Extract any file:
 ```bash

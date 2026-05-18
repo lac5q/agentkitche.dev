@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   Circle,
@@ -149,15 +149,14 @@ export function AgentEngagementConsole() {
   const defaultAgentId = roster[0]?.id ?? "";
 
   const [mode, setMode] = useState<Mode>("chat");
-  const [selectedAgentId, setSelectedAgentId] = useState(defaultAgentId);
-  const [participants, setParticipants] = useState<string[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<string[] | null>(null);
   const [message, setMessage] = useState("");
   const [standupFocus, setStandupFocus] = useState("");
   const [standupBlockers, setStandupBlockers] = useState("");
   const [standupAsk, setStandupAsk] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [busy, setBusy] = useState(false);
-  const [roomInitialized, setRoomInitialized] = useState(false);
   const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -172,27 +171,15 @@ export function AgentEngagementConsole() {
   );
   const selectedId = selectedAgent?.id ?? "";
   const selectedLabel = selectedAgent ? formatAgent(selectedAgent) : "No agent selected";
-  const roomParticipantIds = participants.length > 0 ? participants : selectedId ? [selectedId] : [];
+  const roomParticipantIds = participants ?? roster.map((agent) => agent.id);
   const roomParticipantLabel = `${roomParticipantIds.length} agent${roomParticipantIds.length === 1 ? "" : "s"}`;
   const recentDelegations = delegationsData?.delegations ?? [];
 
-  useEffect(() => {
-    if (!selectedAgentId && defaultAgentId) {
-      setSelectedAgentId(defaultAgentId);
-    }
-  }, [defaultAgentId, selectedAgentId]);
-
-  useEffect(() => {
-    if (roomInitialized || roster.length === 0) return;
-    setParticipants(roster.map((agent) => agent.id));
-    setRoomInitialized(true);
-  }, [roomInitialized, roster]);
-
   function toggleParticipant(agentId: string) {
     setParticipants((current) =>
-      current.includes(agentId)
-        ? current.filter((id) => id !== agentId)
-        : [...current, agentId]
+      (current ?? roster.map((agent) => agent.id)).includes(agentId)
+        ? (current ?? roster.map((agent) => agent.id)).filter((id) => id !== agentId)
+        : [...(current ?? roster.map((agent) => agent.id)), agentId]
     );
   }
 

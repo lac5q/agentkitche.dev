@@ -29,7 +29,7 @@ export function EfficiencySignals() {
           </div>
           <SampleChip />
           <span style={{ fontSize: 11.5, color: NOC.soft }}>
-            If the system has it, the agent shouldn't have to re-ask, re-search, or re-learn.
+            If the system has it, the agent should not have to re-ask, re-search, or re-learn.
           </span>
           <div style={{ marginLeft: "auto" }}>
             <PillBtn>Open report</PillBtn>

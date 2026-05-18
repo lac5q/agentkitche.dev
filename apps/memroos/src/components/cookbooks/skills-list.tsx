@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ClipboardCheck, Edit3, Search, ShieldCheck } from "lucide-react";
 
 import { Btn, Card, Pill } from "@/components/shared/ui";
@@ -43,10 +43,6 @@ export function SkillsList({
 }: SkillsListProps) {
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(skillDetails[0]?.name ?? allSkills[0] ?? null);
-  const [notes, setNotes] = useState("");
-  const [draftBody, setDraftBody] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
-  const reviewMutation = useUpdateSkillReviewMutation();
 
   const fallbackItems = useMemo<SkillWorkflowItem[]>(
     () =>
@@ -96,24 +92,6 @@ export function SkillsList({
       { "agent-limited": 0, general: 0, enterprise: 0 }
     );
   }, [items]);
-
-  useEffect(() => {
-    if (!selected) return;
-    setNotes(selected.reviewNotes);
-    setDraftBody(selected.draftBody || selected.bodyPreview);
-    setNotice(null);
-  }, [selected?.name, selected?.reviewNotes, selected?.draftBody, selected?.bodyPreview]);
-
-  async function runReviewAction(action: "save-draft" | "request-changes" | "approve-general" | "promote-enterprise") {
-    if (!selected) return;
-    await reviewMutation.mutateAsync({
-      skillName: selected.name,
-      action,
-      notes,
-      draftBody,
-    });
-    setNotice(actionNotice(action));
-  }
 
   if (items.length === 0) {
     return (
@@ -295,75 +273,97 @@ export function SkillsList({
           ) : null}
         </Card>
 
-        <Card className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase" style={{ color: NOC.terra, fontFamily: NOC_FONT_MONO }}>
-                Review desk
-              </p>
-              <h3 className="mt-1 text-lg font-semibold" style={{ color: NOC.ink }}>
-                Edit and approve
-              </h3>
-            </div>
-            <Edit3 size={18} color={NOC.terra} />
-          </div>
-
-          <label className="block">
-            <span className="text-xs font-bold uppercase" style={{ color: NOC.soft, fontFamily: NOC_FONT_MONO }}>
-              Review notes
-            </span>
-            <textarea
-              aria-label="Skill review notes"
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              className="mt-2 min-h-24 w-full border p-3 text-sm outline-none"
-              style={{ borderColor: NOC.rule, color: NOC.ink, background: NOC.paper }}
-              placeholder="What must change before this skill is reusable?"
-            />
-          </label>
-
-          <label className="block">
-            <span className="text-xs font-bold uppercase" style={{ color: NOC.soft, fontFamily: NOC_FONT_MONO }}>
-              Proposed edit draft
-            </span>
-            <textarea
-              aria-label="Skill edit draft"
-              value={draftBody}
-              onChange={(event) => setDraftBody(event.target.value)}
-              className="mt-2 min-h-40 w-full border p-3 text-sm outline-none"
-              style={{ borderColor: NOC.rule, color: NOC.ink, background: NOC.paper }}
-              placeholder="Draft revised instructions or approval rationale."
-            />
-          </label>
-
-          {reviewMutation.isError ? (
-            <p className="text-sm" style={{ color: NOC.terra }}>
-              {reviewMutation.error instanceof Error ? reviewMutation.error.message : "Review update failed."}
-            </p>
-          ) : null}
-          {notice ? (
-            <p className="text-sm" style={{ color: NOC.success }}>
-              {notice}
-            </p>
-          ) : null}
-
-          <div className="grid gap-2">
-            <Btn variant="ghost" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("save-draft")}>
-              <ClipboardCheck size={15} /> Save draft
-            </Btn>
-            <Btn variant="flat" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("request-changes")}>
-              Request changes
-            </Btn>
-            <Btn variant="terra" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("approve-general")}>
-              <Check size={15} /> Approve general
-            </Btn>
-            <Btn variant="ink" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("promote-enterprise")}>
-              <ShieldCheck size={15} /> Promote enterprise
-            </Btn>
-          </div>
-        </Card>
+        <SkillReviewDesk key={selected?.name ?? "empty"} selected={selected} />
       </div>
     </div>
+  );
+}
+
+function SkillReviewDesk({ selected }: { selected: SkillWorkflowItem | null }) {
+  const [notes, setNotes] = useState(selected?.reviewNotes ?? "");
+  const [draftBody, setDraftBody] = useState(selected?.draftBody || selected?.bodyPreview || "");
+  const [notice, setNotice] = useState<string | null>(null);
+  const reviewMutation = useUpdateSkillReviewMutation();
+
+  async function runReviewAction(action: "save-draft" | "request-changes" | "approve-general" | "promote-enterprise") {
+    if (!selected) return;
+    await reviewMutation.mutateAsync({
+      skillName: selected.name,
+      action,
+      notes,
+      draftBody,
+    });
+    setNotice(actionNotice(action));
+  }
+
+  return (
+    <Card className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase" style={{ color: NOC.terra, fontFamily: NOC_FONT_MONO }}>
+            Review desk
+          </p>
+          <h3 className="mt-1 text-lg font-semibold" style={{ color: NOC.ink }}>
+            Edit and approve
+          </h3>
+        </div>
+        <Edit3 size={18} color={NOC.terra} />
+      </div>
+
+      <label className="block">
+        <span className="text-xs font-bold uppercase" style={{ color: NOC.soft, fontFamily: NOC_FONT_MONO }}>
+          Review notes
+        </span>
+        <textarea
+          aria-label="Skill review notes"
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          className="mt-2 min-h-24 w-full border p-3 text-sm outline-none"
+          style={{ borderColor: NOC.rule, color: NOC.ink, background: NOC.paper }}
+          placeholder="What must change before this skill is reusable?"
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-xs font-bold uppercase" style={{ color: NOC.soft, fontFamily: NOC_FONT_MONO }}>
+          Proposed edit draft
+        </span>
+        <textarea
+          aria-label="Skill edit draft"
+          value={draftBody}
+          onChange={(event) => setDraftBody(event.target.value)}
+          className="mt-2 min-h-40 w-full border p-3 text-sm outline-none"
+          style={{ borderColor: NOC.rule, color: NOC.ink, background: NOC.paper }}
+          placeholder="Draft revised instructions or approval rationale."
+        />
+      </label>
+
+      {reviewMutation.isError ? (
+        <p className="text-sm" style={{ color: NOC.terra }}>
+          {reviewMutation.error instanceof Error ? reviewMutation.error.message : "Review update failed."}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="text-sm" style={{ color: NOC.success }}>
+          {notice}
+        </p>
+      ) : null}
+
+      <div className="grid gap-2">
+        <Btn variant="ghost" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("save-draft")}>
+          <ClipboardCheck size={15} /> Save draft
+        </Btn>
+        <Btn variant="flat" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("request-changes")}>
+          Request changes
+        </Btn>
+        <Btn variant="terra" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("approve-general")}>
+          <Check size={15} /> Approve general
+        </Btn>
+        <Btn variant="ink" disabled={!selected || reviewMutation.isPending} onClick={() => runReviewAction("promote-enterprise")}>
+          <ShieldCheck size={15} /> Promote enterprise
+        </Btn>
+      </div>
+    </Card>
   );
 }
 

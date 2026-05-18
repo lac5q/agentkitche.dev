@@ -368,7 +368,7 @@ this.apiKey = apiKey ?? (() => {
 ```typescript
 lastError: `missing source path: ${resolvedPath}`,
 ```
-where `resolvedPath` is the fully expanded absolute path (e.g., `/home/user/data/gmail-export`). This path is returned in the `/api/context/health` response (CR-06 above). Even if CR-06 is fixed and auth is added, this information should be sanitized or omitted from responses visible to `reviewer` role users.
+where `resolvedPath` is the fully expanded absolute path (e.g., `/home/USERNAME/data/gmail-export`). This path is returned in the `/api/context/health` response (CR-06 above). Even if CR-06 is fixed and auth is added, this information should be sanitized or omitted from responses visible to `reviewer` role users.
 
 **Fix:** Return only the configured `sourcePath` (with un-expanded `${VAR}` tokens) in error messages, not the resolved absolute path.
 
