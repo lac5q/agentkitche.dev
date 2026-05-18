@@ -4,7 +4,7 @@
       "command": "/bin/bash",
       "args": [
         "-lc",
-        "export MEMROOS_ROOT=\"${MEMROOS_ROOT:-$HOME/github/memroos}\"; export KNOWLEDGE_ROOT=\"${KNOWLEDGE_ROOT:-$HOME/github/knowledge}\"; exec \"${KNOWLEDGE_PYTHON:-$HOME/github/knowledge/.venv/bin/python}\" \"$MEMROOS_ROOT/services/knowledge-mcp/knowledge_system/mcp_server.py\""
+        "exec \"${MEMROOS_ROOT:-$HOME/github/memroos}/scripts/memroos-mcp.sh\""
       ]
     },
     "gitnexus": {
